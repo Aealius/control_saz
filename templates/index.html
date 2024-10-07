@@ -1,0 +1,40 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block content %}
+    <h1>Список задач</h1>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Исполнитель</th>
+                <th>Дата создания</th>
+                <th>Срок</th>
+                <th>Описание</th>
+                <th>Действителен</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+                <tr {% if not task.is_valid %}class="table-muted"{% elif task.is_overdue() %}class="table-danger"{% endif %}>
+                    <td>{{ task.executor }}</td>
+                    <td>{{ task.date_created.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ task.deadline.strftime('%d.%m.%Y') }}</td>
+                    <td>{{ task.description }}</td>
+                    <td>{{ 'Да' if task.is_valid else 'Нет' }}</td>
+                    <td>
+                        <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm">Редактировать</a>
+                        <a href="{{ url_for('delete', task_id=task.id) }}" class="btn btn-danger btn-sm">Удалить</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('add') }}" class="btn btn-success">Добавить задачу</a>
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% endblock %}
