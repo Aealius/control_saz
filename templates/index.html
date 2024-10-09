@@ -16,15 +16,21 @@
         </thead>
         <tbody>
             {% for task in tasks %}
-                <tr {% if not task.is_valid %}class="table-muted"{% elif task.is_overdue() %}class="table-danger"{% endif %}>
+                <tr 
+                    {% if not task.is_valid %}class="table-secondary"{% elif task.is_overdue() %}class="table-danger"{% endif %}
+                >
                     <td>{{ task.executor }}</td>
                     <td>{{ task.date_created.strftime('%d.%m.%Y') }}</td>
                     <td>{{ task.deadline.strftime('%d.%m.%Y') }}</td>
                     <td>{{ task.description }}</td>
                     <td>{{ 'Да' if task.is_valid else 'Нет' }}</td>
                     <td>
+                        <form method="POST" action="{{ url_for('delete', task_id=task.id) }}" onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');"> 
+                            <input type="hidden" name="password" value="1234">  
+                            <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                        </form>
                         <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm">Редактировать</a>
-                        <a href="{{ url_for('delete', task_id=task.id) }}" class="btn btn-danger btn-sm">Удалить</a>
+
                     </td>
                 </tr>
             {% endfor %}

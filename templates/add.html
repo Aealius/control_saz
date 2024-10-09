@@ -1,0 +1,35 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block content %}
+    <h1>Добавить задачу</h1>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="executor">Исполнитель:</label>
+            <input type="text" class="form-control" id="executor" name="executor" required>
+        </div>
+        <div class="form-group">
+            <label for="date_created">Дата создания:</label>
+            <input type="date" class="form-control" id="date_created" name="date_created" required>
+        </div>
+        <div class="form-group">
+            <label for="deadline">Срок:</label>
+            <input type="date" class="form-control" id="deadline" name="deadline" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Описание:</label>
+            <textarea class="form-control" id="description" name="description" required></textarea>
+        </div>
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid" checked>
+            <label class="form-check-label" for="is_valid">Действителен</label>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Добавить</button>
+    </form>
+{% endblock %}

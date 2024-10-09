@@ -1,3 +1,6 @@
+body{
+    margin: 10px;
+}
 /* Добавьте свои стили для красивой таблицы */
 table {
     width: 100%;
@@ -17,4 +20,24 @@ tr:nth-child(even) {
 th {
     background-color: #4CAF50;
     color: white;
+}
+
+/* style.css */
+
+/* Стили для всей строки таблицы */
+.table-bordered > tbody > tr.table-secondary {
+    background-color: #e9ecef !important; /* Серый фон для недействительных задач */
+}
+
+.table-bordered > tbody > tr.table-danger {
+    background-color: #f5c6cb !important; /* Красный фон для просроченных задач */
+}
+
+/* Стили для ячеек таблицы (по желанию) */
+.table-bordered > tbody > tr.table-secondary > td {
+    /* Дополнительные стили для ячеек недействительных задач */
+}
+
+.table-bordered > tbody > tr.table-danger > td {
+    /* Дополнительные стили для ячеек просроченных задач */
 }

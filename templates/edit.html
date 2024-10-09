@@ -1,0 +1,35 @@
+{% extends 'bootstrap/base.html' %}
+
+{% block content %}
+    <h1>Редактировать задачу</h1>
+
+    <form method="POST">
+        <div class="form-group">
+            <label for="executor">Исполнитель:</label>
+            <input type="text" class="form-control" id="executor" name="executor" value="{{ task.executor }}" required>
+        </div>
+        <div class="form-group">
+            <label for="date_created">Дата создания:</label>
+            <input type="date" class="form-control" id="date_created" name="date_created" value="{{ task.date_created.strftime('%Y-%m-%d') }}" required>
+        </div>
+        <div class="form-group">
+            <label for="deadline">Срок:</label>
+            <input type="date" class="form-control" id="deadline" name="deadline" value="{{ task.deadline.strftime('%Y-%m-%d') }}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Описание:</label>
+            <textarea class="form-control" id="description" name="description" required>{{ task.description }}</textarea>
+        </div>
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid" {% if task.is_valid %}checked{% endif %}>
+            <label class="form-check-label" for="is_valid">Действителен</label>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
+{% endblock %}
