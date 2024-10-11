@@ -1,27 +1,34 @@
+# models.py
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
 
-db = SQLAlchemy()  # Инициализация db вне функции
+db = SQLAlchemy()
 
-class Executor(db.Model):
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    surname = db.Column(db.String(100), nullable=False)  # Добавлено поле для фамилии
+    login = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
-        return self.name
+        return f'<User {self.login}>'
 
 
-def create_task_model(db):
-    class Task(db.Model):
-        id = db.Column(db.Integer, primary_key=True)
-        executor_id = db.Column(db.Integer, db.ForeignKey('executor.id'), nullable=False)
-        executor = db.relationship('Executor', backref=db.backref('tasks', lazy=True)) 
-        date_created = db.Column(db.Date, nullable=False)
-        deadline = db.Column(db.Date, nullable=False)
-        description = db.Column(db.Text, nullable=False)
-        is_valid = db.Column(db.Boolean, default=True)
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    executor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    executor = db.relationship('User', backref=db.backref('tasks', lazy=True))
+    date_created = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    deadline = db.Column(db.Date, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    is_valid = db.Column(db.Boolean, default=True)
+    completion_note = db.Column(db.Text)
+    completion_confirmed = db.Column(db.Boolean, default=False)
+    completion_confirmed_at = db.Column(db.DateTime)
+    admin_note = db.Column(db.Text) 
 
-        def is_overdue(self):
-            return self.deadline < datetime.today().date()
-
-    return Task
+    def is_overdue(self):
+        return self.deadline < datetime.today().date()

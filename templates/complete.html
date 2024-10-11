@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Отметить задачу как выполненную</h1>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="completion_note">Заметка о выполнении:</label>
+        <textarea class="form-control" id="completion_note" name="completion_note"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Отправить</button>
+</form>
+{% endblock %}
