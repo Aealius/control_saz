@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -20,8 +19,7 @@ login_manager.login_view = 'login'
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    surname = db.Column(db.String(100), nullable=False) 
+    department = db.Column(db.String(255), nullable=False, default='Общая служба')
     login = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
@@ -31,9 +29,10 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
+
     def __repr__(self):
         return f'<User {self.login}>'
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -48,7 +47,7 @@ class Task(db.Model):
     deadline = db.Column(db.Date, nullable=False)
     description = db.Column(db.Text, nullable=False)
     is_valid = db.Column(db.Boolean, default=True)
-    completion_note = db.Column(db.Text)  
+    completion_note = db.Column(db.Text)
     completion_confirmed = db.Column(db.Boolean, default=False)
     completion_confirmed_at = db.Column(db.DateTime)
     admin_note = db.Column(db.Text)
@@ -63,20 +62,25 @@ def index():
     executor_filter = request.args.get('executor')
     date_filter = request.args.get('date')
 
-    tasks = Task.query.filter_by(executor_id=current_user.id) # Фильтрация по текущему пользователю
-    
+    tasks = Task.query.filter_by(executor_id=current_user.id)
+
     if current_user.is_admin:
         tasks = Task.query  # Если админ, то показываем все задачи
 
     if executor_filter:
-        tasks = tasks.filter_by(executor_id=User.query.filter_by(name=executor_filter).first().id)
+        tasks = tasks.filter_by(executor_id=User.query.filter_by(department=executor_filter).first().id)
     if date_filter:
         date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
         tasks = tasks.filter(db.cast(Task.date_created, db.Date) == date_filter)
 
-    tasks = tasks.order_by(Task.is_valid.desc(), Task.deadline, Task.date_created.desc()).all()
+    tasks = tasks.order_by(
+        Task.is_valid.asc(),  # Сначала не действительные
+        Task.completion_confirmed.asc(),  # Затем выполненные
+        Task.deadline.asc()  # В порядке возрастания дедлайна
+    ).all()
     executors = User.query.all()
     return render_template('index.html', tasks=tasks, executors=executors)
+
 
 @app.route('/add', methods=['GET', 'POST'])
 @login_required
@@ -91,16 +95,26 @@ def add():
         date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
         deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date()
         description = request.form['description']
-        is_valid = request.form.get('is_valid') == 'on' 
+        is_valid = request.form.get('is_valid') == 'on'
 
-        new_task = Task(executor_id=executor_id, date_created=date_created, deadline=deadline,
-                        description=description, is_valid=is_valid)
-        db.session.add(new_task)
+        if executor_id == 'all':
+            # Создаем задачу для каждого пользователя, кроме текущего
+            for user in User.query.all():
+                if user.id != current_user.id:
+                    new_task = Task(executor_id=user.id, date_created=date_created, deadline=deadline,
+                                    description=description, is_valid=is_valid)
+                    db.session.add(new_task)
+        else:
+            # Создаем задачу для выбранного пользователя
+            new_task = Task(executor_id=executor_id, date_created=date_created, deadline=deadline,
+                            description=description, is_valid=is_valid)
+            db.session.add(new_task)
+
         db.session.commit()
         flash('Задача успешно добавлена!', 'success')
         return redirect(url_for('index'))
 
-    return render_template('add.html', executors=executors, datetime=datetime)
+    return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
 
 
 @app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
@@ -117,7 +131,7 @@ def edit(task_id):
         task.date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
         task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date()
         task.description = request.form['description']
-        task.is_valid = request.form.get('is_valid') == 'on' 
+        task.is_valid = request.form.get('is_valid') == 'on'
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
         return redirect(url_for('index'))
@@ -164,7 +178,7 @@ def confirm_task(task_id):
     if not current_user.is_admin:
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
         return redirect(url_for('index'))
-    
+
     task = Task.query.get_or_404(task_id)
     task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
@@ -180,7 +194,7 @@ def reject_task(task_id):
     if not current_user.is_admin:
         flash('У вас нет прав для отклонения выполнения задач.', 'danger')
         return redirect(url_for('index'))
-    
+
     task = Task.query.get_or_404(task_id)
     task.completion_confirmed = False
     task.admin_note = request.form.get('admin_note')
@@ -207,14 +221,18 @@ def add_user():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        name = request.form['name']
-        surname = request.form['surname']
+        department = request.form['department']
         login = request.form['login']
         password = request.form['password']
         is_admin = request.form.get('is_admin') == 'on'
 
-        new_user = User(name=name, surname=surname, login=login, is_admin=is_admin)
-        new_user.set_password(password)
+        existing_user = User.query.filter_by(login=login).first()
+        if existing_user:
+            flash('Пользователь с таким логином уже существует.', 'danger')
+            return redirect(url_for('add_user'))
+
+        hashed_password = generate_password_hash(password)
+        new_user = User(department=department, login=login, password_hash=hashed_password, is_admin=is_admin)
         db.session.add(new_user)
         db.session.commit()
         flash('Пользователь успешно добавлен!', 'success')
@@ -252,28 +270,51 @@ def login():
             flash('Неверный логин или пароль', 'danger')
     return render_template('login.html')
 
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     if request.method == 'POST':
-        name = request.form['name']
-        surname = request.form['surname']
+        department = request.form['department']
         login = request.form['login']
         password = request.form['password']
-        
+
         existing_user = User.query.filter_by(login=login).first()
         if existing_user:
             flash('Пользователь с таким логином уже существует.', 'danger')
             return redirect(url_for('register'))
 
         hashed_password = generate_password_hash(password)
-        new_user = User(name=name, surname=surname, login=login, password_hash=hashed_password)
+        new_user = User(department=department, login=login, password_hash=hashed_password)
         db.session.add(new_user)
         db.session.commit()
         flash('Регистрация прошла успешно! Теперь вы можете войти.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html')
+
+
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+
+        if not current_user.check_password(old_password):
+            flash('Неверный текущий пароль', 'danger')
+            return redirect(url_for('change_password'))
+
+        if new_password != confirm_password:
+            flash('Новый пароль и подтверждение не совпадают', 'danger')
+            return redirect(url_for('change_password'))
+
+        current_user.set_password(new_password)
+        db.session.commit()
+        flash('Пароль успешно изменен!', 'success')
+        return redirect(url_for('index'))  # Перенаправляем на главную после смены пароля
+    return render_template('change_password.html')
 
 @app.route('/logout')
 @login_required

@@ -7,8 +7,11 @@
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
         <select class="form-control" id="executor" name="executor" required>
+            <option value="all">Всем</option> 
             {% for executor in executors %}
-            <option value="{{ executor.id }}">{{ executor.name }} {{ executor.surname }}</option>
+                {% if executor.id != current_user.id %}
+                    <option value="{{ executor.id }}">{{ executor.department }}</option>
+                {% endif %}
             {% endfor %}
         </select>
     </div>

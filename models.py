@@ -1,16 +1,15 @@
-# models.py
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 
 db = SQLAlchemy()
 
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    surname = db.Column(db.String(100), nullable=False)  # Добавлено поле для фамилии
+    department = db.Column(db.String(255), nullable=False, default='Общая служба')
     login = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
@@ -28,7 +27,7 @@ class Task(db.Model):
     completion_note = db.Column(db.Text)
     completion_confirmed = db.Column(db.Boolean, default=False)
     completion_confirmed_at = db.Column(db.DateTime)
-    admin_note = db.Column(db.Text) 
+    admin_note = db.Column(db.Text)
 
     def is_overdue(self):
         return self.deadline < datetime.today().date()

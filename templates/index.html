@@ -6,6 +6,9 @@
 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#filterModal">
     Фильтрация
 </button>
+{% if current_user.is_admin %}
+<a href="{{ url_for('add') }}" class="btn btn-success">Добавить задачу</a>
+{% endif %}
 
 <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel"
     aria-hidden="true">
@@ -24,8 +27,8 @@
                         <select class="form-control" id="executorFilter" name="executor">
                             <option value="">Все</option>
                             {% for executor in executors %}
-                            <option value="{{ executor.name }}" {% if executor.name == request.args.get('executor')
-                                %}selected{% endif %}>{{ executor.name }}</option>
+                            <option value="{{ executor.department }}" {% if executor.department == request.args.get('executor')
+                                %}selected{% endif %}>{{ executor.department }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -55,7 +58,7 @@
     <tbody>
         {% for task in tasks %}
         <tr {% if not task.is_valid %}class="table-secondary"{% elif task.is_overdue() %}class="table-danger"{% endif %}>
-            <td>{{ task.executor.name }} {{ task.executor.surname }}</td>
+            <td>{{ task.executor.department }}</td>
             <td>{{ task.date_created.strftime('%d.%m.%Y') }}</td>
             <td>{{ task.deadline.strftime('%d.%m.%Y') }}</td>
             <td>{{ task.description }}</td>
@@ -138,8 +141,6 @@
     </tbody>
 </table>
 
-{% if current_user.is_admin %}
-<a href="{{ url_for('add') }}" class="btn btn-success">Добавить задачу</a>
-{% endif %}
+
 
 {% endblock %}

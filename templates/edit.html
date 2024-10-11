@@ -9,7 +9,7 @@
             <select class="form-control" id="executor" name="executor" required>
                 {% for executor in executors %}
                     <option value="{{ executor.id }}" {% if executor.id == task.executor_id %}selected{% endif %}>
-                        {{ executor.name }} {{ executor.surname }}
+                        {{ executor.department }}
                     </option>
                 {% endfor %}
             </select>
