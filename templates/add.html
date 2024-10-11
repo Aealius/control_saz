@@ -1,17 +1,20 @@
 {% extends 'base.html' %}
 
-
 {% block content %}
     <h1>Добавить задачу</h1>
 
     <form method="POST">
         <div class="form-group">
             <label for="executor">Исполнитель:</label>
-            <input type="text" class="form-control" id="executor" name="executor" required>
+            <select class="form-control" id="executor" name="executor" required>
+                {% for executor in executors %}
+                    <option value="{{ executor.name }}">{{ executor.name }}</option>
+                {% endfor %}
+            </select>
         </div>
         <div class="form-group">
             <label for="date_created">Дата создания:</label>
-            <input type="date" class="form-control" id="date_created" name="date_created" required>
+            <input type="date" class="form-control" id="date_created" name="date_created" value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
         </div>
         <div class="form-group">
             <label for="deadline">Срок:</label>
@@ -25,12 +28,12 @@
             <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid" checked>
             <label class="form-check-label" for="is_valid">Действителен</label>
         </div>
-        
+
         <div class="form-group">
             <label for="password">Пароль:</label>
             <input type="password" class="form-control" id="password" name="password" required>
         </div>
-
+        
         <button type="submit" class="btn btn-primary">Добавить</button>
     </form>
 {% endblock %}

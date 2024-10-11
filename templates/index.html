@@ -3,6 +3,41 @@
 {% block content %}
     <h1>Список задач</h1>
 
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#filterModal">
+        Фильтрация
+    </button>
+
+    <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="filterModalLabel">Фильтрация задач</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="GET" action="{{ url_for('index') }}">
+                        <div class="form-group">
+                            <label for="executorFilter">Исполнитель:</label>
+                            <select class="form-control" id="executorFilter" name="executor">
+                                <option value="">Все</option> 
+                                {% for executor in executors %}
+                                    <option value="{{ executor.name }}" {% if executor.name == request.args.get('executor') %}selected{% endif %}>{{ executor.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dateFilter">Дата:</label>
+                            <input type="date" class="form-control" id="dateFilter" name="date" value="{{ request.args.get('date') }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Применить фильтр</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <table class="table table-bordered">
         <thead>
             <tr>
@@ -16,21 +51,20 @@
         </thead>
         <tbody>
             {% for task in tasks %}
-                <tr 
+                <tr
                     {% if not task.is_valid %}class="table-secondary"{% elif task.is_overdue() %}class="table-danger"{% endif %}
                 >
-                    <td>{{ task.executor }}</td>
+                    <td>{{ task.executor.name }}</td>
                     <td>{{ task.date_created.strftime('%d.%m.%Y') }}</td>
                     <td>{{ task.deadline.strftime('%d.%m.%Y') }}</td>
                     <td>{{ task.description }}</td>
                     <td>{{ 'Да' if task.is_valid else 'Нет' }}</td>
                     <td>
-                        <form method="POST" action="{{ url_for('delete', task_id=task.id) }}" onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');"> 
-                            <input type="hidden" name="password" value="1234">  
+                        <form method="POST" action="{{ url_for('delete', task_id=task.id) }}" onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');">
+                            <input type="hidden" name="password" value="1234">
                             <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
                         </form>
                         <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm">Редактировать</a>
-
                     </td>
                 </tr>
             {% endfor %}
@@ -38,9 +72,5 @@
     </table>
 
     <a href="{{ url_for('add') }}" class="btn btn-success">Добавить задачу</a>
-{% endblock %}
-
-{% block styles %}
-    {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <a href="{{ url_for('executors') }}" class="btn btn-info">Исполнители</a>
 {% endblock %}

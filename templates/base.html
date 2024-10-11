@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" nonce="{{ nonce }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" nonce="{{ nonce }}"> 
+
     <title>Document</title>
 </head>
 <body>
     
     {% block content %}
     {% endblock %}
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
 </body>
+
 </html>

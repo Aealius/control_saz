@@ -1,13 +1,16 @@
 {% extends 'base.html' %}
 
-
 {% block content %}
     <h1>Редактировать задачу</h1>
 
     <form method="POST">
         <div class="form-group">
             <label for="executor">Исполнитель:</label>
-            <input type="text" class="form-control" id="executor" name="executor" value="{{ task.executor }}" required>
+            <select class="form-control" id="executor" name="executor" required>
+                {% for executor in executors %}
+                    <option value="{{ executor.name }}" {% if executor.name == task.executor.name %}selected{% endif %}>{{ executor.name }}</option>
+                {% endfor %}
+            </select>
         </div>
         <div class="form-group">
             <label for="date_created">Дата создания:</label>
@@ -25,7 +28,7 @@
             <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid" {% if task.is_valid %}checked{% endif %}>
             <label class="form-check-label" for="is_valid">Действителен</label>
         </div>
-        
+
         <div class="form-group">
             <label for="password">Пароль:</label>
             <input type="password" class="form-control" id="password" name="password" required>
@@ -33,4 +36,6 @@
 
         <button type="submit" class="btn btn-primary">Сохранить</button>
     </form>
+
+
 {% endblock %}

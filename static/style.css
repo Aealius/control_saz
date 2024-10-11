@@ -41,3 +41,10 @@ th {
 .table-bordered > tbody > tr.table-danger > td {
     /* Дополнительные стили для ячеек просроченных задач */
 }
+
+/* Удаляем чередующиеся цвета строк Bootstrap */
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: transparent; 
+}
+
+
