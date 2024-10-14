@@ -74,9 +74,9 @@ def index():
         tasks = tasks.filter(db.cast(Task.date_created, db.Date) == date_filter)
 
     tasks = tasks.order_by(
-        Task.is_valid.asc(),  # Сначала не действительные
-        Task.completion_confirmed.asc(),  # Затем выполненные
-        Task.deadline.asc()  # В порядке возрастания дедлайна
+        Task.is_valid.asc(),
+        Task.completion_confirmed.asc(),
+        Task.deadline.asc()
     ).all()
     executors = User.query.all()
     return render_template('index.html', tasks=tasks, executors=executors)

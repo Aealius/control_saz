@@ -57,18 +57,22 @@
     </thead>
     <tbody>
         {% for task in tasks %}
-        <tr {% if not task.is_valid %}class="table-secondary"{% elif task.is_overdue() %}class="table-danger"{% endif %}>
+        <tr class="{% if task.completion_confirmed and task.is_overdue() %}table-warning{% elif task.completion_confirmed %}table-success{% elif not task.is_valid %}table-secondary{% elif task.is_overdue() %}table-danger{% endif %}">
             <td>{{ task.executor.department }}</td>
             <td>{{ task.date_created.strftime('%d.%m.%Y') }}</td>
             <td>{{ task.deadline.strftime('%d.%m.%Y') }}</td>
             <td>{{ task.description }}</td>
             <td>
                 {% if task.completion_confirmed %}
-                    <span class="badge badge-success">Выполнено</span>
-                    {% if task.completion_confirmed_at %}
-                        <br>
-                        <small class="text-muted">Подтверждено: {{ task.completion_confirmed_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                <span class="badge badge-success">Выполнено
+                    {% if task.is_overdue() %}
+                        <span class="badge badge-warning">просрочено на {{ (task.completion_confirmed_at.date() - task.deadline).days }} дн.</span>
                     {% endif %}
+                </span>
+                {% if task.completion_confirmed_at %}
+                    <br>
+                    <small class="text-muted">Подтверждено: {{ task.completion_confirmed_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                {% endif %}
                 {% elif not task.is_valid %}
                     <span class="badge badge-secondary">Не действительна</span>
                 {% elif task.completion_note and not task.completion_confirmed %}
