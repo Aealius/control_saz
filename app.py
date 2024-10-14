@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+import os
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -15,7 +17,18 @@ migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'docx'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -164,13 +177,29 @@ def complete(task_id):
         return redirect(url_for('index'))
 
     if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('Нет файла', 'warning')
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flash('Нет выбранного файла', 'warning')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            task.attached_file = filename  # Сохраняем имя файла в БД
         task.completion_note = request.form.get('completion_note')
-        task.completion_confirmed = False  # Сбрасываем подтверждение, если оно было ранее установлено
+        task.completion_confirmed = False
         db.session.commit()
         flash('Отметка о выполнении отправлена администратору.', 'success')
         return redirect(url_for('index'))
-
     return render_template('complete.html', task=task)
+
+
+@app.route('/uploads/<filename>')
+@login_required
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 @app.route('/admin/tasks/<int:task_id>/confirm', methods=['POST'])

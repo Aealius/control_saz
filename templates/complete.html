@@ -1,12 +1,20 @@
+
 {% extends 'base.html' %}
 
 {% block content %}
 <h1>Отметить задачу как выполненную</h1>
 
-<form method="POST">
+<form method="POST" enctype="multipart/form-data"> {# Добавлено enctype #}
     <div class="form-group">
         <label for="completion_note">Заметка о выполнении:</label>
         <textarea class="form-control" id="completion_note" name="completion_note"></textarea>
+    </div>
+    <div class="form-group">
+        <label for="file">Прикрепить файл:</label>
+        <input type="file" class="form-control-file" id="file" name="file">
+        {% if task.attached_file %}
+          <p>Текущий файл: <a href="{{ url_for('uploaded_file', filename=task.attached_file) }}" target="_blank">{{ task.attached_file }}</a></p>
+        {% endif %}
     </div>
     <button type="submit" class="btn btn-primary">Отправить</button>
 </form>
