@@ -6,7 +6,7 @@
 <form method="POST">
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
-        <select class="form-control" id="executor" name="executor" required>
+        <select class="form-control" id="executor" name="executor" onchange="updateSelectedExecutors()">
             <option value="all">Всем</option> 
             {% for executor in executors %}
                 {% if executor.id != current_user.id %}
@@ -14,11 +14,12 @@
                 {% endif %}
             {% endfor %}
         </select>
-    </div>
+        <div id="selected-executors" class="mt-2"></div> </div>
+
     <div class="form-group">
         <label for="date_created">Дата создания:</label>
         <input type="date" class="form-control" id="date_created" name="date_created"
-            value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
+               value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
     </div>
     <div class="form-group">
         <label for="deadline">Срок:</label>
@@ -34,4 +35,65 @@
     </div>
     <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
+
+<script>
+function updateSelectedExecutors() {
+    let executorSelect = document.getElementById('executor');
+    let selectedExecutorsDiv = document.getElementById('selected-executors');
+    let selectedValue = executorSelect.value;
+    let selectedText = executorSelect.options[executorSelect.selectedIndex].text;
+    
+
+    if (selectedValue === 'all') {
+        selectedExecutorsDiv.innerHTML = ''; 
+        addExecutorToSelected('all', 'Всем'); 
+    } 
+
+    else {
+        let existingExecutor = document.querySelector(`#selected-executors span[data-value="${selectedValue}"]`);
+        
+        if (existingExecutor) {
+            existingExecutor.remove(); 
+        } else {
+            addExecutorToSelected(selectedValue, selectedText); 
+        }
+    }
+}
+
+function addExecutorToSelected(value, text) {
+    let selectedExecutorsDiv = document.getElementById('selected-executors');
+    
+    let executorSpan = document.createElement('span');
+    executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+    executorSpan.textContent = text;
+    executorSpan.setAttribute('data-value', value); 
+    
+    let closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.classList.add('close', 'small-close');
+    closeButton.innerHTML = '×';
+    closeButton.addEventListener('click', function() {
+        this.parentNode.remove(); 
+    });
+
+    executorSpan.appendChild(closeButton);
+    
+
+    let hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'executor';
+    hiddenInput.value = value;
+    executorSpan.appendChild(hiddenInput);
+
+    selectedExecutorsDiv.appendChild(executorSpan);
+}
+</script>
+<style>
+
+    .small-close {
+        font-size: 12px;
+        line-height: 1;
+        padding: 2px 4px;
+    }
+</style>
 {% endblock %}

@@ -91,13 +91,13 @@ def add():
 
     executors = User.query.all()
     if request.method == 'POST':
-        executor_id = request.form['executor']
+        selected_executors = request.form.getlist('executor')  # Получаем список выбранных исполнителей
         date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
         deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date()
         description = request.form['description']
         is_valid = request.form.get('is_valid') == 'on'
 
-        if executor_id == 'all':
+        if 'all' in selected_executors:
             # Создаем задачу для каждого пользователя, кроме текущего
             for user in User.query.all():
                 if user.id != current_user.id:
@@ -105,10 +105,11 @@ def add():
                                     description=description, is_valid=is_valid)
                     db.session.add(new_task)
         else:
-            # Создаем задачу для выбранного пользователя
-            new_task = Task(executor_id=executor_id, date_created=date_created, deadline=deadline,
-                            description=description, is_valid=is_valid)
-            db.session.add(new_task)
+            # Создаем задачу для каждого выбранного пользователя
+            for executor_id in selected_executors:
+                new_task = Task(executor_id=executor_id, date_created=date_created, deadline=deadline,
+                                description=description, is_valid=is_valid)
+                db.session.add(new_task)
 
         db.session.commit()
         flash('Задача успешно добавлена!', 'success')
@@ -164,7 +165,7 @@ def complete(task_id):
 
     if request.method == 'POST':
         task.completion_note = request.form.get('completion_note')
-        task.completion_confirmed = False
+        task.completion_confirmed = False  # Сбрасываем подтверждение, если оно было ранее установлено
         db.session.commit()
         flash('Отметка о выполнении отправлена администратору.', 'success')
         return redirect(url_for('index'))

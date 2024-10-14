@@ -71,6 +71,8 @@
                     {% endif %}
                 {% elif not task.is_valid %}
                     <span class="badge badge-secondary">Не действительна</span>
+                {% elif task.completion_note and not task.completion_confirmed %}
+                    <span class="badge badge-info">На проверке</span> 
                 {% elif task.is_overdue() %}
                     <span class="badge badge-danger">Просрочена</span>
                 {% else %}
@@ -84,15 +86,22 @@
             </td>
             <td>
                 {% if current_user.is_admin %}
-                <form method="POST" action="{{ url_for('delete', task_id=task.id) }}"
-                    onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');">
-                    <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
-                </form>
-                <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm">Редактировать</a>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm" data-toggle="tooltip"
+                        title="Редактировать">
+                        <i class="fas fa-pencil-alt"></i>
+                    </a>
+                    <form method="POST" action="{{ url_for('delete', task_id=task.id) }}"
+                        onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');" class="d-inline-block">
+                        <button type="submit" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Удалить">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                </div>
                 {% endif %}
 
-                {% if current_user.id == task.executor_id and task.is_valid and not task.completion_confirmed %}
-                <a href="{{ url_for('complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
+                {% if current_user.id == task.executor_id and task.is_valid and not task.completion_confirmed and not task.completion_note %}
+                    <a href="{{ url_for('complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
                 {% endif %}
 
                 {% if current_user.is_admin and task.completion_note and not task.completion_confirmed %}
@@ -141,6 +150,10 @@
     </tbody>
 </table>
 
-
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
 
 {% endblock %}
