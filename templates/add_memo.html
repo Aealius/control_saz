@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Создать служебную записку</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="executor">Кому:</label>
+        <select class="form-control" id="executor" name="executor" required>
+            <option value="" selected disabled>Выберите получателя</option>
+            {% for executor in executors %}
+                {% if executor.id != current_user.id %}
+                    <option value="{{ executor.id }}">{{ executor.department }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="description">Содержание:</label>
+        <textarea class="form-control" id="description" name="description" required></textarea>
+    </div>
+    <div class="form-group">
+        <label for="file">Прикрепить файл:</label>
+        <input type="file" class="form-control-file" id="file" name="file">
+    </div>
+    <button type="submit" class="btn btn-primary">Отправить</button>
+</form>
+
+{% endblock %}

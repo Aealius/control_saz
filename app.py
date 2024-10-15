@@ -50,7 +50,7 @@ def load_user(user_id):
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     executor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    executor = db.relationship('User', backref=db.backref('tasks', lazy=True), foreign_keys=[executor_id]) 
+    executor = db.relationship('User', backref=db.backref('tasks', lazy=True), foreign_keys=[executor_id])
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     creator = db.relationship('User', backref=db.backref('created_tasks', lazy=True), foreign_keys=[creator_id])
     date_created = db.Column(db.Date, nullable=False, default=datetime.utcnow)
@@ -161,6 +161,40 @@ def add():
 
     return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
 
+@app.route('/add_memo', methods=['GET', 'POST']) #  Маршрут для создания служебных записок
+@login_required
+def add_memo():
+    executors = User.query.all()
+    if request.method == 'POST':
+        selected_executor_id = int(request.form['executor'])  #  Получаем ID выбранного исполнителя
+        description = request.form['description']
+        file = request.files.get('file')
+
+        new_memo = Task(
+            executor_id=selected_executor_id,
+            creator_id=current_user.id,
+            date_created=datetime.now(),
+            is_бессрочно=True,
+            for_review=True,
+            description=description
+        )
+        db.session.add(new_memo)
+        db.session.commit()
+
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(new_memo.id), 'creator')
+            os.makedirs(memo_uploads_folder, exist_ok=True)
+            file.save(os.path.join(memo_uploads_folder, filename))
+            creator_file = os.path.join(str(new_memo.id), 'creator', filename)
+            new_memo.creator_file = creator_file
+            db.session.commit()  
+
+        flash('Служебная записка успешно отправлена!', 'success')
+        return redirect(url_for('index'))
+
+    return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
+
 @app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):
@@ -207,21 +241,14 @@ def complete(task_id):
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('Нет файла', 'warning')
-            return redirect(request.url)
+        file = request.files.get('file')  # Получаем файл, если он есть
 
-        file = request.files['file']
-        if file.filename == '':
-            flash('Нет выбранного файла', 'warning')
-            return redirect(request.url)
-
-        if file:
+        if file and file.filename != '':  # Проверяем, выбран ли файл
             filename = secure_filename(file.filename)
-            task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(task_id), 'executor')  #  Добавляем подпапку 'executor'
+            task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(task_id), 'executor')
             os.makedirs(task_uploads_folder, exist_ok=True)
             file.save(os.path.join(task_uploads_folder, filename))
-            task.attached_file = os.path.join(str(task_id), 'executor', filename)  #  Изменяем относительный путь
+            task.attached_file = os.path.join(str(task_id), 'executor', filename)
 
         task.completion_note = request.form.get('completion_note')
         task.completion_confirmed = False
