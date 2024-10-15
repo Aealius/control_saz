@@ -11,8 +11,7 @@
 {% endif %}
 
 <a href="{{ url_for('add_memo') }}" class="btn btn-success">Создать служебную записку</a>
-<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel"
-    aria-hidden="true">
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -28,16 +27,42 @@
                         <select class="form-control" id="executorFilter" name="executor">
                             <option value="">Все</option>
                             {% for executor in executors %}
-                            <option value="{{ executor.department }}" {% if executor.department == request.args.get('executor')
-                                %}selected{% endif %}>{{ executor.department }}</option>
+                                <option value="{{ executor.department }}" {% if executor.department == request.args.get('executor') %}selected{% endif %}>{{ executor.department }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="dateFilter">Дата:</label>
-                        <input type="date" class="form-control" id="dateFilter" name="date"
-                            value="{{ request.args.get('date') }}">
+                        <label for="creatorFilter">Отправитель:</label>
+                        <select class="form-control" id="creatorFilter" name="creator">
+                            <option value="">Все</option>
+                            {% for creator_id, department in creator_department.items() %}
+                                <option value="{{ department }}" {% if department == request.args.get('creator') %}selected{% endif %}>{{ department }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
+                    <div class="form-group">
+                        <label for="monthFilter">Месяц:</label>
+                        <input type="month" class="form-control" id="monthFilter" name="month" value="{{ request.args.get('month') }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="dateFilter">Дата:</label>
+                        <input type="date" class="form-control" id="dateFilter" name="date" value="{{ request.args.get('date') }}">
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="yes" id="overdueFilter" name="overdue"  {% if request.args.get('overdue') %}checked{% endif %}>
+                        <label class="form-check-label" for="overdueFilter">
+                            Просроченные
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="yes" id="completedFilter" name="completed" {% if request.args.get('completed') %}checked{% endif %}>
+                        <label class="form-check-label" for="completedFilter">
+                            Выполненные
+                        </label>
+                    </div>
+
+
                     <button type="submit" class="btn btn-primary">Применить фильтр</button>
                 </form>
             </div>
@@ -59,7 +84,13 @@
     </thead>
     <tbody>
         {% for task in tasks %}
-        <tr class="{% if task.completion_confirmed and task.is_overdue() %}table-warning{% elif task.completion_confirmed %}table-success{% elif not task.is_valid %}table-secondary{% elif task.is_overdue() %}table-danger{% endif %}">
+        <tr class="
+        {% if task.completion_confirmed and task.deadline_for_check < date.today() %}table-warning
+        {% elif task.completion_confirmed %}table-success
+        {% elif not task.is_valid %}table-secondary
+        {% elif task.deadline_for_check < date.today() %}table-danger 
+        {% endif %}
+    ">
             <td>{{ task.executor.department }}</td>
             <td>{{ creator_department.get(task.creator_id) }}</td>
             <td>
@@ -74,6 +105,9 @@
                 Бессрочно
                 {% elif task.deadline %} 
                 {{ task.deadline.strftime('%d.%m.%Y') }}
+                {% if task.extended_deadline %}
+<br><small class="text-muted">Продлена до: {{ task.extended_deadline.strftime('%d.%m.%Y') }}</small>
+{% endif %}
                 {% else %}
                 -
                 {% endif %}
@@ -88,9 +122,8 @@
             <td>
                 {% if task.completion_confirmed %}
                 <span class="badge badge-success">Выполнено
-                    {% if task.is_overdue() %}
-                    <span class="badge badge-warning">просрочено на
-                        {{ (task.completion_confirmed_at.date() - task.deadline).days }} дн.</span>
+                    {% if task.deadline_for_check < date.today() %} <br><small class="badge-warning">просрочена на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</small>
+                       -{{ calculate_penalty(task)|int }}%
                     {% endif %}
                 </span>
                 {% if task.completion_confirmed_at %}

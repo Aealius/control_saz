@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>Отчет по штрафам</h1>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Пользователь</th>
+            {% for month in range(1, 13) %}
+                <th>{{ date(1, month, 1).strftime('%B') }}</th> 
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for user, penalties in report_data.items() %}
+            <tr>
+                <td>{{ user.department }}</td>
+                {% for month in range(1, 13) %}
+                    <td>
+                        {% if penalties.get(month) %}
+                            -{{ penalties.get(month) }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

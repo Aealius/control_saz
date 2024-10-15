@@ -1,7 +1,7 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, date
 from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -55,6 +55,7 @@ class Task(db.Model):
     creator = db.relationship('User', backref=db.backref('created_tasks', lazy=True), foreign_keys=[creator_id])
     date_created = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     deadline = db.Column(db.Date, nullable=True)
+    extended_deadline = db.Column(db.Date, nullable=True)
     description = db.Column(db.Text, nullable=False)
     is_valid = db.Column(db.Boolean, default=True)
     completion_note = db.Column(db.Text)
@@ -68,13 +69,20 @@ class Task(db.Model):
 
     def is_overdue(self):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
+    
+    def get_deadline_for_check(self):
+        return self.extended_deadline or self.deadline or date(9999, 12, 31)
 
 
 @app.route('/')
 @login_required
 def index():
     executor_filter = request.args.get('executor')
+    creator_filter = request.args.get('creator') # новый фильтр
+    month_filter = request.args.get('month') # новый фильтр
     date_filter = request.args.get('date')
+    overdue_filter = request.args.get('overdue') # новый фильтр
+    completed_filter = request.args.get('completed') # новый фильтр
 
     tasks = Task.query.filter_by(executor_id=current_user.id)
 
@@ -83,9 +91,30 @@ def index():
 
     if executor_filter:
         tasks = tasks.filter_by(executor_id=User.query.filter_by(department=executor_filter).first().id)
+    
+    if creator_filter:
+        creator = User.query.filter_by(department=creator_filter).first()
+        if creator:
+            tasks = tasks.filter_by(creator_id=creator.id)
+
+    if month_filter:
+        try:
+            year, month = map(int, month_filter.split('-'))
+            tasks = tasks.filter(db.extract('year', Task.date_created) == year,
+                                 db.extract('month', Task.date_created) == month)
+        except ValueError:
+            # Обработка некорректного формата месяца
+            flash("Некорректный формат месяца", "danger")
+    
     if date_filter:
         date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
         tasks = tasks.filter(db.cast(Task.date_created, db.Date) == date_filter)
+
+    if overdue_filter:
+        tasks = tasks.filter(Task.deadline < date.today())
+
+    if completed_filter:
+        tasks = tasks.filter_by(completion_confirmed = True)
 
     tasks = tasks.options(db.joinedload(Task.executor)).order_by(
         Task.is_valid.asc(),
@@ -93,6 +122,15 @@ def index():
         Task.deadline.asc() if not Task.is_бессрочно else Task.id 
 
     ).all()
+
+
+    for task in tasks:
+        if task.extended_deadline:
+            task.deadline_for_check = task.extended_deadline
+        elif task.deadline:  # Добавляем проверку на deadline
+            task.deadline_for_check = task.deadline
+        else:
+            task.deadline_for_check = date(9999,12,31)
 
 
     creator_department = {}
@@ -105,7 +143,9 @@ def index():
             creator_department[task.executor.id] = task.executor.department
 
     executors = User.query.all()
-    return render_template('index.html', tasks=tasks, executors=executors, creator_department=creator_department)
+    return render_template('index.html', tasks=tasks, executors=executors, 
+                           creator_department=creator_department, date=date, 
+                           calculate_penalty=calculate_penalty) 
 
 
 
@@ -210,11 +250,22 @@ def edit(task_id):
         task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
         task.description = request.form['description']
         task.is_valid = request.form.get('is_valid') == 'on'
+        extend_deadline = request.form.get('extend_deadline')
+        if extend_deadline:
+            try:
+                extended_deadline_date = datetime.strptime(request.form['extended_deadline'], '%Y-%m-%d').date()
+                task.extended_deadline = extended_deadline_date
+            except ValueError:
+                flash("Некорректный формат даты продления", "danger")
+                return render_template('edit.html', task=task, executors=executors, datetime=datetime)
+
+
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
         return redirect(url_for('index'))
 
     return render_template('edit.html', task=task, executors=executors, datetime=datetime)
+
 
 
 @app.route('/delete/<int:task_id>', methods=['POST'])
@@ -228,7 +279,7 @@ def delete(task_id):
     db.session.delete(task)
     db.session.commit()
     flash('Задача успешно удалена!', 'success')
-    return redirect(url_for('index'))
+    return redirect(request.referrer or url_for('index'))
 
 
 @app.route('/complete/<int:task_id>', methods=['GET', 'POST'])
@@ -426,6 +477,54 @@ def review(task_id):
         flash('Вы ознакомились с задачей.', 'success')
         return redirect(url_for('index'))  #  Перенаправление на главную страницу
     return render_template('review.html', task=task)
+
+
+
+reports_bp = Blueprint('reports', __name__) # Создаем Blueprint
+
+
+@reports_bp.route('/reports')
+@login_required
+def reports():
+    if not current_user.is_admin:
+        flash('У вас нет прав для просмотра этой страницы.', 'danger')
+        return redirect(url_for('index'))
+
+    all_users = User.query.all()
+    report_data = {}
+
+    for user in all_users:
+        report_data[user] = {}
+        for month in range(1, 13): #  Перебираем все месяцы
+            tasks_in_month = Task.query.filter(
+                Task.executor_id == user.id,
+                db.extract('month', Task.date_created) == month
+            ).all()
+            
+            total_penalty = 0
+            for task in tasks_in_month:
+                task.deadline_for_check = task.get_deadline_for_check() # используем метод модели
+                penalty = calculate_penalty(task) # calculate_penalty(task)
+                total_penalty += penalty
+            report_data[user][month] = total_penalty
+
+    return render_template('reports.html', report_data=report_data, all_users=all_users, date=date)
+
+
+def calculate_penalty(task):  
+    if task.completion_confirmed and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
+        overdue_days = (task.completion_confirmed_at.date() - task.deadline_for_check).days
+        if overdue_days > 0:
+            max_penalty = 20
+            penalty = min(overdue_days, max_penalty)
+            return penalty
+    return 0
+
+
+app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Blueprint
+
+
+
 
 if __name__ == '__main__':
     with app.app_context():

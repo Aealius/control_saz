@@ -35,6 +35,36 @@
                    {% if task.is_valid %}checked{% endif %}>
             <label class="form-check-label" for="is_valid">Действителен</label>
         </div>
+        <div class="form-group form-check">
+            <input type="checkbox" class="form-check-input" id="extend_deadline" name="extend_deadline">
+            <label class="form-check-label" for="extend_deadline">Продлить срок</label>
+        </div>
+        <div class="form-group" id="extended_deadline_field" style="display:none;">
+            <label for="extended_deadline">Продлить до:</label>
+            <input type="date" class="form-control" id="extended_deadline" name="extended_deadline" value="{% if task.extended_deadline %}{{ task.extended_deadline.strftime('%Y-%m-%d') }}{% endif %}">
+        </div>
         <button type="submit" class="btn btn-primary">Сохранить</button>
     </form>
+
+    <script>
+        const extendDeadlineCheckbox = document.getElementById('extend_deadline');
+        const extendedDeadlineField = document.getElementById('extended_deadline_field');
+    
+        extendDeadlineCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                extendedDeadlineField.style.display = 'block';
+            } else {
+                extendedDeadlineField.style.display = 'none';
+            }
+        });
+    
+    
+        // Для отображения поля при загрузке, если задача уже продлена
+        window.addEventListener('load', function() {
+            {% if task.extended_deadline %}
+            document.getElementById('extend_deadline').checked = true;
+            document.getElementById('extended_deadline_field').style.display = 'block';
+            {% endif %}
+        });
+    </script>
 {% endblock %}
