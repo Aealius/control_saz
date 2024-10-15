@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <h1>Список задач</h1>
 
@@ -115,7 +114,7 @@
             <td>{{ task.description }}
                 {% if task.creator_file %}
                 <p><a href="{{ url_for('uploaded_file', filename=task.creator_file) }}" target="_blank"
-                        download="{{ task.creator_file.split('/')[-1] }}">{{ task.creator_file.split('/')[-1] }}</a>
+                        download="{{ unquote(task.creator_file.split('/')[-1]) }}">{{ unquote(task.creator_file.split('/')[-1]) }}</a>
                 </p>
                 {% endif %}
             </td>
@@ -190,7 +189,7 @@
                                 <p>
                                     <p><a href="{{ url_for('uploaded_file', filename=task.creator_file) }}"
                                             target="_blank"
-                                            download="{{ task.creator_file.split('/')[-1] }}">{{ task.creator_file.split('/')[-1] }}</a>
+                                            download="{{ unquote(task.creator_file.split('/')[-1]) }}">{{ unquote(task.creator_file.split('/')[-1]) }}</a>
                                     </p>
                                 </p>
 
@@ -230,7 +229,7 @@
                                 {% if task.attached_file %}
                                 <p>Прикрепленный файл: <a
                                         href="{{ url_for('uploaded_file', filename=task.attached_file) }}"
-                                        target="_blank" download="{{ task.attached_file.split('/')[-1] }}">{{ task.attached_file.split('/')[-1] }}</a>
+                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{ unquote(task.attached_file.split('/')[-1]) }} </a>
                                 </p>
                                 {% endif %}
                                 <form method="POST" action="{{ url_for('confirm_task', task_id=task.id) }}">
