@@ -32,6 +32,7 @@ class User(UserMixin, db.Model):
     login = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    is_deputy = db.Column(db.Boolean, default=False)  # Новый атрибут для заместителя
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -75,6 +76,7 @@ class Task(db.Model):
         return self.extended_deadline or self.deadline or date(9999, 12, 31)
 
 
+
 @app.route('/')
 @login_required
 def index():
@@ -85,10 +87,17 @@ def index():
     overdue_filter = request.args.get('overdue') # новый фильтр
     completed_filter = request.args.get('completed') # новый фильтр
 
-    tasks = Task.query.filter_by(executor_id=current_user.id)
-
+    # Начальный фильтр, если user - admin
     if current_user.is_admin:
-        tasks = Task.query  
+        tasks = Task.query 
+    # Начальный фильтр, если user - deputy
+    elif current_user.is_deputy:
+        tasks = Task.query.filter(
+            db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id)
+        )
+    else:
+        # Если user - обычный пользователь, то видим только задачи где он - executor
+        tasks = Task.query.filter_by(executor_id=current_user.id)
 
     if executor_filter:
         tasks = tasks.filter_by(executor_id=User.query.filter_by(department=executor_filter).first().id)
@@ -149,11 +158,10 @@ def index():
                            calculate_penalty=calculate_penalty, unquote=unquote) 
 
 
-
 @app.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
-    if not current_user.is_admin:
+    if not current_user.is_admin and not current_user.is_deputy:  # Проверка прав
         flash('У вас нет прав для создания задач.', 'danger')
         return redirect(url_for('index'))
 
@@ -249,11 +257,11 @@ def add_memo():
 @app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):
-    if not current_user.is_admin:
-        flash('У вас нет прав для редактирования задач.', 'danger')
+    task = Task.query.get_or_404(task_id)
+    if task.creator_id != current_user.id and not current_user.is_admin:  # Проверка прав
+        flash('У вас нет прав для редактирования этой задачи.', 'danger')
         return redirect(url_for('index'))
 
-    task = Task.query.get_or_404(task_id)
     executors = User.query.all()
     if request.method == 'POST':
         task.executor_id = request.form['executor']
@@ -282,11 +290,11 @@ def edit(task_id):
 @app.route('/delete/<int:task_id>', methods=['POST'])
 @login_required
 def delete(task_id):
-    if not current_user.is_admin:
-        flash('У вас нет прав для удаления задач.', 'danger')
+    task = Task.query.get_or_404(task_id)
+    if task.creator_id != current_user.id and not current_user.is_admin:  # Проверка прав
+        flash('У вас нет прав для удаления этой задачи.', 'danger')
         return redirect(url_for('index'))
 
-    task = Task.query.get_or_404(task_id)
     db.session.delete(task)
     db.session.commit()
     flash('Задача успешно удалена!', 'success')
@@ -391,6 +399,7 @@ def add_user():
         login = request.form['login']
         password = request.form['password']
         is_admin = request.form.get('is_admin') == 'on'
+        is_deputy = request.form.get('is_deputy') == 'on' # Добавляем проверку на is_deputy
 
         existing_user = User.query.filter_by(login=login).first()
         if existing_user:
@@ -398,7 +407,7 @@ def add_user():
             return redirect(url_for('add_user'))
 
         hashed_password = generate_password_hash(password)
-        new_user = User(department=department, login=login, password_hash=hashed_password, is_admin=is_admin)
+        new_user = User(department=department, login=login, password_hash=hashed_password, is_admin=is_admin, is_deputy=is_deputy)
         db.session.add(new_user)
         db.session.commit()
         flash('Пользователь успешно добавлен!', 'success')
@@ -530,7 +539,7 @@ def reports():
                 total_penalty += penalty
             report_data[user][month] = total_penalty
 
-    return render_template('reports.html', report_data=report_data, all_users=all_users, date=date)
+    return render_template('reports.html', report_data=report_data, all_users=all_users, date=date, any=any)
 
 
 def calculate_penalty(task):  

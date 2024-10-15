@@ -5,7 +5,7 @@
 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#filterModal">
     Фильтрация
 </button>
-{% if current_user.is_admin %}
+{% if current_user.is_admin or current_user.is_deputy %}
 <a href="{{ url_for('add') }}" class="btn btn-success">Добавить задачу</a>
 {% endif %}
 
@@ -146,7 +146,7 @@
                 {% endif %}
             </td>
             <td>
-                {% if current_user.is_admin %}
+                {% if current_user.is_admin or (current_user.is_deputy and task.creator_id == current_user.id) %}
                 <div class="btn-group" role="group">
                     <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm" data-toggle="tooltip"
                         title="Редактировать">
