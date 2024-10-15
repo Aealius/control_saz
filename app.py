@@ -61,10 +61,10 @@ class Task(db.Model):
     completion_confirmed = db.Column(db.Boolean, default=False)
     completion_confirmed_at = db.Column(db.DateTime)
     admin_note = db.Column(db.Text)
-    attached_file = db.Column(db.String(255))  #  Файл исполнителя
-    creator_file = db.Column(db.String(255))
+    attached_file = db.Column(db.String(255))  
+    creator_file = db.Column(db.String(255))  
     is_бессрочно = db.Column(db.Boolean, default=False)
-    for_review = db.Column(db.Boolean, default=False)  # Поле для галочки "Для ознакомления"
+    for_review = db.Column(db.Boolean, default=False)  
 
     def is_overdue(self):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
@@ -79,7 +79,7 @@ def index():
     tasks = Task.query.filter_by(executor_id=current_user.id)
 
     if current_user.is_admin:
-        tasks = Task.query  # Если админ, то показываем все задачи
+        tasks = Task.query  
 
     if executor_filter:
         tasks = tasks.filter_by(executor_id=User.query.filter_by(department=executor_filter).first().id)
@@ -90,7 +90,7 @@ def index():
     tasks = tasks.options(db.joinedload(Task.executor)).order_by(
         Task.is_valid.asc(),
         Task.completion_confirmed.asc(),
-        Task.deadline.asc() if not Task.is_бессрочно else Task.id # Сортировка, если is_бессрочно is not None
+        Task.deadline.asc() if not Task.is_бессрочно else Task.id 
 
     ).all()
 
@@ -127,11 +127,10 @@ def add():
         for_review = request.form.get('for_review') == 'on'
         file = request.files.get('file')
 
-        #  Логика для создания задачи для всех или выбранных пользователей
         if 'all' in selected_executors:
             executors_for_task = User.query.all()
         else:
-            #  Преобразуем строковые ID в целые числа
+
             executors_for_task = User.query.filter(User.id.in_([int(id) for id in selected_executors])).all()
 
         for executor in executors_for_task:
@@ -145,7 +144,7 @@ def add():
                 for_review=for_review
             )
             db.session.add(new_task)
-            db.session.commit()  # Сохраняем задачу, чтобы получить ее ID
+            db.session.commit() 
 
             if file and file.filename != '':
                 filename = secure_filename(file.filename)
@@ -153,7 +152,8 @@ def add():
                 os.makedirs(task_uploads_folder, exist_ok=True)
                 file.save(os.path.join(task_uploads_folder, filename))
                 creator_file = os.path.join(str(new_task.id), 'creator', filename)
-                new_task.creator_file = creator_file
+                new_task.creator_file = creator_file  #new_memo.creator_file = creator_file.replace('\\', '/') # Linux new_memo.creator_file = creator_file
+
                 db.session.commit()  # Сохраняем изменения в файле задачи
 
         flash('Задача успешно добавлена!', 'success')
@@ -187,7 +187,7 @@ def add_memo():
             os.makedirs(memo_uploads_folder, exist_ok=True)
             file.save(os.path.join(memo_uploads_folder, filename))
             creator_file = os.path.join(str(new_memo.id), 'creator', filename)
-            new_memo.creator_file = creator_file
+            new_memo.creator_file = creator_file #new_memo.creator_file = creator_file.replace('\\', '/') # Linux new_memo.creator_file = creator_file
             db.session.commit()  
 
         flash('Служебная записка успешно отправлена!', 'success')
@@ -259,7 +259,7 @@ def complete(task_id):
     return render_template('complete.html', task=task)
 
 
-@app.route('/uploads/<path:filename>')  # <path:filename> для подпапок
+@app.route('/uploads/<path:filename>') 
 @login_required
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
