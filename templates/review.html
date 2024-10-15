@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="modal-body">
+    <p>Описание задачи: {{ task.description }}</p>
+    {% if task.attached_file %}
+        <p><a href="{{ url_for('uploaded_file', filename=task.attached_file) }}" target="_blank"
+              download="">Скачать</a></p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('review', task_id=task.id) }}">
+        <button type="submit" class="btn btn-primary">Ознакомлен</button>
+    </form>
+</div>
+
+{% endblock %}

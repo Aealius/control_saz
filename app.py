@@ -18,7 +18,6 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'docx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
@@ -26,15 +25,11 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     department = db.Column(db.String(255), nullable=False, default='Общая служба')
     login = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
 
     def set_password(self, password):
@@ -55,18 +50,24 @@ def load_user(user_id):
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     executor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    executor = db.relationship('User', backref=db.backref('tasks', lazy=True))
+    executor = db.relationship('User', backref=db.backref('tasks', lazy=True), foreign_keys=[executor_id]) 
+    creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    creator = db.relationship('User', backref=db.backref('created_tasks', lazy=True), foreign_keys=[creator_id])
     date_created = db.Column(db.Date, nullable=False, default=datetime.utcnow)
-    deadline = db.Column(db.Date, nullable=False)
+    deadline = db.Column(db.Date, nullable=True)
     description = db.Column(db.Text, nullable=False)
     is_valid = db.Column(db.Boolean, default=True)
     completion_note = db.Column(db.Text)
     completion_confirmed = db.Column(db.Boolean, default=False)
     completion_confirmed_at = db.Column(db.DateTime)
     admin_note = db.Column(db.Text)
+    attached_file = db.Column(db.String(255))  #  Файл исполнителя
+    creator_file = db.Column(db.String(255))
+    is_бессрочно = db.Column(db.Boolean, default=False)
+    for_review = db.Column(db.Boolean, default=False)  # Поле для галочки "Для ознакомления"
 
     def is_overdue(self):
-        return self.deadline < datetime.today().date()
+        return self.deadline < datetime.today().date() if self.deadline is not None else False
 
 
 @app.route('/')
@@ -86,13 +87,26 @@ def index():
         date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
         tasks = tasks.filter(db.cast(Task.date_created, db.Date) == date_filter)
 
-    tasks = tasks.order_by(
+    tasks = tasks.options(db.joinedload(Task.executor)).order_by(
         Task.is_valid.asc(),
         Task.completion_confirmed.asc(),
-        Task.deadline.asc()
+        Task.deadline.asc() if not Task.is_бессрочно else Task.id # Сортировка, если is_бессрочно is not None
+
     ).all()
+
+
+    creator_department = {}
+    for task in tasks:
+        if task.creator_id not in creator_department:  # Проверяем creator_id, а не executor_id
+            creator_department[task.creator_id] = task.creator.department
+        if current_user.is_admin and task.executor and task.executor_id not in creator_department:
+            creator_department[task.executor_id] = task.executor.department
+        elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
+            creator_department[task.executor.id] = task.executor.department
+
     executors = User.query.all()
-    return render_template('index.html', tasks=tasks, executors=executors)
+    return render_template('index.html', tasks=tasks, executors=executors, creator_department=creator_department)
+
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -104,32 +118,48 @@ def add():
 
     executors = User.query.all()
     if request.method == 'POST':
-        selected_executors = request.form.getlist('executor')  # Получаем список выбранных исполнителей
+        selected_executors = request.form.getlist('executor[]')
         date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
-        deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date()
+        is_бессрочно = request.form.get('is_бессрочно') == 'on'
+        deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not is_бессрочно else None
         description = request.form['description']
         is_valid = request.form.get('is_valid') == 'on'
+        for_review = request.form.get('for_review') == 'on'
+        file = request.files.get('file')
 
+        #  Логика для создания задачи для всех или выбранных пользователей
         if 'all' in selected_executors:
-            # Создаем задачу для каждого пользователя, кроме текущего
-            for user in User.query.all():
-                if user.id != current_user.id:
-                    new_task = Task(executor_id=user.id, date_created=date_created, deadline=deadline,
-                                    description=description, is_valid=is_valid)
-                    db.session.add(new_task)
+            executors_for_task = User.query.all()
         else:
-            # Создаем задачу для каждого выбранного пользователя
-            for executor_id in selected_executors:
-                new_task = Task(executor_id=executor_id, date_created=date_created, deadline=deadline,
-                                description=description, is_valid=is_valid)
-                db.session.add(new_task)
+            #  Преобразуем строковые ID в целые числа
+            executors_for_task = User.query.filter(User.id.in_([int(id) for id in selected_executors])).all()
 
-        db.session.commit()
+        for executor in executors_for_task:
+            new_task = Task(
+                executor_id=executor.id,
+                date_created=date_created,
+                deadline=deadline,
+                description=description,
+                is_valid=is_valid,
+                creator_id=current_user.id,
+                for_review=for_review
+            )
+            db.session.add(new_task)
+            db.session.commit()  # Сохраняем задачу, чтобы получить ее ID
+
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(new_task.id), 'creator')
+                os.makedirs(task_uploads_folder, exist_ok=True)
+                file.save(os.path.join(task_uploads_folder, filename))
+                creator_file = os.path.join(str(new_task.id), 'creator', filename)
+                new_task.creator_file = creator_file
+                db.session.commit()  # Сохраняем изменения в файле задачи
+
         flash('Задача успешно добавлена!', 'success')
         return redirect(url_for('index'))
 
     return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
-
 
 @app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
 @login_required
@@ -143,7 +173,7 @@ def edit(task_id):
     if request.method == 'POST':
         task.executor_id = request.form['executor']
         task.date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
-        task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date()
+        task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
         task.description = request.form['description']
         task.is_valid = request.form.get('is_valid') == 'on'
         db.session.commit()
@@ -180,23 +210,29 @@ def complete(task_id):
         if 'file' not in request.files:
             flash('Нет файла', 'warning')
             return redirect(request.url)
+
         file = request.files['file']
         if file.filename == '':
             flash('Нет выбранного файла', 'warning')
             return redirect(request.url)
-        if file and allowed_file(file.filename):
+
+        if file:
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            task.attached_file = filename  # Сохраняем имя файла в БД
+            task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(task_id), 'executor')  #  Добавляем подпапку 'executor'
+            os.makedirs(task_uploads_folder, exist_ok=True)
+            file.save(os.path.join(task_uploads_folder, filename))
+            task.attached_file = os.path.join(str(task_id), 'executor', filename)  #  Изменяем относительный путь
+
         task.completion_note = request.form.get('completion_note')
         task.completion_confirmed = False
         db.session.commit()
         flash('Отметка о выполнении отправлена администратору.', 'success')
         return redirect(url_for('index'))
+
     return render_template('complete.html', task=task)
 
 
-@app.route('/uploads/<filename>')
+@app.route('/uploads/<path:filename>')  # <path:filename> для подпапок
 @login_required
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -352,6 +388,17 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+@app.route('/review/<int:task_id>', methods=['GET', 'POST'])
+@login_required
+def review(task_id):
+    task = Task.query.get_or_404(task_id)
+    if request.method == 'POST':  #  Обработка POST-запроса от кнопки "Ознакомлен"
+        task.completion_confirmed = True
+        task.completion_confirmed_at = datetime.now()
+        db.session.commit()
+        flash('Вы ознакомились с задачей.', 'success')
+        return redirect(url_for('index'))  #  Перенаправление на главную страницу
+    return render_template('review.html', task=task)
 
 if __name__ == '__main__':
     with app.app_context():

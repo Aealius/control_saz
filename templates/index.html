@@ -48,6 +48,7 @@
     <thead>
         <tr>
             <th>Исполнитель</th>
+            <th>Отправитель</th>
             <th>Дата создания</th>
             <th>Срок</th>
             <th>Описание</th>
@@ -59,9 +60,26 @@
         {% for task in tasks %}
         <tr class="{% if task.completion_confirmed and task.is_overdue() %}table-warning{% elif task.completion_confirmed %}table-success{% elif not task.is_valid %}table-secondary{% elif task.is_overdue() %}table-danger{% endif %}">
             <td>{{ task.executor.department }}</td>
-            <td>{{ task.date_created.strftime('%d.%m.%Y') }}</td>
-            <td>{{ task.deadline.strftime('%d.%m.%Y') }}</td>
-            <td>{{ task.description }}</td>
+            <td>{{ creator_department.get(task.creator_id) }}</td>  
+            <td>
+                {% if task.date_created %}
+                    {{ task.date_created.strftime('%d.%m.%Y') }}
+                {% else %}
+                    -  
+                {% endif %}
+            </td>
+            <td>
+                {% if task.is_бессрочно %}
+                    Бессрочно
+                {% elif task.deadline %} {#  Проверка на None перед strftime #}
+                    {{ task.deadline.strftime('%d.%m.%Y') }}
+                {% else %}
+                    - 
+                {% endif %}
+            </td>
+            <td>{{ task.description }}          {% if task.creator_file %} 
+                <p><a href="{{ url_for('uploaded_file', filename=task.creator_file) }}" target="_blank" download="">{{ task.creator_file }}</a></p>
+            {% endif %}</td>
             <td>
                 {% if task.completion_confirmed %}
                 <span class="badge badge-success">Выполнено
@@ -108,6 +126,40 @@
                     <a href="{{ url_for('complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
                 {% endif %}
 
+                {% if task.for_review and current_user.id == task.executor_id %} {#  Кнопка "Ознакомиться" #}
+                    <a href="{{ url_for('review', task_id=task.id) }}" class="btn btn-secondary btn-sm" data-toggle="modal"
+                       data-target="#reviewModal-{{ task.id }}">
+                        Ознакомиться
+                    </a>
+                    <div class="modal fade" id="reviewModal-{{ task.id }}" tabindex="-1" role="dialog"
+                         aria-labelledby="reviewModalLabel-{{ task.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="reviewModalLabel-{{ task.id }}">Задача {{ task.id }}
+                                    </h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">×</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Описание задачи: {{ task.description }}</p>
+                                    {% if task.attached_file and 'creator' in task.attached_file %}
+                                        <p>
+                                            <p><a href="{{ url_for('uploaded_file', filename=task.attached_file) }}" target="_blank" download="">{{ task.attached_file }}</a></p>
+                                        </p>
+
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('review', task_id=task.id) }}">
+                                        <button type="submit" class="btn btn-primary">Ознакомлен</button>
+                                    </form>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
                 {% if current_user.is_admin and task.completion_note and not task.completion_confirmed %}
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
@@ -129,6 +181,9 @@
                             <div class="modal-body">
                                 <p>Задача: {{ task.description }}</p>
                                 <p>Заметка исполнителя: {{ task.completion_note }}</p>
+                                {% if task.attached_file %} 
+                                <p>Прикрепленный файл: <a href="{{ url_for('uploaded_file', filename=task.attached_file) }}" target="_blank" download>{{ task.attached_file }}</a></p>
+                            {% endif %}
                                 <form method="POST" action="{{ url_for('confirm_task', task_id=task.id) }}">
                                     <div class="form-group">
                                         <label for="admin_note">Заметка администратора:</label>

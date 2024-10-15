@@ -3,97 +3,221 @@
 {% block content %}
 <h1>Добавить задачу</h1>
 
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
         <select class="form-control" id="executor" name="executor" onchange="updateSelectedExecutors()">
-            <option value="all">Всем</option> 
+            <option value="" selected>Не выбрано</option> {##}
+            <option value="all">Всем</option>
             {% for executor in executors %}
                 {% if executor.id != current_user.id %}
                     <option value="{{ executor.id }}">{{ executor.department }}</option>
                 {% endif %}
             {% endfor %}
         </select>
-        <div id="selected-executors" class="mt-2"></div> </div>
+        <div id="selected-executors" class="mt-2"></div>
+    </div>
 
     <div class="form-group">
         <label for="date_created">Дата создания:</label>
-        <input type="date" class="form-control" id="date_created" name="date_created"
-               value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
+        <input type="date" class="form-control" id="date_created" name="date_created" value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
     </div>
+
     <div class="form-group">
+        <input class="form-check-input" type="checkbox" id="is_бессрочно" name="is_бессрочно" onchange="toggleDeadline()">
+        <label class="form-check-label" for="is_бессрочно">Бессрочно</label>
+    </div>
+    <div class="form-group" id="deadline-field">
         <label for="deadline">Срок:</label>
         <input type="date" class="form-control" id="deadline" name="deadline" required>
     </div>
+
     <div class="form-group">
         <label for="description">Описание:</label>
         <textarea class="form-control" id="description" name="description" required></textarea>
     </div>
+
     <div class="form-group form-check">
         <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid" checked>
         <label class="form-check-label" for="is_valid">Действителен</label>
     </div>
+     <div class="form-group">
+        <input type="checkbox" class="form-check-input" id="for_review" name="for_review">
+        <label class="form-check-label" for="for_review">Для ознакомления</label>
+    </div>
+    <div class="form-group">
+        <label for="file">Прикрепить файл:</label>
+       <input type="file" class="form-control-file" id="file" name="file">
+   </div>
+
     <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
 
 <script>
-function updateSelectedExecutors() {
-    let executorSelect = document.getElementById('executor');
-    let selectedExecutorsDiv = document.getElementById('selected-executors');
-    let selectedValue = executorSelect.value;
-    let selectedText = executorSelect.options[executorSelect.selectedIndex].text;
-    
 
-    if (selectedValue === 'all') {
-        selectedExecutorsDiv.innerHTML = ''; 
-        addExecutorToSelected('all', 'Всем'); 
-    } 
+      let allSelected = false; //флаг, указывающий выбрано ли всем
+    function updateSelectedExecutors() {
+        let executorSelect = document.getElementById('executor');
+        let selectedExecutorsDiv = document.getElementById('selected-executors');
+        let selectedValue = executorSelect.value;
+        let selectedText = executorSelect.options[executorSelect.selectedIndex].text;
 
-    else {
-        let existingExecutor = document.querySelector(`#selected-executors span[data-value="${selectedValue}"]`);
-        
-        if (existingExecutor) {
-            existingExecutor.remove(); 
+
+
+        if (selectedValue === 'all') {
+             allSelected = true; // установить флаг, если выбрано всем
+             executorSelect.value = ''; // сбросить select на дефолтное значение
+
+             selectedExecutorsDiv.innerHTML = '';
+            addExecutorToSelected('all','Всем')
+
+
+        }
+          else if(allSelected === true && selectedValue !== '' ){  // selected value all === true  когда уже всем ставится задача и в селект тыкнули
+
+
+         let allSpan = document.querySelector("#selected-executors > span[data-value='all']");
+
+             allSpan.remove();
+
+
+
+             allSelected=false
+            addExecutorToSelected(selectedValue, selectedText)
+
+
+
+
+           
+          }
+           else if (selectedValue !== '') {
+
+
+
+                let existingExecutor = document.querySelector(`#selected-executors span[data-value="${selectedValue}"]`);
+
+                if (existingExecutor) {
+
+
+                     existingExecutor.remove();
+
+                }
+
+
+
+                else{
+                    addExecutorToSelected(selectedValue,selectedText)
+
+
+
+
+                    executorSelect.value = '';
+
+
+               }
+
+
+               
+
+                // Показать выпадающий список, когда все исполнители удалены
+                if (selectedExecutorsDiv.querySelectorAll(".executor-item").length === 0) {
+                 selectedExecutorsDiv.innerHTML = ''; // Очищаем перед добавлением "Не выбрано"
+                 executorSelect.value = '';
+               }
+               
+
+                executorSelect.value = '';
+
+
+            }
+    }
+
+    function addExecutorToSelected(value, text) {
+        let selectedExecutorsDiv = document.getElementById('selected-executors');
+
+        let executorSpan = document.createElement('span');
+        executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+        executorSpan.textContent = text;
+        executorSpan.setAttribute('data-value', value);
+
+        let closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.classList.add('close', 'small-close');
+        closeButton.innerHTML = '×';
+        closeButton.addEventListener('click', function () {
+             let currentValue = this.parentNode.dataset.value;  // get the value
+
+                if (currentValue == 'all') { // Удаление  allSelected  
+
+                        allSelected = false // ставим false allSelected
+
+
+
+                    }
+
+
+                    this.parentNode.remove();
+            updateSelectedExecutors()
+
+
+        });
+
+        executorSpan.appendChild(closeButton);
+
+
+        let hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'executor[]';
+        hiddenInput.value = value;
+        executorSpan.appendChild(hiddenInput);
+
+
+
+        selectedExecutorsDiv.appendChild(executorSpan);
+
+
+    }
+
+
+
+
+
+    function toggleDeadline() {
+        var deadlineField = document.getElementById('deadline-field');
+        var deadlineInput = document.getElementById('deadline');
+        var бессрочноCheckbox = document.getElementById('is_бессрочно');
+
+        if (бессрочноCheckbox.checked) {
+            deadlineField.style.display = 'none';
+            deadlineInput.required = false;  // Снять требование при бессрочной задаче
+            deadlineInput.value = ''; // Очистить значение поля срока
         } else {
-            addExecutorToSelected(selectedValue, selectedText); 
+            deadlineField.style.display = 'block';
+            deadlineInput.required = true;   // Вернуть требование
         }
     }
-}
 
-function addExecutorToSelected(value, text) {
-    let selectedExecutorsDiv = document.getElementById('selected-executors');
-    
-    let executorSpan = document.createElement('span');
-    executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
-    executorSpan.textContent = text;
-    executorSpan.setAttribute('data-value', value); 
-    
-    let closeButton = document.createElement('button');
-    closeButton.type = 'button';
-    closeButton.classList.add('close', 'small-close');
-    closeButton.innerHTML = '×';
-    closeButton.addEventListener('click', function() {
-        this.parentNode.remove(); 
-    });
+    // Вызов функции при загрузке страницы для установки начального состояния
+    toggleDeadline();
 
-    executorSpan.appendChild(closeButton);
-    
+    // Вызов функции при изменении состояния чекбокса
+    document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);
 
-    let hiddenInput = document.createElement('input');
-    hiddenInput.type = 'hidden';
-    hiddenInput.name = 'executor';
-    hiddenInput.value = value;
-    executorSpan.appendChild(hiddenInput);
 
-    selectedExecutorsDiv.appendChild(executorSpan);
-}
+
+    updateSelectedExecutors();
+
+
+
+
 </script>
-<style>
 
+<style>
     .small-close {
         font-size: 12px;
         line-height: 1;
         padding: 2px 4px;
     }
+
 </style>
 {% endblock %}
