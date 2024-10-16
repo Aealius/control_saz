@@ -12,6 +12,7 @@ from urllib.parse import quote, unquote
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:admin@localhost/control_saz'
+app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
 migrate = Migrate(app, db)
@@ -197,14 +198,13 @@ def add():
 
             if file and file.filename != '':
                 filename = file.filename  # Оригинальное имя файла
-                encoded_filename = quote(filename)  # Кодируем имя файла
-
+                
                 task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(new_task.id), 'creator')
                 os.makedirs(task_uploads_folder, exist_ok=True)
 
-                file.save(os.path.join(task_uploads_folder, encoded_filename)) # Сохраняем файл с ЗАКОДИРОВАННЫМ именем!
+                file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем файл с оригинальным именем!
 
-                new_task.creator_file = os.path.join(str(new_task.id), 'creator', encoded_filename) #  В базе данных тоже закодированное имя
+                new_task.creator_file = os.path.join(str(new_task.id), 'creator', filename) #  В базе данных тоже оригинальное имя
 
                 db.session.commit()
                 #new_memo.creator_file = creator_file.replace('\\', '/') # Linux new_memo.creator_file = creator_file
@@ -236,13 +236,12 @@ def add_memo():
 
         if file and file.filename != '':
             filename = file.filename  # Оригинальное имя
-            encoded_filename = quote(filename)
-
+            
             memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(new_memo.id), 'creator')
             os.makedirs(memo_uploads_folder, exist_ok=True)
 
-            file.save(os.path.join(memo_uploads_folder, encoded_filename)) # Сохраняем с закодированным именем!
-            new_memo.creator_file = os.path.join(str(new_memo.id), 'creator', encoded_filename) # Закодированное имя в базе
+            file.save(os.path.join(memo_uploads_folder, filename)) # Сохраняем с оригинальным именем!
+            new_memo.creator_file = os.path.join(str(new_memo.id), 'creator', filename) # Оригинальное имя в базе
 
             db.session.commit()
 
@@ -315,14 +314,13 @@ def complete(task_id):
 
         if file and file.filename != '':
             filename = file.filename  # Оригинальное имя
-            encoded_filename = quote(filename)  # Кодируем
-
+            
             task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(task_id), 'executor')
             os.makedirs(task_uploads_folder, exist_ok=True)
 
-            file.save(os.path.join(task_uploads_folder, encoded_filename)) # Сохраняем с закодированным именем!
+            file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем с оригинальным именем!
 
-            task.attached_file = os.path.join(str(task_id), 'executor', encoded_filename) #  Закодированное имя в базе
+            task.attached_file = os.path.join(str(task_id), 'executor', filename) #  Оригинальное имя в базе
 
 
         task.completion_note = request.form.get('completion_note')
@@ -337,11 +335,10 @@ def complete(task_id):
 @app.route('/uploads/<path:filename>') 
 @login_required
 def uploaded_file(filename):
-    decoded_filename = unquote(filename)
     uploads_folder = app.config['UPLOAD_FOLDER']
-    safe_path = safe_join(uploads_folder, decoded_filename) # Используем safe_join
+    safe_path = safe_join(uploads_folder, filename) # Используем safe_join
     if safe_path and os.path.exists(safe_path):
-       return send_from_directory(uploads_folder, decoded_filename, as_attachment=True)
+       return send_from_directory(uploads_folder, filename, as_attachment=True)
     else:
         flash(f"File not found: {filename}")
         return redirect(url_for('index'))
