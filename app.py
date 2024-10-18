@@ -11,7 +11,7 @@ from urllib.parse import quote, unquote
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:admin@localhost/control_saz'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/control_saz'
 app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
@@ -205,7 +205,7 @@ def add():
                 file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем файл с оригинальным именем!
 
                 new_task.creator_file = os.path.join(str(new_task.id), 'creator', filename) #  В базе данных тоже оригинальное имя
-
+                new_task.creator_file = new_task.creator_file.replace('\\', '/')
                 db.session.commit()
                 #new_memo.creator_file = creator_file.replace('\\', '/') # Linux new_memo.creator_file = creator_file
 
@@ -242,7 +242,7 @@ def add_memo():
 
             file.save(os.path.join(memo_uploads_folder, filename)) # Сохраняем с оригинальным именем!
             new_memo.creator_file = os.path.join(str(new_memo.id), 'creator', filename) # Оригинальное имя в базе
-
+            new_memo.creator_file = new_memo.creator_file.replace('\\', '/')
             db.session.commit()
 
              #new_memo.creator_file = creator_file.replace('\\', '/') # Linux new_memo.creator_file = creator_file
@@ -321,6 +321,7 @@ def complete(task_id):
             file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем с оригинальным именем!
 
             task.attached_file = os.path.join(str(task_id), 'executor', filename) #  Оригинальное имя в базе
+            task.attached_file = task.attached_file.replace('\\', '/')
 
 
         task.completion_note = request.form.get('completion_note')
