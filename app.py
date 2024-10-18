@@ -214,45 +214,46 @@ def add():
 
     return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
 
+
 @app.route('/add_memo', methods=['GET', 'POST']) #  Маршрут для создания служебных записок
 @login_required
 def add_memo():
     executors = User.query.all()
     if request.method == 'POST':
-        selected_executor_id = int(request.form['executor'])  #  Получаем ID выбранного исполнителя
+        selected_executor_id = request.form.getlist('executor[]')  #  Получаем ID выбранного исполнителя 
+        if selected_executor_id == ['all']:
+            selected_executor_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
         description = request.form['description']
         file = request.files.get('file')
 
-        new_memo = Task(
-            executor_id=selected_executor_id,
-            creator_id=current_user.id,
-            date_created=datetime.now(),
-            is_бессрочно=True,
-            for_review=True,
-            description=description
-        )
-        db.session.add(new_memo)
-        db.session.commit()
-
-        if file and file.filename != '':
-            filename = file.filename  # Оригинальное имя
-            
-            memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(new_memo.id), 'creator')
-            os.makedirs(memo_uploads_folder, exist_ok=True)
-
-            file.save(os.path.join(memo_uploads_folder, filename)) # Сохраняем с оригинальным именем!
-            new_memo.creator_file = os.path.join(str(new_memo.id), 'creator', filename) # Оригинальное имя в базе
-            new_memo.creator_file = new_memo.creator_file.replace('\\', '/')
+        for executor_id in selected_executor_id:
+            new_memo = Task(
+                executor_id=int(executor_id), 
+                creator_id=current_user.id,
+                date_created=datetime.now(),
+                is_бессрочно=True,
+                for_review=True,
+                description=description
+            )
+            db.session.add(new_memo)
             db.session.commit()
 
-             #new_memo.creator_file = creator_file.replace('\\', '/') # Linux new_memo.creator_file = creator_file
+            if file and file.filename != '':
+                filename = file.filename  # Оригинальное имя
+                memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(new_memo.id), 'creator')
+                os.makedirs(memo_uploads_folder, exist_ok=True)
 
+                file.save(os.path.join(memo_uploads_folder, filename)) # Сохраняем с оригинальным именем!
+                new_memo.creator_file = os.path.join(str(new_memo.id), 'creator', filename) # Оригинальное имя в базе
+                new_memo.creator_file = new_memo.creator_file.replace('\\', '/')
+                db.session.commit()
 
         flash('Служебная записка успешно отправлена!', 'success')
         return redirect(url_for('index'))
 
     return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
 
+    return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
 @app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):

@@ -3,17 +3,21 @@
 {% block content %}
 <h1>Создать служебную записку</h1>
 
+
+
 <form method="POST" enctype="multipart/form-data">
     <div class="form-group">
         <label for="executor">Кому:</label>
-        <select class="form-control" id="executor" name="executor" required>
+        <select class="form-control" id="executor" name="executor" onchange="updateSelectedExecutorsMemo()">
             <option value="" selected disabled>Выберите получателя</option>
+            <option value="all">Всем</option>
             {% for executor in executors %}
                 {% if executor.id != current_user.id %}
                     <option value="{{ executor.id }}">{{ executor.department }}</option>
                 {% endif %}
             {% endfor %}
         </select>
+        <div id="selected-executors-memo" class="mt-2"></div>
     </div>
     <div class="form-group">
         <label for="description">Содержание:</label>
@@ -26,4 +30,98 @@
     <button type="submit" class="btn btn-primary">Отправить</button>
 </form>
 
+<script>
+    let allSelectedMemo = false; //флаг, указывающий выбрано ли всем
+
+    function updateSelectedExecutorsMemo() {
+        let executorSelectMemo = document.getElementById('executor');
+        let selectedExecutorsDivMemo = document.getElementById('selected-executors-memo');
+        let selectedValue = executorSelectMemo.value;
+        let selectedText = executorSelectMemo.options[executorSelectMemo.selectedIndex].text;
+
+        if (selectedValue === 'all') {
+            allSelectedMemo = true; // установить флаг, если выбрано всем
+            executorSelectMemo.value = ''; // сбросить select на дефолтное значение
+
+            selectedExecutorsDivMemo.innerHTML = '';
+            addExecutorToSelectedMemo('all', 'Всем');
+
+        } else if (allSelectedMemo === true && selectedValue !== '') {
+            let allSpan = document.querySelector("#selected-executors-memo > span[data-value='all']");
+
+            if (allSpan) {
+                allSpan.remove();
+            }
+
+            allSelectedMemo = false;
+            addExecutorToSelectedMemo(selectedValue, selectedText);
+
+        } else if (selectedValue !== '') {
+
+            let existingExecutor = document.querySelector(`#selected-executors-memo span[data-value="${selectedValue}"]`);
+
+            if (existingExecutor) {
+                existingExecutor.remove();
+            } else {
+                addExecutorToSelectedMemo(selectedValue, selectedText);
+                executorSelectMemo.value = '';
+            }
+
+            // Показать выпадающий список, когда все исполнители удалены
+            if (selectedExecutorsDivMemo.querySelectorAll(".executor-item").length === 0) {
+                selectedExecutorsDivMemo.innerHTML = ''; // Очищаем перед добавлением "Не выбрано"
+                executorSelectMemo.value = '';
+            }
+
+            executorSelectMemo.value = '';
+
+        }
+    }
+
+    function addExecutorToSelectedMemo(value, text) {
+        let selectedExecutorsDivMemo = document.getElementById('selected-executors-memo');
+
+        let executorSpan = document.createElement('span');
+        executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+        executorSpan.textContent = text;
+        executorSpan.setAttribute('data-value', value);
+
+        let closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.classList.add('close', 'small-close');
+        closeButton.innerHTML = '×';
+        closeButton.addEventListener('click', function () {
+            let currentValue = this.parentNode.dataset.value;  // get the value
+
+            if (currentValue == 'all') {
+                allSelectedMemo = false;
+            }
+
+            this.parentNode.remove();
+            updateSelectedExecutorsMemo();
+        });
+
+        executorSpan.appendChild(closeButton);
+
+        let hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'executor[]';  // Изменен на 'executor[]'
+        hiddenInput.value = value;
+        executorSpan.appendChild(hiddenInput);
+
+        selectedExecutorsDivMemo.appendChild(executorSpan);
+    }
+
+    updateSelectedExecutorsMemo();
+
+</script>
+
+<style>
+    .small-close {
+        font-size: 12px;
+        line-height: 1;
+        padding: 2px 4px;
+    }
+
+</style>
 {% endblock %}
