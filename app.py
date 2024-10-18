@@ -11,7 +11,7 @@ from urllib.parse import quote, unquote
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/control_saz'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@/control_saz'
 app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
@@ -507,6 +507,25 @@ def review(task_id):
         return redirect(url_for('index'))  #  Перенаправление на главную страницу
     return render_template('review.html', task=task)
 
+
+@app.route('/deputy/tasks/<int:task_id>/confirm', methods=['POST'])
+@login_required
+def confirm_task_deputy(task_id):
+    if not current_user.is_deputy:
+        flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
+        return redirect(url_for('index'))
+
+    task = Task.query.get_or_404(task_id)
+    if task.creator_id != current_user.id:
+        flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
+        return redirect(url_for('index'))
+
+    task.completion_confirmed = True
+    task.completion_confirmed_at = datetime.now()
+    task.admin_note = request.form.get('admin_note')
+    db.session.commit()
+    flash('Выполнение задачи подтверждено.', 'success')
+    return redirect(url_for('index'))
 
 
 reports_bp = Blueprint('reports', __name__) # Создаем Blueprint

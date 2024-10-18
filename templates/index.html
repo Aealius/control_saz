@@ -10,6 +10,7 @@
 {% endif %}
 
 <a href="{{ url_for('add_memo') }}" class="btn btn-success">Создать служебную записку</a>
+
 <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -119,17 +120,12 @@
                 {% endif %}
             </td>
             <td>
-                {% if task.completion_confirmed %}
-                <span class="badge badge-success">Выполнено
-                    {% if task.deadline_for_check < date.today() %} <br><small class="badge-warning">просрочена на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</small>
-                       -{{ calculate_penalty(task)|int }}%
-                    {% endif %}
-                </span>
-                {% if task.completion_confirmed_at %}
-                <br>
-                <small class="text-muted">Подтверждено:
-                    {{ task.completion_confirmed_at.strftime('%d.%m.%Y %H:%M') }}</small>
-                {% endif %}
+                {% if task.completion_confirmed and task.for_review %}
+                <span class="badge badge-success">Ознакомлен</span>
+                {% elif task.completion_confirmed and task.deadline_for_check < date.today() %}
+                <span class="badge badge-warning">Выполнено, просрочена на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</span>
+                {% elif task.completion_confirmed %}
+                <span class="badge badge-success">Выполнено</span>
                 {% elif not task.is_valid %}
                 <span class="badge badge-secondary">Не действительна</span>
                 {% elif task.completion_note and not task.completion_confirmed %}
@@ -205,7 +201,7 @@
                 {% endif %}
                 {% endif %}
 
-                {% if current_user.is_admin and task.completion_note and not task.completion_confirmed %}
+                {% if current_user.is_admin and task.completion_note and not task.completion_confirmed %} 
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
                     Подтвердить выполнение
@@ -233,6 +229,53 @@
                                 </p>
                                 {% endif %}
                                 <form method="POST" action="{{ url_for('confirm_task', task_id=task.id) }}">
+                                    <div class="form-group">
+                                        <label for="admin_note">Заметка администратора:</label>
+                                        <textarea class="form-control" id="admin_note" name="admin_note"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">Подтвердить</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('reject_task', task_id=task.id) }}">
+                                    <div class="form-group">
+                                        <label for="admin_note">Причина отклонения:</label>
+                                        <textarea class="form-control" id="admin_note" name="admin_note"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger">Отклонить</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if current_user.is_deputy and task.creator_id == current_user.id and task.completion_note and not task.completion_confirmed %} 
+                <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
+                    data-target="#confirmModal{{ task.id }}">
+                    Подтвердить выполнение
+                </button>
+
+                <div class="modal fade" id="confirmModal{{ task.id }}" tabindex="-1" role="dialog"
+                    aria-labelledby="confirmModalLabel{{ task.id }}" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="confirmModalLabel{{ task.id }}">Подтверждение выполнения
+                                    задачи
+                                </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Задача: {{ task.description }}</p>
+                                <p>Заметка исполнителя: {{ task.completion_note }}</p>
+                                {% if task.attached_file %}
+                                <p>Прикрепленный файл: <a
+                                        href="{{ url_for('uploaded_file', filename=task.attached_file) }}"
+                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{ unquote(task.attached_file.split('/')[-1]) }} </a>
+                                </p>
+                                {% endif %}
+                                <form method="POST" action="{{ url_for('confirm_task_deputy', task_id=task.id) }}">
                                     <div class="form-group">
                                         <label for="admin_note">Заметка администратора:</label>
                                         <textarea class="form-control" id="admin_note" name="admin_note"></textarea>
