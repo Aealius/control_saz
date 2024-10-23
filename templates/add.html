@@ -6,9 +6,9 @@
 <form method="POST" enctype="multipart/form-data">
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
-        <select class="form-control" id="executor" name="executor" onchange="updateSelectedExecutors()">
-            <option value="" selected>Не выбрано</option> 
-            <option value="all" data-all="true">Всем</option>
+        <select class="selectpicker show-tick is-invalid form-control" id="executor" name="executor" data-live-search="true" multiple onchange="updateSelectedExecutors()">
+            <!--<option value="" selected>Не выбрано</option> {##}-->
+            <option value="all">Всем</option>
             {% for executor in executors %}
                 {% if executor.id != current_user.id %}
                     <option value="{{ executor.id }}">{{ executor.department }}</option>
@@ -23,7 +23,7 @@
         <input type="date" class="form-control" id="date_created" name="date_created" value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
     </div>
 
-    <div class="form-group">
+    <div class="form-group form-check">
         <input class="form-check-input" type="checkbox" id="is_бессрочно" name="is_бессрочно" onchange="toggleDeadline()">
         <label class="form-check-label" for="is_бессрочно">Бессрочно</label>
     </div>
@@ -41,7 +41,7 @@
         <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid" checked>
         <label class="form-check-label" for="is_valid">Действителен</label>
     </div>
-     <div class="form-group">
+     <div class="form-group form-check">
         <input type="checkbox" class="form-check-input" id="for_review" name="for_review">
         <label class="form-check-label" for="for_review">Для ознакомления</label>
     </div>
@@ -55,7 +55,9 @@
 
 <script>
 
-      let allSelected = false; //флаг, указывающий выбрано ли всем
+    let allSelected = false; //флаг, указывающий выбрано ли всем
+    let selectedValues = [];
+
     function updateSelectedExecutors() {
         let executorSelect = document.getElementById('executor');
         let selectedExecutorsDiv = document.getElementById('selected-executors');
@@ -63,73 +65,50 @@
         let selectedText = executorSelect.options[executorSelect.selectedIndex].text;
 
 
+        if(selectedValues.find(item => item === selectedValue)){
+            selectedValues.splice(selectedValues.indexOf(selectedValue), 1);
+        }
+        else{
+            selectedValues.push(selectedValue);
+        }
+        
 
         if (selectedValue === 'all') {
-             allSelected = true; // установить флаг, если выбрано всем
-             executorSelect.value = ''; // сбросить select на дефолтное значение
+            allSelected = true; // установить флаг, если выбрано всем
+            //executorSelect.value = ''; // сбросить select на дефолтное значение
+            $('.selectpicker').selectpicker('val', selectedValues);
 
-             selectedExecutorsDiv.innerHTML = '';
+            selectedExecutorsDiv.innerHTML = '';
             addExecutorToSelected('all','Всем')
-
-
         }
-          else if(allSelected === true && selectedValue !== '' ){  // selected value all === true  когда уже всем ставится задача и в селект тыкнули
+        else if(allSelected === true && selectedValue !== '' ){  // selected value all === true  когда уже всем ставится задача и в селект тыкнули
 
+            let allSpan = document.querySelector("#selected-executors > span[data-value='all']");
+            allSpan.remove();
+            allSelected=false
+            addExecutorToSelected(selectedValue, selectedText) 
+        }
+        else if (selectedValue !== '') {
 
-         let allSpan = document.querySelector("#selected-executors > span[data-value='all']");
-
-             allSpan.remove();
-
-
-
-             allSelected=false
-            addExecutorToSelected(selectedValue, selectedText)
-
-
-
-
-           
-          }
-           else if (selectedValue !== '') {
-
-
-
-                let existingExecutor = document.querySelector(`#selected-executors span[data-value="${selectedValue}"]`);
-
-                if (existingExecutor) {
-
-
-                     existingExecutor.remove();
-
-                }
-
-
-
-                else{
-                    addExecutorToSelected(selectedValue,selectedText)
-
-
-
-
-                    executorSelect.value = '';
-
-
-               }
-
-
-               
-
-                // Показать выпадающий список, когда все исполнители удалены
-                if (selectedExecutorsDiv.querySelectorAll(".executor-item").length === 0) {
-                 selectedExecutorsDiv.innerHTML = ''; // Очищаем перед добавлением "Не выбрано"
-                 executorSelect.value = '';
-               }
-               
-
-                executorSelect.value = '';
-
-
+            let existingExecutor = document.querySelector(`#selected-executors span[data-value="${selectedValue}"]`);
+            if (existingExecutor) {
+                existingExecutor.remove();
             }
+            else{
+                addExecutorToSelected(selectedValue,selectedText)
+                executorSelect.value = '';
+                //$('.selectpicker').selectpicker('val', selectedValues);
+            }
+
+            // Показать выпадающий список, когда все исполнители удалены
+            if (selectedExecutorsDiv.querySelectorAll(".executor-item").length === 0) {
+                selectedExecutorsDiv.innerHTML = ''; // Очищаем перед добавлением "Не выбрано"
+                executorSelect.value = '';
+            }
+
+            $('.selectpicker').selectpicker('val', selectedValues);
+            //executorSelect.value = '';
+        }
     }
 
     function addExecutorToSelected(value, text) {
@@ -145,12 +124,12 @@
         closeButton.classList.add('close', 'small-close');
         closeButton.innerHTML = '×';
         closeButton.addEventListener('click', function () {
-            let currentValue = this.parentNode.dataset.value; 
-            if (currentValue == 'all') {
-                allSelected = false;
+            let currentValue = this.parentNode.dataset.value;  // get the value
+            if (currentValue == 'all') { // Удаление  allSelected  
+                allSelected = false // ставим false allSelected
             }
             this.parentNode.remove();
-            updateSelectedExecutors();
+            updateSelectedExecutors()
         });
 
         executorSpan.appendChild(closeButton);
@@ -164,8 +143,6 @@
         selectedExecutorsDiv.appendChild(executorSpan);
     }
 
-
-
     function toggleDeadline() {
         var deadlineField = document.getElementById('deadline-field');
         var deadlineInput = document.getElementById('deadline');
@@ -175,25 +152,19 @@
             deadlineField.style.display = 'none';
             deadlineInput.required = false;  // Снять требование при бессрочной задаче
             deadlineInput.value = ''; // Очистить значение поля срока
-        } else {
+        }
+        else {
             deadlineField.style.display = 'block';
             deadlineInput.required = true;   // Вернуть требование
         }
     }
-
     // Вызов функции при загрузке страницы для установки начального состояния
     toggleDeadline();
 
     // Вызов функции при изменении состояния чекбокса
     document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);
 
-
-
     updateSelectedExecutors();
-
-
-
-
 </script>
 
 <style>
