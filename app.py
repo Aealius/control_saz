@@ -12,7 +12,7 @@ import shutil
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:admin@/control_saz'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@/control_saz'
 app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
