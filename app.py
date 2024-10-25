@@ -12,7 +12,7 @@ import shutil
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@/control_saz'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:admin@/control_saz'
 app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
@@ -172,6 +172,13 @@ def add():
     executors = User.query.all()
     if request.method == 'POST':
         selected_executors = request.form.getlist('executor[]')
+
+        if 'all' in selected_executors:
+            executors_for_task = User.query.all()
+        else:
+            executors_for_task = User.query.filter(
+                User.id.in_([int(executor) for executor in selected_executors])  
+            ).all()
         date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
         is_бессрочно = request.form.get('is_бессрочно') == 'on'
         deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not is_бессрочно else None
@@ -190,13 +197,21 @@ def add():
             filename = file.filename  # Оригинальное имя файла
             
             # Используем ID первого исполнителя для создания папки
-            first_executor_id = int(selected_executors[0]) 
+             # Взять первый ID, если он есть, иначе 1
+            if 'all' in selected_executors:
+                all_count = 1 
+                # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
+                while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
+                    all_count += 1
+                first_executor_id = f'all{all_count}' # Использовать "all" + счетчик
+
             task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(first_executor_id), 'creator') # Папка для всех задач
             os.makedirs(task_uploads_folder, exist_ok=True)
 
             # Сохранение файла
             file.save(os.path.join(task_uploads_folder, filename)) 
             creator_file_path = os.path.join(str(first_executor_id), 'creator', filename)
+            creator_file_path = creator_file_path.replace('\\', '/') 
 
         for executor in executors_for_task:
             new_task = Task(
@@ -220,14 +235,13 @@ import shutil
 
 
 
-
 @app.route('/add_memo', methods=['GET', 'POST']) #  Маршрут для создания служебных записок
 @login_required
 def add_memo():
     executors = User.query.all()
     if request.method == 'POST':
         selected_executor_id = request.form.getlist('executor[]')  #  Получаем ID выбранного исполнителя 
-        if selected_executor_id == ['all']:
+        if 'all' in selected_executor_id:
             selected_executor_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
         description = request.form['description']
         file = request.files.get('file') #  Получаем файл вне цикла
@@ -237,13 +251,23 @@ def add_memo():
             filename = file.filename  # Оригинальное имя
             
             # Используем ID первой задачи для создания папки
-            first_executor_id = int(selected_executor_id[0]) 
+            first_executor_id = 1  # Устанавливаем по умолчанию 1
+            if selected_executor_id:  # Проверка, есть ли ID в списке
+                first_executor_id = int(selected_executor_id[0])  
+                if 'all' in selected_executor_id:
+                    all_count = 1 
+                    # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
+                    while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
+                        all_count += 1
+                    first_executor_id = f'all{all_count}' # Использовать "all" + счетчик
+
             memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(first_executor_id), 'creator') # Папка для всех записок
             os.makedirs(memo_uploads_folder, exist_ok=True)
 
             # Сохранение файла
             file.save(os.path.join(memo_uploads_folder, filename)) 
-            creator_file_path = os.path.join(str(first_executor_id), 'creator', filename) # Запись пути к файлу в базу
+            creator_file_path = os.path.join(str(first_executor_id), 'creator', filename)
+            creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
 
         for executor_id in selected_executor_id:
             new_memo = Task(
@@ -262,7 +286,6 @@ def add_memo():
         return redirect(url_for('index'))
 
     return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
-
 @app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):
@@ -332,6 +355,7 @@ def complete(task_id):
 
             task.attached_file = os.path.join(str(task_id), 'executor', filename) #  Оригинальное имя в базе
             task.attached_file = task.attached_file.replace('\\', '/')
+            
 
 
         task.completion_note = request.form.get('completion_note')

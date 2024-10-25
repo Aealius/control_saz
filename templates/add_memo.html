@@ -1,118 +1,180 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Создать служебную записку</h1>
-
-
+<h1>Служебная записка</h1>
 
 <form method="POST" enctype="multipart/form-data">
     <div class="form-group">
-        <label for="executor">Кому:</label>
-        <select class="form-control" id="executor" name="executor" onchange="updateSelectedExecutorsMemo()">
-            <option value="" selected disabled>Выберите получателя</option>
-            <option value="all">Всем</option>
+        <label for="executor">Исполнитель:</label>
+        <select class="form-control" id="executor" name="executor" onchange="updateSelectedExecutors()">
+            <option value="" selected>Не выбрано</option> 
+            <option value="all" data-all="true">Всем</option>
             {% for executor in executors %}
                 {% if executor.id != current_user.id %}
                     <option value="{{ executor.id }}">{{ executor.department }}</option>
                 {% endif %}
             {% endfor %}
         </select>
-        <div id="selected-executors-memo" class="mt-2"></div>
+        <div id="selected-executors" class="mt-2"></div>
     </div>
+
+
+
+
     <div class="form-group">
-        <label for="description">Содержание:</label>
+        <label for="description">Описание:</label>
         <textarea class="form-control" id="description" name="description" required></textarea>
     </div>
+
+ 
     <div class="form-group">
         <label for="file">Прикрепить файл:</label>
-        <input type="file" class="form-control-file" id="file" name="file">
-    </div>
-    <button type="submit" class="btn btn-primary">Отправить</button>
+       <input type="file" class="form-control-file" id="file" name="file">
+   </div>
+
+    <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
 
 <script>
-    let allSelectedMemo = false; //флаг, указывающий выбрано ли всем
 
-    function updateSelectedExecutorsMemo() {
-        let executorSelectMemo = document.getElementById('executor');
-        let selectedExecutorsDivMemo = document.getElementById('selected-executors-memo');
-        let selectedValue = executorSelectMemo.value;
-        let selectedText = executorSelectMemo.options[executorSelectMemo.selectedIndex].text;
+      let allSelected = false; //флаг, указывающий выбрано ли всем
+    function updateSelectedExecutors() {
+        let executorSelect = document.getElementById('executor');
+        let selectedExecutorsDiv = document.getElementById('selected-executors');
+        let selectedValue = executorSelect.value;
+        let selectedText = executorSelect.options[executorSelect.selectedIndex].text;
+
+
 
         if (selectedValue === 'all') {
-            allSelectedMemo = true; // установить флаг, если выбрано всем
-            executorSelectMemo.value = ''; // сбросить select на дефолтное значение
+             allSelected = true; // установить флаг, если выбрано всем
+             executorSelect.value = ''; // сбросить select на дефолтное значение
 
-            selectedExecutorsDivMemo.innerHTML = '';
-            addExecutorToSelectedMemo('all', 'Всем');
+             selectedExecutorsDiv.innerHTML = '';
+            addExecutorToSelected('all','Всем')
 
-        } else if (allSelectedMemo === true && selectedValue !== '') {
-            let allSpan = document.querySelector("#selected-executors-memo > span[data-value='all']");
-
-            if (allSpan) {
-                allSpan.remove();
-            }
-
-            allSelectedMemo = false;
-            addExecutorToSelectedMemo(selectedValue, selectedText);
-
-        } else if (selectedValue !== '') {
-
-            let existingExecutor = document.querySelector(`#selected-executors-memo span[data-value="${selectedValue}"]`);
-
-            if (existingExecutor) {
-                existingExecutor.remove();
-            } else {
-                addExecutorToSelectedMemo(selectedValue, selectedText);
-                executorSelectMemo.value = '';
-            }
-
-            // Показать выпадающий список, когда все исполнители удалены
-            if (selectedExecutorsDivMemo.querySelectorAll(".executor-item").length === 0) {
-                selectedExecutorsDivMemo.innerHTML = ''; // Очищаем перед добавлением "Не выбрано"
-                executorSelectMemo.value = '';
-            }
-
-            executorSelectMemo.value = '';
 
         }
+          else if(allSelected === true && selectedValue !== '' ){  // selected value all === true  когда уже всем ставится задача и в селект тыкнули
+
+
+         let allSpan = document.querySelector("#selected-executors > span[data-value='all']");
+
+             allSpan.remove();
+
+
+
+             allSelected=false
+            addExecutorToSelected(selectedValue, selectedText)
+
+
+
+
+           
+          }
+           else if (selectedValue !== '') {
+
+
+
+                let existingExecutor = document.querySelector(`#selected-executors span[data-value="${selectedValue}"]`);
+
+                if (existingExecutor) {
+
+
+                     existingExecutor.remove();
+
+                }
+
+
+
+                else{
+                    addExecutorToSelected(selectedValue,selectedText)
+
+
+
+
+                    executorSelect.value = '';
+
+
+               }
+
+
+               
+
+                // Показать выпадающий список, когда все исполнители удалены
+                if (selectedExecutorsDiv.querySelectorAll(".executor-item").length === 0) {
+                 selectedExecutorsDiv.innerHTML = ''; // Очищаем перед добавлением "Не выбрано"
+                 executorSelect.value = '';
+               }
+               
+
+                executorSelect.value = '';
+
+
+            }
     }
 
-    function addExecutorToSelectedMemo(value, text) {
-        let selectedExecutorsDivMemo = document.getElementById('selected-executors-memo');
+    function addExecutorToSelected(value, text) {
+        let selectedExecutorsDiv = document.getElementById('selected-executors');
 
         let executorSpan = document.createElement('span');
         executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
         executorSpan.textContent = text;
-        executorSpan.setAttribute('data-value', value);
+        executorSpan.setAttribute('data-value', value); // Добавить атрибут data-value
 
         let closeButton = document.createElement('button');
         closeButton.type = 'button';
         closeButton.classList.add('close', 'small-close');
         closeButton.innerHTML = '×';
         closeButton.addEventListener('click', function () {
-            let currentValue = this.parentNode.dataset.value;  // get the value
-
+            let currentValue = this.parentNode.dataset.value; 
             if (currentValue == 'all') {
-                allSelectedMemo = false;
+                allSelected = false;
             }
-
             this.parentNode.remove();
-            updateSelectedExecutorsMemo();
+            updateSelectedExecutors();
         });
 
         executorSpan.appendChild(closeButton);
 
         let hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
-        hiddenInput.name = 'executor[]';  // Изменен на 'executor[]'
+        hiddenInput.name = 'executor[]';
         hiddenInput.value = value;
         executorSpan.appendChild(hiddenInput);
 
-        selectedExecutorsDivMemo.appendChild(executorSpan);
+        selectedExecutorsDiv.appendChild(executorSpan);
     }
 
-    updateSelectedExecutorsMemo();
+
+
+    function toggleDeadline() {
+        var deadlineField = document.getElementById('deadline-field');
+        var deadlineInput = document.getElementById('deadline');
+        var бессрочноCheckbox = document.getElementById('is_бессрочно');
+
+        if (бессрочноCheckbox.checked) {
+            deadlineField.style.display = 'none';
+            deadlineInput.required = false;  // Снять требование при бессрочной задаче
+            deadlineInput.value = ''; // Очистить значение поля срока
+        } else {
+            deadlineField.style.display = 'block';
+            deadlineInput.required = true;   // Вернуть требование
+        }
+    }
+
+    // Вызов функции при загрузке страницы для установки начального состояния
+    toggleDeadline();
+
+    // Вызов функции при изменении состояния чекбокса
+    document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);
+
+
+
+    updateSelectedExecutors();
+
+
+
 
 </script>
 

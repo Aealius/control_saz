@@ -7,8 +7,8 @@
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
         <select class="form-control" id="executor" name="executor" onchange="updateSelectedExecutors()">
-            <option value="" selected>Не выбрано</option> {##}
-            <option value="all">Всем</option>
+            <option value="" selected>Не выбрано</option> 
+            <option value="all" data-all="true">Всем</option>
             {% for executor in executors %}
                 {% if executor.id != current_user.id %}
                     <option value="{{ executor.id }}">{{ executor.department }}</option>
@@ -138,32 +138,22 @@
         let executorSpan = document.createElement('span');
         executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
         executorSpan.textContent = text;
-        executorSpan.setAttribute('data-value', value);
+        executorSpan.setAttribute('data-value', value); // Добавить атрибут data-value
 
         let closeButton = document.createElement('button');
         closeButton.type = 'button';
         closeButton.classList.add('close', 'small-close');
         closeButton.innerHTML = '×';
         closeButton.addEventListener('click', function () {
-             let currentValue = this.parentNode.dataset.value;  // get the value
-
-                if (currentValue == 'all') { // Удаление  allSelected  
-
-                        allSelected = false // ставим false allSelected
-
-
-
-                    }
-
-
-                    this.parentNode.remove();
-            updateSelectedExecutors()
-
-
+            let currentValue = this.parentNode.dataset.value; 
+            if (currentValue == 'all') {
+                allSelected = false;
+            }
+            this.parentNode.remove();
+            updateSelectedExecutors();
         });
 
         executorSpan.appendChild(closeButton);
-
 
         let hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
@@ -171,14 +161,8 @@
         hiddenInput.value = value;
         executorSpan.appendChild(hiddenInput);
 
-
-
         selectedExecutorsDiv.appendChild(executorSpan);
-
-
     }
-
-
 
 
 
