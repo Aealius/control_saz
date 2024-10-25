@@ -173,45 +173,37 @@ def add():
     if request.method == 'POST':
         selected_executors = request.form.getlist('executor[]')
 
+        # Генерируем task_id для новой задачи
+        task_id = str(len(Task.query.all()) + 1)
+
+        # Обработка 'all'
         if 'all' in selected_executors:
+            # Добавляем всех пользователей как исполнителей
             executors_for_task = User.query.all()
+            task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator')
+            os.makedirs(task_uploads_folder, exist_ok=True)
         else:
+            # Добавляем выбранных пользователей как исполнителей
             executors_for_task = User.query.filter(
-                User.id.in_([int(executor) for executor in selected_executors])  
+                User.id.in_([int(executor) for executor in selected_executors])
             ).all()
+            task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator')
+            os.makedirs(task_uploads_folder, exist_ok=True)
+
         date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
         is_бессрочно = request.form.get('is_бессрочно') == 'on'
         deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not is_бессрочно else None
         description = request.form['description']
         is_valid = request.form.get('is_valid') == 'on'
         for_review = request.form.get('for_review') == 'on'
-        file = request.files.get('file') # Получаем файл вне цикла
-
-        if 'all' in selected_executors:
-            executors_for_task = User.query.all()
-        else:
-            executors_for_task = User.query.filter(User.id.in_([int(id) for id in selected_executors])).all()
+        file = request.files.get('file')
 
         # Сохраняем файл только один раз
         if file and file.filename != '':
-            filename = file.filename  # Оригинальное имя файла
-            
-            # Используем ID первого исполнителя для создания папки
-             # Взять первый ID, если он есть, иначе 1
-            if 'all' in selected_executors:
-                all_count = 1 
-                # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
-                while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
-                    all_count += 1
-                first_executor_id = f'all{all_count}' # Использовать "all" + счетчик
-
-            task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(first_executor_id), 'creator') # Папка для всех задач
-            os.makedirs(task_uploads_folder, exist_ok=True)
-
-            # Сохранение файла
-            file.save(os.path.join(task_uploads_folder, filename)) 
-            creator_file_path = os.path.join(str(first_executor_id), 'creator', filename)
-            creator_file_path = creator_file_path.replace('\\', '/') 
+            filename = file.filename
+            file.save(os.path.join(task_uploads_folder, filename))
+            creator_file_path = os.path.join('uploads', task_id, 'creator', filename)
+            creator_file_path = creator_file_path.replace('\\', '/')
 
         for executor in executors_for_task:
             new_task = Task(
@@ -222,7 +214,7 @@ def add():
                 is_valid=is_valid,
                 creator_id=current_user.id,
                 for_review=for_review,
-                creator_file=creator_file_path # Запись пути к файлу в базу
+                creator_file=creator_file_path  
             )
             db.session.add(new_task)
             db.session.commit()
@@ -231,6 +223,7 @@ def add():
         return redirect(url_for('index'))
 
     return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
+
 import shutil 
 
 
@@ -249,24 +242,24 @@ def add_memo():
         # Сохраняем файл только один раз
         if file and file.filename != '':
             filename = file.filename  # Оригинальное имя
-            
-            # Используем ID первой задачи для создания папки
-            first_executor_id = 1  # Устанавливаем по умолчанию 1
-            if selected_executor_id:  # Проверка, есть ли ID в списке
-                first_executor_id = int(selected_executor_id[0])  
-                if 'all' in selected_executor_id:
-                    all_count = 1 
-                    # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
-                    while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
-                        all_count += 1
-                    first_executor_id = f'all{all_count}' # Использовать "all" + счетчик
 
-            memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(first_executor_id), 'creator') # Папка для всех записок
+            # Счетчик для task_id при "all"
+            if 'all' in selected_executor_id:
+                all_count = 1 
+                # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
+                while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
+                    all_count += 1
+                task_id = f'all{all_count}' # Использовать "all" + счетчик
+            else:
+                # Генерируем task_id для "не all"
+                task_id = str(len(Task.query.all()) + 1) 
+                
+            memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
             os.makedirs(memo_uploads_folder, exist_ok=True)
 
             # Сохранение файла
             file.save(os.path.join(memo_uploads_folder, filename)) 
-            creator_file_path = os.path.join(str(first_executor_id), 'creator', filename)
+            creator_file_path = os.path.join('uploads', task_id, 'creator', filename)
             creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
 
         for executor_id in selected_executor_id:
@@ -353,7 +346,7 @@ def complete(task_id):
 
             file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем с оригинальным именем!
 
-            task.attached_file = os.path.join(str(task_id), 'executor', filename) #  Оригинальное имя в базе
+            task.attached_file = os.path.join('uploads', str(task_id), 'executor', filename) #  Оригинальное имя в базе
             task.attached_file = task.attached_file.replace('\\', '/')
             
 
