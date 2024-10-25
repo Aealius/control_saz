@@ -198,6 +198,7 @@ def add():
         for_review = request.form.get('for_review') == 'on'
         file = request.files.get('file')
 
+        creator_file_path = ''
         # Сохраняем файл только один раз
         if file and file.filename != '':
             filename = file.filename

@@ -6,7 +6,7 @@
 <form method="POST" enctype="multipart/form-data">
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
-        <select class="selectpicker show-tick is-invalid form-control" id="executor" name="executor" data-live-search="true" multiple onchange="updateSelectedExecutors()">
+        <select class="selectpicker show-tick is-invalid form-control" id="executor" name="executor" data-live-search="true" data-actions-box="true" multiple onchange="updateSelectedExecutors()">
             <!--<option value="" selected>Не выбрано</option> {##}-->
             <option value="all">Всем</option>
             {% for executor in executors %}
@@ -45,9 +45,9 @@
         <input type="checkbox" class="form-check-input" id="for_review" name="for_review">
         <label class="form-check-label" for="for_review">Для ознакомления</label>
     </div>
-    <div class="form-group">
-        <label for="file">Прикрепить файл:</label>
-       <input type="file" class="form-control-file" id="file" name="file">
+    <div class="input-group mb-3 upload-file-input">
+        <label for="file" class="input-group-text">Прикрепить файл:</label>
+       <input type="file" class="form-control" id="file" name="file" aria-describedby="inputGroupFile" aria-label="Обзор">
    </div>
 
     <button type="submit" class="btn btn-primary">Добавить</button>
@@ -56,91 +56,57 @@
 <script>
 
     let allSelected = false; //флаг, указывающий выбрано ли всем
-    let selectedValues = [];
+    let executorSelect = document.getElementById('executor');
+    let selectedExecutorsDiv = document.getElementById('selected-executors');
 
     function updateSelectedExecutors() {
-        let executorSelect = document.getElementById('executor');
-        let selectedExecutorsDiv = document.getElementById('selected-executors');
-        let selectedValue = executorSelect.value;
-        let selectedText = executorSelect.options[executorSelect.selectedIndex].text;
+        let executorSelectedOptions = executorSelect.selectedOptions; 
+        let selectedValuesArray = []; 
+        let selectedTextArray = [];
 
-
-        if(selectedValues.find(item => item === selectedValue)){
-            selectedValues.splice(selectedValues.indexOf(selectedValue), 1);
+        for(let i = 0; i < executorSelectedOptions.length; i++){
+            selectedValuesArray.push(executorSelectedOptions[i].value);
+            selectedTextArray.push(executorSelectedOptions[i].innerHTML);
         }
-        else{
-            selectedValues.push(selectedValue);
-        }
-        
 
-        if (selectedValue === 'all') {
-            allSelected = true; // установить флаг, если выбрано всем
-            //executorSelect.value = ''; // сбросить select на дефолтное значение
-            $('.selectpicker').selectpicker('val', selectedValues);
-
-            selectedExecutorsDiv.innerHTML = '';
-            addExecutorToSelected('all','Всем')
-        }
-        else if(allSelected === true && selectedValue !== '' ){  // selected value all === true  когда уже всем ставится задача и в селект тыкнули
-
-            let allSpan = document.querySelector("#selected-executors > span[data-value='all']");
-            allSpan.remove();
-            allSelected=false
-            addExecutorToSelected(selectedValue, selectedText) 
-        }
-        else if (selectedValue !== '') {
-
-            let existingExecutor = document.querySelector(`#selected-executors span[data-value="${selectedValue}"]`);
-            if (existingExecutor) {
-                existingExecutor.remove();
-            }
-            else{
-                addExecutorToSelected(selectedValue,selectedText)
-                executorSelect.value = '';
-                //$('.selectpicker').selectpicker('val', selectedValues);
-            }
-
-            // Показать выпадающий список, когда все исполнители удалены
-            if (selectedExecutorsDiv.querySelectorAll(".executor-item").length === 0) {
-                selectedExecutorsDiv.innerHTML = ''; // Очищаем перед добавлением "Не выбрано"
-                executorSelect.value = '';
-            }
-
-            $('.selectpicker').selectpicker('val', selectedValues);
-            //executorSelect.value = '';
-        }
-    }
+        addExecutorToSelected(selectedValuesArray,selectedTextArray);
+    } 
 
     function addExecutorToSelected(value, text) {
-        let selectedExecutorsDiv = document.getElementById('selected-executors');
 
-        let executorSpan = document.createElement('span');
-        executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
-        executorSpan.textContent = text;
-        executorSpan.setAttribute('data-value', value); // Добавить атрибут data-value
-
-        let closeButton = document.createElement('button');
-        closeButton.type = 'button';
-        closeButton.classList.add('close', 'small-close');
-        closeButton.innerHTML = '×';
-        closeButton.addEventListener('click', function () {
-            let currentValue = this.parentNode.dataset.value;  // get the value
-            if (currentValue == 'all') { // Удаление  allSelected  
-                allSelected = false // ставим false allSelected
-            }
-            this.parentNode.remove();
-            updateSelectedExecutors()
-        });
-
-        executorSpan.appendChild(closeButton);
+        selectedExecutorsDiv.innerHTML = "";
 
         let hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
         hiddenInput.name = 'executor[]';
-        hiddenInput.value = value;
-        executorSpan.appendChild(hiddenInput);
 
-        selectedExecutorsDiv.appendChild(executorSpan);
+        for (let i = 0; i < value.length; i++){
+
+            let executorSpan = document.createElement('span');
+            executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+            executorSpan.textContent = text[i];
+            executorSpan.setAttribute('data-value', value[i]);
+
+            let closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.classList.add('close', 'small-close');
+            closeButton.innerHTML = '×';
+            closeButton.addEventListener('click', function () {
+                let currentValue = this.parentNode.dataset.value;  // get the value
+                if (currentValue == 'all') { // Удаление  allSelected  
+                    allSelected = false // ставим false allSelected
+                    $('.selectpicker option[value="'+currentValue+'"]').prop("selected", false);
+                }
+                this.parentNode.remove();
+                
+                updateSelectedExecutors()
+                
+            });
+            executorSpan.appendChild(closeButton);
+            selectedExecutorsDiv.appendChild(executorSpan);
+            executorSpan.appendChild(hiddenInput);
+        }
+        hiddenInput.value = value;  
     }
 
     function toggleDeadline() {

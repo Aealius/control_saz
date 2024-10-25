@@ -47,4 +47,18 @@ th {
     background-color: transparent; 
 }
 
+/*для форм на /add и /add_memo*/
+.upload-file-input input[type=file]::file-selector-button { /*чобы скрыть дефолтную кнопку "Обзор"*/
+    display: none;
+}
+
+.upload-file-input:hover label { /*ховер на лейбл*/
+    background-color: #dfdfe4;
+    cursor: pointer;
+}
+
+.upload-file-input input[type=file] { /*чтобы кнопка загрузки была одним целым с самой формой*/
+    margin-left: -2px !important;
+  }
+
 
