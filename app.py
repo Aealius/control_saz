@@ -234,12 +234,15 @@ import shutil
 def add_memo():
     executors = User.query.all()
     if request.method == 'POST':
-        selected_executor_id = request.form.getlist('executor[]')  #  Получаем ID выбранного исполнителя 
+        selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя 
         if 'all' in selected_executor_id:
             selected_executor_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
+        else:
+            selected_executor_id = [int(executor) for executor in selected_executor_id.split(',')]
         description = request.form['description']
         file = request.files.get('file') #  Получаем файл вне цикла
 
+        creator_file_path = ''
         # Сохраняем файл только один раз
         if file and file.filename != '':
             filename = file.filename  # Оригинальное имя
@@ -280,6 +283,8 @@ def add_memo():
         return redirect(url_for('index'))
 
     return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
+
+
 @app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):
