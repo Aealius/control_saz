@@ -95,10 +95,18 @@
                 let currentValue = this.parentNode.dataset.value;  // get the value
                 if (currentValue == 'all') { // Удаление  allSelected  
                     allSelected = false // ставим false allSelected
-                    $('.selectpicker option[value="'+currentValue+'"]').prop("selected", false);
+                    
                 }
                 this.parentNode.remove();
                 
+                let elements = executorSelect.options;
+                elements[currentValue-1].selected = false;
+
+                let selectedText = document.querySelector(".filter-option-inner-inner");
+                selectedText.innerHTML = (selectedText.innerHTML.replace(elements[currentValue-1].innerHTML + ',', ''));
+
+
+
                 updateSelectedExecutors()
                 
             });
