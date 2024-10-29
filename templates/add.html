@@ -6,9 +6,9 @@
 <form method="POST" enctype="multipart/form-data">
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
-        <select class="selectpicker show-tick is-invalid form-control" id="executor" name="executor" data-live-search="true" data-actions-box="true" multiple onchange="updateSelectedExecutors()">
+        <select class="selectpicker show-tick form-control" id="executor" name="executor" data-live-search="true" data-actions-box="true" multiple onchange="updateSelectedExecutors()">
             <!--<option value="" selected>Не выбрано</option> {##}-->
-            <option value="all">Всем</option>
+            <!--<option value="all">Всем</option>-->
             {% for executor in executors %}
                 {% if executor.id != current_user.id %}
                     <option value="{{ executor.id }}">{{ executor.department }}</option>
@@ -78,43 +78,78 @@
 
         let hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
-        hiddenInput.name = 'executor[]';
-
-        for (let i = 0; i < value.length; i++){
-
-            let executorSpan = document.createElement('span');
-            executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
-            executorSpan.textContent = text[i];
-            executorSpan.setAttribute('data-value', value[i]);
+        hiddenInput.name = 'executor[]'; 
+        
+        if (executorSelect.options.length == executorSelect.selectedOptions.length){
+            let allSpan = document.createElement('span');
+            allSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+            allSpan.textContent = 'Всем';
+            allSpan.setAttribute('data-value', 'all');
 
             let closeButton = document.createElement('button');
             closeButton.type = 'button';
             closeButton.classList.add('close', 'small-close');
             closeButton.innerHTML = '×';
+            allSpan.appendChild(closeButton);
+            selectedExecutorsDiv.appendChild(allSpan);
             closeButton.addEventListener('click', function () {
-                let currentValue = this.parentNode.dataset.value;  // get the value
-                if (currentValue == 'all') { // Удаление  allSelected  
-                    allSelected = false // ставим false allSelected
-                    
-                }
                 this.parentNode.remove();
-                
-                let elements = executorSelect.options;
-                elements[currentValue-1].selected = false;
-
-                let selectedText = document.querySelector(".filter-option-inner-inner");
-                selectedText.innerHTML = (selectedText.innerHTML.replace(elements[currentValue-1].innerHTML + ',', ''));
-
-
-
-                updateSelectedExecutors()
-                
+                $('.selectpicker').selectpicker('deselectAll'); 
             });
-            executorSpan.appendChild(closeButton);
-            selectedExecutorsDiv.appendChild(executorSpan);
-            executorSpan.appendChild(hiddenInput);
+            allSpan.appendChild(hiddenInput);
+            hiddenInput.value = 'all';
         }
-        hiddenInput.value = value;  
+        else{
+            for (let i = 0; i < value.length; i++){
+
+                let executorSpan = document.createElement('span');
+                executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+                executorSpan.textContent = text[i];
+                executorSpan.setAttribute('data-value', value[i]);
+    
+                let closeButton = document.createElement('button');
+                closeButton.type = 'button';
+                closeButton.classList.add('close', 'small-close');
+                closeButton.innerHTML = '×';
+                closeButton.addEventListener('click', function () {
+                    let currentValue = this.parentNode.dataset.value;  // get the value
+                    if (currentValue == 'all') { // Удаление  allSelected  
+                        allSelected = false // ставим false allSelected
+                        
+                    }
+                    this.parentNode.remove();
+                    
+    
+                    let elements = executorSelect.selectedOptions;
+                    let selectedText = document.querySelector(".filter-option-inner-inner");
+    
+                    for (let i = 0; i < elements.length; i++){
+                        if ((elements[i].value) == currentValue){
+                            let removeText = elements[i].innerHTML;
+                            elements[i].selected = false;  
+                            if (i == selectedExecutorsDiv.childElementCount){
+                                if(elements.length == 0){ //когда никого не остается в выбранных
+                                    $('.selectpicker').selectpicker('deselectAll'); //убираем всех отовсюду, чтобы показало дефолтное состояние дропдауна 
+                                }
+                                else{
+                                    selectedText.innerHTML = (selectedText.innerHTML.replace( ', '  + removeText , ''));
+                                }
+                            }
+                            else{
+                                selectedText.innerHTML = (selectedText.innerHTML.replace(removeText + ', ', ''));
+                            }                    
+                        }   
+                    }
+    
+                    updateSelectedExecutors()
+                    
+                });
+                executorSpan.appendChild(closeButton);
+                selectedExecutorsDiv.appendChild(executorSpan);
+                executorSpan.appendChild(hiddenInput);
+            }
+            hiddenInput.value = value; 
+        }  
     }
 
     function toggleDeadline() {

@@ -171,7 +171,7 @@ def add():
 
     executors = User.query.all()
     if request.method == 'POST':
-        selected_executors = request.form.getlist('executor[]')
+        selected_executors = request.form.get('executor[]')
 
         # Генерируем task_id для новой задачи
         task_id = str(len(Task.query.all()) + 1)
@@ -185,7 +185,7 @@ def add():
         else:
             # Добавляем выбранных пользователей как исполнителей
             executors_for_task = User.query.filter(
-                User.id.in_([int(executor) for executor in selected_executors])
+                User.id.in_([int(executor) for executor in selected_executors.split(',')])
             ).all()
             task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator')
             os.makedirs(task_uploads_folder, exist_ok=True)
