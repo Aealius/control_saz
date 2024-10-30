@@ -75,6 +75,36 @@
 </div>
 
 
+<div class ="d-flex justify-content-between">
+    <!--Табы для навигации по статусам задач -->
+    <ul class="nav nav-tabs" id="status-filter-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <a class="nav-link active" id="in-work-tab" href="{{ url_for('index',st=in_work) }}" aria-current="page">В работе</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" id="completion-check-tab" href="{{ url_for('index',st=completance_check) }}">На проверке</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" id="completed-tab" href="{{ url_for('index', st=completed) }}">Выполненные</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" id="overdue-tab" href="{{ url_for('index', st=overdue) }}">Просроченные</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="for-information-tab" href="{{ url_for('index', st=for_information) }}">Для ознакомления</a>
+        </li>
+    </ul>
+
+    <!--Фильтрация по dходящиv и исходящим задачам-->
+
+    <select id="select-task-sender" class="selectpicker show-tick">
+        <option>Все</option>
+        <option>Входящие</option>
+        <option>Исходящие</option>
+    </select>
+</div>
+
+
 <!--таблица с задачами-->
 <table class="table table-bordered">
     <thead>
@@ -306,6 +336,29 @@
     </tbody>
 </table>
 
+
+<div class="d-flex justify-content-between">
+    <div>
+        Страница 1 | Записи 1-20 из 9999
+    </div>
+    <nav aria-label="paging">
+        <ul class="pagination justify-content-end">
+          <li class="page-item disabled">
+            <a class="page-link">Предыдущая</a>
+          </li>
+          <li class="page-item"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item">
+            <a class="page-link" href="#">Следующая</a>
+          </li>
+        </ul>
+    </nav>
+</div>
+
+
+
+<script src="{{ url_for('static', filename='src/js/index.js') }}"></script>
 <script>
     $(function () {
         $('[data-toggle="tooltip"]').tooltip()

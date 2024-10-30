@@ -20,9 +20,17 @@ migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+
 UPLOAD_FOLDER = 'uploads'
+PER_PAGE = 20
+
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
+
+
+
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -78,20 +86,45 @@ class Task(db.Model):
         return self.extended_deadline or self.deadline or date(9999, 12, 31)
 
 
-
+'''
+    начальная фильтрация для всех
+    
+    
+'''
 @app.route('/')
 @login_required
-def index():
+def index(page = 1):
     executor_filter = request.args.get('executor')
     creator_filter = request.args.get('creator') # новый фильтр
     month_filter = request.args.get('month') # новый фильтр
     date_filter = request.args.get('date')
     overdue_filter = request.args.get('overdue') # новый фильтр
     completed_filter = request.args.get('completed') # новый фильтр
-
+    
+    
+    '''
+    варианты значения параметров для st:
+        in_work - в работе
+        completance_check - на проверке
+        completed - выполненные
+        overdue - просроченные
+        for_information - для ознакомления
+    '''
+    status_filter = request.args.get('st') #параметр для табов
+    
+    '''
+    варианты значения параметров для sn:
+        in - входящие таски
+        out - исходящие таски    
+    '''
+    sender_filter = request.args.get('sn') #параметр для отправителей и получателей
+    
+    page = request.args.get('p') #параметр для страницы
+    
+    
     # Начальный фильтр, если user - admin
     if current_user.is_admin:
-        tasks = Task.query 
+        tasks = Task.query
     # Начальный фильтр, если user - deputy
     elif current_user.is_deputy:
         tasks = Task.query.filter(
