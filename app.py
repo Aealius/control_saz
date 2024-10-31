@@ -93,7 +93,7 @@ class Task(db.Model):
 '''
 @app.route('/')
 @login_required
-def index(page = 1):
+def index():
     executor_filter = request.args.get('executor')
     creator_filter = request.args.get('creator') # новый фильтр
     month_filter = request.args.get('month') # новый фильтр
@@ -101,41 +101,39 @@ def index(page = 1):
     overdue_filter = request.args.get('overdue') # новый фильтр
     completed_filter = request.args.get('completed') # новый фильтр
     
-    
     '''
-    варианты значения параметров для st:
+    варианты значения параметра st:
         in_work - в работе
         completance_check - на проверке
         completed - выполненные
         overdue - просроченные
         for_information - для ознакомления
     '''
-    status_filter = request.args.get('st') #параметр для табов
+    #status_filter = request.args.get('st') #параметр для табов (табов пока нет)
     
     '''
-    варианты значения параметров для sn:
+    варианты значения параметра sn:
         in - входящие таски
         out - исходящие таски    
     '''
-    sender_filter = request.args.get('sn') #параметр для отправителей и получателей
+    sender_filter = request.args.get('sn', 'in', type=str) #параметр для отправителей и получателей
     
-    page = request.args.get('p') #параметр для страницы
+    page = request.args.get('p', 1, type=int) #параметр для страницы
     
+    
+    filter_data= {''}
     
     # Начальный фильтр, если user - admin
     if current_user.is_admin:
         tasks = Task.query
-    # Начальный фильтр, если user - deputy
-    elif current_user.is_deputy:
-        tasks = Task.query.filter(
+    else:
+        # Если user - обычный пользователь, то видим только задачи где он - executor, а также те, которые он отправил
+       tasks = Task.query.filter(
             db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id)
         )
-    else:
-        # Если user - обычный пользователь, то видим только задачи где он - executor
-        tasks = Task.query.filter_by(executor_id=current_user.id)
-
     if executor_filter:
         tasks = tasks.filter_by(executor_id=User.query.filter_by(department=executor_filter).first().id)
+        sender_filter = 'out'
     
     if creator_filter:
         creator = User.query.filter_by(department=creator_filter).first()
@@ -160,14 +158,28 @@ def index(page = 1):
 
     if completed_filter:
         tasks = tasks.filter_by(completion_confirmed = True)
+    
+    if sender_filter: #фильтрация по отправителю
+        if sender_filter == 'in':
+            tasks = tasks.filter_by(executor_id = current_user.id)
+        elif sender_filter == 'out':
+            tasks = tasks.filter_by(creator_id = current_user.id)
+        elif sender_filter == 'all':
+            tasks = Task.query.filter(
+                db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))
+        else:
+            tasks = tasks.filter(Task.executor_id == current_user.id)
+                
+    #tasks = db.paginate(tasks, page = page, per_page = PER_PAGE)    
+    
+    task_count  = tasks.count();  
 
     tasks = tasks.options(db.joinedload(Task.executor)).order_by(
         Task.is_valid.asc(),
         Task.completion_confirmed.asc(),
         Task.deadline.asc() if not Task.is_бессрочно else Task.id 
 
-    ).all()
-
+    ).paginate(page=page, per_page=PER_PAGE)
 
     for task in tasks:
         if task.extended_deadline:
@@ -185,12 +197,19 @@ def index(page = 1):
         if current_user.is_admin and task.executor and task.executor_id not in creator_department:
             creator_department[task.executor_id] = task.executor.department
         elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor.id] = task.executor.department
-
+            creator_department[task.executor.id] = task.executor.department 
+    
     executors = User.query.all()
-    return render_template('index.html', tasks=tasks, executors=executors, 
-                           creator_department=creator_department, date=date, 
-                           calculate_penalty=calculate_penalty, unquote=unquote) 
+    return render_template('index.html',tasks=tasks,
+                                        task_count = task_count,
+                                        executors=executors, 
+                                        creator_department=creator_department,
+                                        date=date, 
+                                        calculate_penalty=calculate_penalty,
+                                        unquote=unquote,
+                                        page = page,
+                                        per_page = PER_PAGE,
+                                        sender_filter = sender_filter) 
 
 
 
