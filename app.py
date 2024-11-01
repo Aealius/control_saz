@@ -91,9 +91,10 @@ class Task(db.Model):
     
     
 '''
-@app.route('/')
+@app.route('/', methods = ['GET'])
 @login_required
 def index():
+    
     executor_filter = request.args.get('executor')
     creator_filter = request.args.get('creator') # новый фильтр
     month_filter = request.args.get('month') # новый фильтр
@@ -117,11 +118,12 @@ def index():
         out - исходящие таски    
     '''
     sender_filter = request.args.get('sn', 'in', type=str) #параметр для отправителей и получателей
+
     
     page = request.args.get('p', 1, type=int) #параметр для страницы
     
     
-    filter_data= {''}
+    #filter_data= {''}
     
     # Начальный фильтр, если user - admin
     if current_user.is_admin:
@@ -129,12 +131,25 @@ def index():
     else:
         # Если user - обычный пользователь, то видим только задачи где он - executor, а также те, которые он отправил
        tasks = Task.query.filter(
-            db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id)
-        )
+            db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))
+       
+    if sender_filter: #фильтрация по отправителю
+        if sender_filter == 'in':
+            tasks = tasks.filter_by(executor_id = current_user.id)
+        elif sender_filter == 'out':
+            tasks = tasks.filter_by(creator_id = current_user.id)
+        elif sender_filter == 'all':
+            if (not current_user.is_admin):
+                tasks = tasks.filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))#видит ВСЕ таски, а не только те, которые отправлены или назначены на приемную   
+        else:
+            tasks = tasks.filter(Task.executor_id == current_user.id)   
+       
+    #может видеть исполнителя, если только смотрит те, которые ОН ОТПРАВИЛ 
     if executor_filter:
         tasks = tasks.filter_by(executor_id=User.query.filter_by(department=executor_filter).first().id)
-        sender_filter = 'out'
     
+    
+    #может видеть создателя, если только смотрит те, которые ОТПРАВЛЕНЫ ЕМУ
     if creator_filter:
         creator = User.query.filter_by(department=creator_filter).first()
         if creator:
@@ -159,16 +174,7 @@ def index():
     if completed_filter:
         tasks = tasks.filter_by(completion_confirmed = True)
     
-    if sender_filter: #фильтрация по отправителю
-        if sender_filter == 'in':
-            tasks = tasks.filter_by(executor_id = current_user.id)
-        elif sender_filter == 'out':
-            tasks = tasks.filter_by(creator_id = current_user.id)
-        elif sender_filter == 'all':
-            tasks = Task.query.filter(
-                db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))
-        else:
-            tasks = tasks.filter(Task.executor_id == current_user.id)
+
                 
     #tasks = db.paginate(tasks, page = page, per_page = PER_PAGE)    
     
@@ -210,8 +216,6 @@ def index():
                                         page = page,
                                         per_page = PER_PAGE,
                                         sender_filter = sender_filter) 
-
-
 
 
 @app.route('/add', methods=['GET', 'POST'])

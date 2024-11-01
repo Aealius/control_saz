@@ -26,7 +26,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form method="GET" action="{{ url_for('index') }}">
+                <form method="GET" id="filterForm" action="{{ url_for('index') }}">
                     <div class="form-group">
                         <label for="executorFilter">Исполнитель:</label>
                         <select class="form-control" id="executorFilter" name="executor">
@@ -46,8 +46,8 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="monthFilter">Месяц:</label>
-                        <input type="month" class="form-control" id="monthFilter" name="month" value="{{ request.args.get('month') }}">
+                        <label for="monthFilter">Месяц <span class="text-muted">(формат - "год-месяц")</span>: </label>
+                        <input type="month" class="form-control" id="monthFilter" name="month">
                     </div>
                     <div class="form-group">
                         <label for="dateFilter">Дата:</label>
@@ -66,8 +66,13 @@
                                 Выполненные
                             </label>
                         </div>
-                    </div>    
-                    <button type="submit" class="btn btn-primary">Применить фильтр</button>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button id="submitFilterFormButton" type="submit" class="btn btn-primary">Применить фильтр</button>
+                        <a id="clearFilterHref" class="text-muted">Очистить фильтр</a>
+                    </div>   
+                    
+
                 </form>
             </div>
         </div>
@@ -350,6 +355,7 @@
         {%endif%}
         {%endif%}
     </div>
+    {% if task_count != 0 %}
     <nav aria-label="paging">
         <ul class="pagination justify-content-end">
             
@@ -370,6 +376,7 @@
           </li>
         </ul>
     </nav>
+    {%endif%}
 </div>
 
 
