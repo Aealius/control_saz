@@ -63,6 +63,8 @@ filterForm.addEventListener('submit', () => {
         if (input.value == '') input.disabled=true;
     });
 
+    let senderHiddenInput =  document.getElementById("hiddenSender");
+    senderHiddenInput.value = senderSelect.value;
 
 });
 

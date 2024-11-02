@@ -95,6 +95,16 @@ class Task(db.Model):
 @login_required
 def index():
     
+    FILTER_PARAM_KEYS = ['executor',
+                         'creator',
+                         'month',
+                         'date',
+                         'overdue',
+                         'completed',
+                         'sn']
+    
+    filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
+    
     executor_filter = request.args.get('executor')
     creator_filter = request.args.get('creator') # новый фильтр
     month_filter = request.args.get('month') # новый фильтр
@@ -121,8 +131,7 @@ def index():
 
     
     page = request.args.get('p', 1, type=int) #параметр для страницы
-    
-    
+
     #filter_data= {''}
     
     # Начальный фильтр, если user - admin
@@ -182,10 +191,12 @@ def index():
 
     tasks = tasks.options(db.joinedload(Task.executor)).order_by(
         Task.is_valid.asc(),
-        Task.completion_confirmed.asc(),
-        Task.deadline.asc() if not Task.is_бессрочно else Task.id 
+        Task.date_created.desc(),
+        Task.deadline.desc() if not Task.is_бессрочно else Task.id 
 
     ).paginate(page=page, per_page=PER_PAGE)
+    
+    
 
     for task in tasks:
         if task.extended_deadline:
@@ -214,8 +225,8 @@ def index():
                                         calculate_penalty=calculate_penalty,
                                         unquote=unquote,
                                         page = page,
-                                        per_page = PER_PAGE,
-                                        sender_filter = sender_filter) 
+                                        filter_params_dict = filter_params_dict,
+                                        per_page = PER_PAGE) 
 
 
 @app.route('/add', methods=['GET', 'POST'])
