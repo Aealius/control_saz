@@ -181,7 +181,8 @@
                 {% endif %}
             </td>
             <td>
-                {% if current_user.is_admin or (current_user.is_deputy and task.creator_id == current_user.id) %}
+                <!--кнопки редактирования и удаления-->
+                {% if current_user.is_admin or task.creator_id == current_user.id %}
                 <div class="btn-group" role="group">
                     <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm" data-toggle="tooltip"
                         title="Редактировать">
@@ -292,7 +293,7 @@
                     data-target="#confirmModal{{ task.id }}">
                     Подтвердить выполнение
                 </button>
-
+                <!--модалка на подтверждение выполнения задачи-->
                 <div class="modal fade" id="confirmModal{{ task.id }}" tabindex="-1" role="dialog"
                     aria-labelledby="confirmModalLabel{{ task.id }}" aria-hidden="true">
                     <div class="modal-dialog" role="document">
