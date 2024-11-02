@@ -198,11 +198,12 @@ def add():
         for_review = request.form.get('for_review') == 'on'
         file = request.files.get('file')
 
+        creator_file_path = ''
         # Сохраняем файл только один раз
         if file and file.filename != '':
             filename = file.filename
             file.save(os.path.join(task_uploads_folder, filename))
-            creator_file_path = os.path.join('uploads', task_id, 'creator', filename)
+            creator_file_path = os.path.join(task_id, 'creator', filename)
             creator_file_path = creator_file_path.replace('\\', '/')
 
         for executor in executors_for_task:
@@ -239,6 +240,7 @@ def add_memo():
         description = request.form['description']
         file = request.files.get('file') #  Получаем файл вне цикла
 
+        creator_file_path =''
         # Сохраняем файл только один раз
         if file and file.filename != '':
             filename = file.filename  # Оригинальное имя
@@ -259,7 +261,7 @@ def add_memo():
 
             # Сохранение файла
             file.save(os.path.join(memo_uploads_folder, filename)) 
-            creator_file_path = os.path.join('uploads', task_id, 'creator', filename)
+            creator_file_path = os.path.join(task_id, 'creator', filename)
             creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
 
         for executor_id in selected_executor_id:
@@ -346,7 +348,7 @@ def complete(task_id):
 
             file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем с оригинальным именем!
 
-            task.attached_file = os.path.join('uploads', str(task_id), 'executor', filename) #  Оригинальное имя в базе
+            task.attached_file = os.path.join(str(task_id), 'executor', filename) #  Оригинальное имя в базе
             task.attached_file = task.attached_file.replace('\\', '/')
             
 
