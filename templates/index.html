@@ -2,16 +2,21 @@
 {% block content %}
 <h1>Список задач</h1>
 
-<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#filterModal">
-    Фильтрация
-</button>
-{% if current_user.is_admin or current_user.is_deputy %}
-<a href="{{ url_for('add') }}" class="btn btn-success">Добавить задачу</a>
-{% endif %}
 
-<a href="{{ url_for('add_memo') }}" class="btn btn-success">Создать служебную записку</a>
+<!--панель кнопок-->
+<div class="d-flex mb-2"> 
+    <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#filterModal">
+        Фильтрация
+    </button>
+    {% if current_user.is_admin or current_user.is_deputy %}
+    <a href="{{ url_for('add') }}" class="btn btn-success mr-2">Добавить задачу</a>
+    {% endif %}
+    
+    <a href="{{ url_for('add_memo') }}" class="btn btn-success mr-2">Создать служебную записку</a>
+</div>
 
-<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+<!--модалка на фильтрацию-->
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true"> 
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -48,21 +53,20 @@
                         <label for="dateFilter">Дата:</label>
                         <input type="date" class="form-control" id="dateFilter" name="date" value="{{ request.args.get('date') }}">
                     </div>
-
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="yes" id="overdueFilter" name="overdue"  {% if request.args.get('overdue') %}checked{% endif %}>
-                        <label class="form-check-label" for="overdueFilter">
-                            Просроченные
-                        </label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="yes" id="completedFilter" name="completed" {% if request.args.get('completed') %}checked{% endif %}>
-                        <label class="form-check-label" for="completedFilter">
-                            Выполненные
-                        </label>
-                    </div>
-
-
+                    <div class="mb-4">
+                        <div class="form-check-inline mr-4">
+                            <input class="form-check-input" type="checkbox" value="yes" id="overdueFilter" name="overdue"  {% if request.args.get('overdue') %}checked{% endif %}>
+                            <label class="form-check-label" for="overdueFilter">
+                                Просроченные
+                            </label>
+                        </div>
+                        <div class="form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="yes" id="completedFilter" name="completed" {% if request.args.get('completed') %}checked{% endif %}>
+                            <label class="form-check-label" for="completedFilter">
+                                Выполненные
+                            </label>
+                        </div>
+                    </div>    
                     <button type="submit" class="btn btn-primary">Применить фильтр</button>
                 </form>
             </div>
@@ -70,6 +74,8 @@
     </div>
 </div>
 
+
+<!--таблица с задачами-->
 <table class="table table-bordered">
     <thead>
         <tr>
@@ -127,7 +133,7 @@
                 {% elif task.completion_confirmed %}
                 <span class="badge badge-success">Выполнено</span>
                 {% elif not task.is_valid %}
-                <span class="badge badge-secondary">Не действительна</span>
+                <span class="badge badge-secondary">Недействительна</span>
                 {% elif task.completion_note and not task.completion_confirmed %}
                 <span class="badge badge-info">На проверке</span>
                 {% elif task.is_overdue() %}

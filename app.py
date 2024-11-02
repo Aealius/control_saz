@@ -12,7 +12,7 @@ import shutil
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@/control_saz'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345@localhost/control_saz'
 app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
@@ -171,7 +171,7 @@ def add():
 
     executors = User.query.all()
     if request.method == 'POST':
-        selected_executors = request.form.getlist('executor[]')
+        selected_executors = request.form.get('executor[]')
 
         # Генерируем task_id для новой задачи
         task_id = str(len(Task.query.all()) + 1)
@@ -185,7 +185,7 @@ def add():
         else:
             # Добавляем выбранных пользователей как исполнителей
             executors_for_task = User.query.filter(
-                User.id.in_([int(executor) for executor in selected_executors])
+                User.id.in_([int(executor) for executor in selected_executors.split(',')])
             ).all()
             task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator')
             os.makedirs(task_uploads_folder, exist_ok=True)
@@ -234,13 +234,16 @@ import shutil
 def add_memo():
     executors = User.query.all()
     if request.method == 'POST':
-        selected_executor_id = request.form.getlist('executor[]')  #  Получаем ID выбранного исполнителя 
+        selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя 
         if 'all' in selected_executor_id:
             selected_executor_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
+        else:
+            selected_executor_id = [int(executor) for executor in selected_executor_id.split(',')]
         description = request.form['description']
         file = request.files.get('file') #  Получаем файл вне цикла
 
         creator_file_path =''
+        creator_file_path = ''
         # Сохраняем файл только один раз
         if file and file.filename != '':
             filename = file.filename  # Оригинальное имя
@@ -281,6 +284,8 @@ def add_memo():
         return redirect(url_for('index'))
 
     return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
+
+
 @app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):
