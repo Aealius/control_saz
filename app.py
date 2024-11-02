@@ -20,9 +20,17 @@ migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+
 UPLOAD_FOLDER = 'uploads'
+PER_PAGE = 20
+
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
+
+
+
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -78,32 +86,79 @@ class Task(db.Model):
         return self.extended_deadline or self.deadline or date(9999, 12, 31)
 
 
-
-@app.route('/')
+'''
+    начальная фильтрация для всех
+    
+    
+'''
+@app.route('/', methods = ['GET'])
 @login_required
 def index():
+    
+    FILTER_PARAM_KEYS = ['executor',
+                         'creator',
+                         'month',
+                         'date',
+                         'overdue',
+                         'completed',
+                         'sn']
+    
+    filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
+    
     executor_filter = request.args.get('executor')
     creator_filter = request.args.get('creator') # новый фильтр
     month_filter = request.args.get('month') # новый фильтр
     date_filter = request.args.get('date')
     overdue_filter = request.args.get('overdue') # новый фильтр
     completed_filter = request.args.get('completed') # новый фильтр
+    
+    '''
+    варианты значения параметра st:
+        in_work - в работе
+        completance_check - на проверке
+        completed - выполненные
+        overdue - просроченные
+        for_information - для ознакомления
+    '''
+    #status_filter = request.args.get('st') #параметр для табов (табов пока нет)
+    
+    '''
+    варианты значения параметра sn:
+        in - входящие таски
+        out - исходящие таски    
+    '''
+    sender_filter = request.args.get('sn', 'in', type=str) #параметр для отправителей и получателей
 
+    
+    page = request.args.get('p', 1, type=int) #параметр для страницы
+
+    #filter_data= {''}
+    
     # Начальный фильтр, если user - admin
     if current_user.is_admin:
-        tasks = Task.query 
-    # Начальный фильтр, если user - deputy
-    elif current_user.is_deputy:
-        tasks = Task.query.filter(
-            db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id)
-        )
+        tasks = Task.query
     else:
-        # Если user - обычный пользователь, то видим только задачи где он - executor
-        tasks = Task.query.filter_by(executor_id=current_user.id)
-
+        # Если user - обычный пользователь, то видим только задачи где он - executor, а также те, которые он отправил
+       tasks = Task.query.filter(
+            db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))
+       
+    if sender_filter: #фильтрация по отправителю
+        if sender_filter == 'in':
+            tasks = tasks.filter_by(executor_id = current_user.id)
+        elif sender_filter == 'out':
+            tasks = tasks.filter_by(creator_id = current_user.id)
+        elif sender_filter == 'all':
+            if (not current_user.is_admin):
+                tasks = tasks.filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))#видит ВСЕ таски, а не только те, которые отправлены или назначены на приемную   
+        else:
+            tasks = tasks.filter(Task.executor_id == current_user.id)   
+       
+    #может видеть исполнителя, если только смотрит те, которые ОН ОТПРАВИЛ 
     if executor_filter:
         tasks = tasks.filter_by(executor_id=User.query.filter_by(department=executor_filter).first().id)
     
+    
+    #может видеть создателя, если только смотрит те, которые ОТПРАВЛЕНЫ ЕМУ
     if creator_filter:
         creator = User.query.filter_by(department=creator_filter).first()
         if creator:
@@ -127,14 +182,21 @@ def index():
 
     if completed_filter:
         tasks = tasks.filter_by(completion_confirmed = True)
+    
+
+                
+    #tasks = db.paginate(tasks, page = page, per_page = PER_PAGE)    
+    
+    task_count  = tasks.count();  
 
     tasks = tasks.options(db.joinedload(Task.executor)).order_by(
         Task.is_valid.asc(),
-        Task.completion_confirmed.asc(),
-        Task.deadline.asc() if not Task.is_бессрочно else Task.id 
+        Task.date_created.desc(),
+        Task.deadline.desc() if not Task.is_бессрочно else Task.id 
 
-    ).all()
-
+    ).paginate(page=page, per_page=PER_PAGE)
+    
+    
 
     for task in tasks:
         if task.extended_deadline:
@@ -152,14 +214,19 @@ def index():
         if current_user.is_admin and task.executor and task.executor_id not in creator_department:
             creator_department[task.executor_id] = task.executor.department
         elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor.id] = task.executor.department
-
+            creator_department[task.executor.id] = task.executor.department 
+    
     executors = User.query.all()
-    return render_template('index.html', tasks=tasks, executors=executors, 
-                           creator_department=creator_department, date=date, 
-                           calculate_penalty=calculate_penalty, unquote=unquote) 
-
-
+    return render_template('index.html',tasks=tasks,
+                                        task_count = task_count,
+                                        executors=executors, 
+                                        creator_department=creator_department,
+                                        date=date, 
+                                        calculate_penalty=calculate_penalty,
+                                        unquote=unquote,
+                                        page = page,
+                                        filter_params_dict = filter_params_dict,
+                                        per_page = PER_PAGE) 
 
 
 @app.route('/add', methods=['GET', 'POST'])

@@ -26,7 +26,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form method="GET" action="{{ url_for('index') }}">
+                <form method="GET" id="filterForm" action="{{ url_for('index', p=1, **filter_params_dict) }}">
                     <div class="form-group">
                         <label for="executorFilter">Исполнитель:</label>
                         <select class="form-control" id="executorFilter" name="executor">
@@ -46,8 +46,8 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="monthFilter">Месяц:</label>
-                        <input type="month" class="form-control" id="monthFilter" name="month" value="{{ request.args.get('month') }}">
+                        <label for="monthFilter">Месяц <span class="text-muted">(формат - "год-месяц")</span>: </label>
+                        <input type="month" class="form-control" id="monthFilter" name="month">
                     </div>
                     <div class="form-group">
                         <label for="dateFilter">Дата:</label>
@@ -66,13 +66,46 @@
                                 Выполненные
                             </label>
                         </div>
-                    </div>    
-                    <button type="submit" class="btn btn-primary">Применить фильтр</button>
+                        <input type="hidden" id="hiddenSender" name="sn" value="">
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button id="submitFilterFormButton" type="submit" class="btn btn-primary">Применить фильтр</button>
+                        <a id="clearFilterHref" class="text-muted">Очистить фильтр</a>
+                    </div>   
+                    
+
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+    <!--Табы для навигации по статусам задач -->
+    <!--<ul class="nav nav-tabs" id="status-filter-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <a class="nav-link active" id="in-work-tab" href="{{ url_for('index',st=in_work) }}" aria-current="page">В работе</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" id="completion-check-tab" href="{{ url_for('index',st=completance_check) }}">На проверке</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" id="completed-tab" href="{{ url_for('index', st=completed) }}">Выполненные</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" id="overdue-tab" href="{{ url_for('index', st=overdue) }}">Просроченные</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="for-information-tab" href="{{ url_for('index', st=for_information) }}">Для ознакомления</a>
+        </li>
+    </ul>-->
+
+    <!--Фильтрация по dходящиv и исходящим задачам-->
+    <select id="select-task-sender" class="selectpicker show-tick my-2">
+        <option value="in">Входящие</option>
+        <option value="out">Исходящие</option>
+        <option value="all">Все</option>
+    </select>
+    
 
 
 <!--таблица с задачами-->
@@ -306,6 +339,50 @@
     </tbody>
 </table>
 
+
+<div class="d-flex justify-content-between">
+    <div>
+        {% if per_page > task_count %}
+        Страница {{page}} | Записи 1-{{task_count}} из {{task_count}}
+        {%else%}
+        {%if page == 1%}
+        Страница {{page}} | Записи 1-{{page * per_page }} из {{task_count}}
+        {%else%}
+        {%if page * per_page > task_count%}
+        Страница {{page}} | Записи {{(page-1) * per_page + 1}}-{{task_count}} из {{task_count}}
+        {%else%}
+        Страница {{page}} | Записи {{(page-1) * per_page + 1}}-{{page * per_page }} из {{task_count}}
+        {%endif%}
+        {%endif%}
+        {%endif%}
+    </div>
+    {% if task_count != 0 %}
+    <nav aria-label="paging">
+        <ul class="pagination justify-content-end">
+            
+          <li class="page-item {% if page == 1 %} disabled {% endif %}">
+            <a class="page-link" href="{{url_for('index', p=page-1, **filter_params_dict)}}">Предыдущая</a>
+          </li>
+          {% for page_number in tasks.iter_pages(right_current=2)%}
+          {% if page_number == None %}
+          <li class="page-item disabled"><a class="page-link">...</a></li>
+          {%elif page_number == page%}
+          <li class="page-item active"><a class="page-link">{{page_number}}</a></li>
+          {%else %}
+          <li class="page-item"><a class="page-link" href="{{url_for('index', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
+          {% endif %}
+          {% endfor %}
+          <li class="page-item {% if page == tasks.pages %}disabled{% endif %}">
+            <a class="page-link" href="{{url_for('index', p=page+1, **filter_params_dict)}}">Следующая</a>
+          </li>
+        </ul>
+    </nav>
+    {%endif%}
+</div>
+
+
+
+<script src="{{ url_for('static', filename='src/js/index.js') }}"></script>
 <script>
     $(function () {
         $('[data-toggle="tooltip"]').tooltip()
