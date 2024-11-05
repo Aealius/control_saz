@@ -134,10 +134,18 @@
             <td>{{ creator_department.get(task.creator_id) }}</td>
             <td>
                 {% if task.date_created %}
-                {{ task.date_created.strftime('%d.%m.%Y') }}
+                {% if task.date_created.time() == time.fromisoformat('00:00:00') %}
+                <div>{{ task.date_created.strftime('%d.%m.%Y') }}</div>
+                {% else %}
+                <div>{{ task.date_created.strftime('%d.%m.%Y %H:%M') }}</div>
+                {%endif%}
                 {% else %}
                 -
                 {% endif %}
+
+                {% if task.edit_datetime %}
+                    <div class="text-muted font-italic" style="font-size:smaller">Отредактировано: {{task.edit_datetime.strftime('%d.%m.%Y %H:%M')}}</div>
+                {%endif%}
             </td>
             <td>
                 {% if task.is_бессрочно %}

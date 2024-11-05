@@ -1,7 +1,7 @@
 import os
 from flask import (Flask, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint)
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, date
+from datetime import datetime, date, time
 from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -65,9 +65,10 @@ class Task(db.Model):
     executor = db.relationship('User', backref=db.backref('tasks', lazy=True), foreign_keys=[executor_id])
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     creator = db.relationship('User', backref=db.backref('created_tasks', lazy=True), foreign_keys=[creator_id])
-    date_created = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #теперь datetime
     deadline = db.Column(db.Date, nullable=True)
     extended_deadline = db.Column(db.Date, nullable=True)
+    edit_datetime = db.Column(db.DateTime, nullable=True) #поле, запоминающее дату последнего редактирования
     description = db.Column(db.Text, nullable=False)
     is_valid = db.Column(db.Boolean, default=True)
     completion_note = db.Column(db.Text)
@@ -122,6 +123,8 @@ def index():
     '''
     #status_filter = request.args.get('st') #параметр для табов (табов пока нет)
     
+    
+    
     '''
     варианты значения параметра sn:
         in - входящие таски
@@ -149,7 +152,7 @@ def index():
             tasks = tasks.filter_by(creator_id = current_user.id)
         elif sender_filter == 'all':
             if (not current_user.is_admin):
-                tasks = tasks.filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))#видит ВСЕ таски, а не только те, которые отправлены или назначены на приемную   
+                tasks = tasks.filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))#админ видит ВСЕ таски, а не только те, которые отправлены или назначены на приемную   
         else:
             tasks = tasks.filter(Task.executor_id == current_user.id)   
        
@@ -182,7 +185,6 @@ def index():
 
     if completed_filter:
         tasks = tasks.filter_by(completion_confirmed = True)
-    
 
                 
     #tasks = db.paginate(tasks, page = page, per_page = PER_PAGE)    
@@ -195,8 +197,6 @@ def index():
         Task.deadline.desc() if not Task.is_бессрочно else Task.id 
 
     ).paginate(page=page, per_page=PER_PAGE)
-    
-    
 
     for task in tasks:
         if task.extended_deadline:
@@ -221,7 +221,9 @@ def index():
                                         task_count = task_count,
                                         executors=executors, 
                                         creator_department=creator_department,
-                                        date=date, 
+                                        date=date,
+                                        datetime = datetime,
+                                        time = time,
                                         calculate_penalty=calculate_penalty,
                                         unquote=unquote,
                                         page = page,
@@ -236,6 +238,9 @@ def add():
         flash('У вас нет прав для создания задач.', 'danger')
         return redirect(url_for('index'))
 
+    
+    
+    
     executors = User.query.all()
     if request.method == 'POST':
         selected_executors = request.form.get('executor[]')
@@ -257,13 +262,14 @@ def add():
             task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator')
             os.makedirs(task_uploads_folder, exist_ok=True)
 
-        date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
+        date_created = datetime.combine(datetime.strptime(request.form['date_created'], '%Y-%m-%d'), datetime.now().time())
         is_бессрочно = request.form.get('is_бессрочно') == 'on'
         deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not is_бессрочно else None
         description = request.form['description']
         is_valid = request.form.get('is_valid') == 'on'
         for_review = request.form.get('for_review') == 'on'
         file = request.files.get('file')
+
 
         creator_file_path = ''
         # Сохраняем файл только один раз
@@ -309,7 +315,6 @@ def add_memo():
         description = request.form['description']
         file = request.files.get('file') #  Получаем файл вне цикла
 
-        creator_file_path =''
         creator_file_path = ''
         # Сохраняем файл только один раз
         if file and file.filename != '':
@@ -360,29 +365,51 @@ def edit(task_id):
     if task.creator_id != current_user.id and not current_user.is_admin:  # Проверка прав
         flash('У вас нет прав для редактирования этой задачи.', 'danger')
         return redirect(url_for('index'))
+    
+    #previous_file_path = task.creator_file
 
     executors = User.query.all()
     if request.method == 'POST':
         task.executor_id = request.form['executor']
-        task.date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
         task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
         task.description = request.form['description']
         task.is_valid = request.form.get('is_valid') == 'on'
         extend_deadline = request.form.get('extend_deadline')
+        task.edit_datetime = datetime.now()
+        task.is_бессрочно = request.form.get('is_бессрочно')
+        
+        file = request.form.get('file') #получаем у формы файл (вдруг решили изменить его)
+        
+        #можно было написать это все дело придерживаясь DRY, но мне лень (¬‿¬)
+        #так что пусть будет в качестве TODO
+        if file and file.filename != '':
+            filename = file.filename  # Оригинальное имя
+                
+            memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+
+            # Сохранение файла
+            file.save(os.path.join(memo_uploads_folder, filename)) 
+            creator_file_path = os.path.join(task_id, 'creator', filename)
+            creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
+        
         if extend_deadline:
             try:
                 extended_deadline_date = datetime.strptime(request.form['extended_deadline'], '%Y-%m-%d').date()
                 task.extended_deadline = extended_deadline_date
             except ValueError:
                 flash("Некорректный формат даты продления", "danger")
-                return render_template('edit.html', task=task, executors=executors, datetime=datetime)
-
-
+                return render_template('edit.html', task=task,
+                                                    executors=executors,
+                                                    current_user = current_user,
+                                                    datetime=datetime)
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
         return redirect(url_for('index'))
 
-    return render_template('edit.html', task=task, executors=executors, datetime=datetime)
+    return render_template('edit.html', task=task,
+                                        executors=executors,
+                                        current_user = current_user,
+                                        datetime=datetime)
 
 
 
@@ -671,9 +698,8 @@ def calculate_penalty(task):
 
 
 app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Blueprint
-
-
-
+ 
+    
 
 if __name__ == '__main__':
     with app.app_context():
