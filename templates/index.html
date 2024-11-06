@@ -149,11 +149,11 @@
             </td>
             <td>
                 {% if task.is_бессрочно %}
-                Бессрочно
+                <div>Бессрочно</div>
                 {% elif task.deadline %} 
-                {{ task.deadline.strftime('%d.%m.%Y') }}
+                <div>{{ task.deadline.strftime('%d.%m.%Y') }}</div>
                 {% if task.extended_deadline %}
-<br><small class="text-muted">Продлена до: {{ task.extended_deadline.strftime('%d.%m.%Y') }}</small>
+                <div class="text-muted font-italic" style="font-size:smaller">Продлена до: {{ task.extended_deadline.strftime('%d.%m.%Y') }}</div>
 {% endif %}
                 {% else %}
                 -

@@ -238,9 +238,6 @@ def add():
         flash('У вас нет прав для создания задач.', 'danger')
         return redirect(url_for('index'))
 
-    
-    
-    
     executors = User.query.all()
     if request.method == 'POST':
         selected_executors = request.form.get('executor[]')
@@ -371,40 +368,43 @@ def edit(task_id):
     executors = User.query.all()
     if request.method == 'POST':
         task.executor_id = request.form['executor']
-        task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
         task.description = request.form['description']
         task.is_valid = request.form.get('is_valid') == 'on'
-        extend_deadline = request.form.get('extend_deadline')
         task.edit_datetime = datetime.now()
-        task.is_бессрочно = request.form.get('is_бессрочно')
+        task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
+        file = request.files.get('file') #получаем у формы файл (вдруг решили изменить его)
         
-        file = request.form.get('file') #получаем у формы файл (вдруг решили изменить его)
+        if (current_user.is_admin):
+            task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
+            extend_deadline = request.form.get('extend_deadline')
+            if extend_deadline:
+                try:
+                    extended_deadline_date = datetime.strptime(request.form['extended_deadline'], '%Y-%m-%d').date()
+                    task.extended_deadline = extended_deadline_date
+                except ValueError:
+                    flash("Некорректный формат даты продления", "danger")
+                    return render_template('edit.html', task=task,
+                                                        executors=executors,
+                                                        current_user = current_user,
+                                                        datetime=datetime)
         
-        #можно было написать это все дело придерживаясь DRY, но мне лень (¬‿¬)
-        #так что пусть будет в качестве TODO
         if file and file.filename != '':
             filename = file.filename  # Оригинальное имя
+            task_id = str(task_id)
                 
             memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+            os.makedirs(memo_uploads_folder, exist_ok=True)
 
             # Сохранение файла
             file.save(os.path.join(memo_uploads_folder, filename)) 
             creator_file_path = os.path.join(task_id, 'creator', filename)
             creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
+            task.creator_file = creator_file_path
         
-        if extend_deadline:
-            try:
-                extended_deadline_date = datetime.strptime(request.form['extended_deadline'], '%Y-%m-%d').date()
-                task.extended_deadline = extended_deadline_date
-            except ValueError:
-                flash("Некорректный формат даты продления", "danger")
-                return render_template('edit.html', task=task,
-                                                    executors=executors,
-                                                    current_user = current_user,
-                                                    datetime=datetime)
+        
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
-        return redirect(url_for('index'))
+        #return redirect(url_for('index'))
 
     return render_template('edit.html', task=task,
                                         executors=executors,
