@@ -192,7 +192,7 @@ def index():
     task_count  = tasks.count();  
 
     tasks = tasks.options(db.joinedload(Task.executor)).order_by(
-        Task.is_valid.asc(),
+        Task.is_valid.desc(),
         Task.date_created.desc(),
         Task.deadline.desc() if not Task.is_бессрочно else Task.id 
 
@@ -240,6 +240,9 @@ def add():
 
     executors = User.query.all()
     if request.method == 'POST':
+        sn = request.form['sn']
+        p = request.form['p']
+        
         selected_executors = request.form.get('executor[]')
 
         # Генерируем task_id для новой задачи
@@ -291,7 +294,7 @@ def add():
             db.session.commit()
 
         flash('Задача успешно добавлена!', 'success')
-        return redirect(url_for('index'))
+        return redirect(url_for('index', sn=sn, p = p))
 
     return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
 
@@ -303,6 +306,10 @@ import shutil
 @login_required
 def add_memo():
     executors = User.query.all()
+    
+    sn = request.form['sn']
+    p = request.form['p']
+        
     if request.method == 'POST':
         selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя 
         if 'all' in selected_executor_id:
@@ -350,7 +357,7 @@ def add_memo():
             db.session.commit()
 
         flash('Служебная записка успешно отправлена!', 'success')
-        return redirect(url_for('index'))
+        return redirect(url_for('index', sn = sn, p = p))
 
     return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
 
@@ -374,6 +381,11 @@ def edit(task_id):
         task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
         file = request.files.get('file') #получаем у формы файл (вдруг решили изменить его)
         
+        #параметры запроса
+        
+        sn = request.form['sn']
+        p = request.form['p']
+                
         if (current_user.is_admin):
             task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
             extend_deadline = request.form.get('extend_deadline')
@@ -404,7 +416,7 @@ def edit(task_id):
         
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
-        #return redirect(url_for('index'))
+        return redirect(url_for('index', sn = sn, p = p))
 
     return render_template('edit.html', task=task,
                                         executors=executors,

@@ -3,7 +3,7 @@
 {% block content %}
     <h1>Редактировать задачу</h1>
 
-    <form method="POST" enctype="multipart/form-data">
+    <form id="editTaskForm" method="POST" enctype="multipart/form-data">
         <div class="form-group">
             <label for="executor">Исполнитель:</label>
             <select class="form-control" id="executor" name="executor" required>
@@ -42,8 +42,11 @@
         </div>
         <!--важно оставить возможность прикреплять файлы при редактировании-->
         <div class="input-group mb-3 upload-file-input">
-            <label for="file" class="input-group-text">Прикрепить файл:</label>
-           <input type="file" value= "{{previous_file_path}}" class="form-control" id="file" name="file" aria-describedby="inputGroupFile" aria-label="Обзор">
+            <div class="input-group upload-file-input">
+                <label for="file" class="input-group-text">Прикрепить файл:</label>
+                <input type="file" value= "{{previous_file_path}}" class="form-control" id="file" name="file" aria-describedby="inputGroupFile" aria-label="Обзор">
+            </div>
+            <div class="text-muted" style="font-size:small">Если Вы желаете оставить файл прежним, то оставьте данное поле пустым</div>
        </div>
         <div class="form-group form-check">
             <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid"
@@ -60,6 +63,9 @@
             <input type="date" class="form-control" id="extended_deadline" name="extended_deadline" value="{% if task.extended_deadline %}{{ task.extended_deadline.strftime('%Y-%m-%d') }}{% endif %}">
         </div>
         {%endif%}
+
+        <input type="hidden" id="sn" name="sn" value="">
+        <input type="hidden" id="p" name="p" value="">
         
         
         <button type="submit" class="btn btn-primary">Сохранить</button>
@@ -69,6 +75,7 @@
         const extendDeadlineCheckbox = document.getElementById('extend_deadline');
         const extendedDeadlineField = document.getElementById('extended_deadline_field');
         const fileUploadInput = document.getElementById('file')
+        const editTaskForm = document.getElementById('editTaskForm')
     
         
         function toggleDeadline() {
@@ -110,6 +117,14 @@
             {% endif %}
 
             toggleDeadline();
+        });
+
+        editTaskForm.addEventListener('submit', () => {
+            let pInput = document.getElementById("p");
+            let snInput = document.getElementById("sn");
+
+            pInput.value = sessionStorage.getItem('p');
+            snInput.value = sessionStorage.getItem('sn');
         });
 
     </script>
