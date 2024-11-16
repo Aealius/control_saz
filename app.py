@@ -220,6 +220,7 @@ def add():
                 deadline=deadline,
                 description=description,
                 is_valid=is_valid,
+                is_бессрочно=is_бессрочно,
                 creator_id=current_user.id,
                 for_review=for_review,
                 creator_file=creator_file_path  
