@@ -84,4 +84,14 @@ button.archive:hover{
     z-index: 2;
 }
 
+/* Стиль для сокращения длинной ссылки */
+.long-href {
+    display: inline-block;
+    max-width: 10em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
 
