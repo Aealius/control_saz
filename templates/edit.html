@@ -3,7 +3,7 @@
 {% block content %}
     <h1>Редактировать задачу</h1>
 
-    <form method="POST">
+    <form id="editTaskForm" method="POST" enctype="multipart/form-data">
         <div class="form-group">
             <label for="executor">Исполнитель:</label>
             <select class="form-control" id="executor" name="executor" required>
@@ -17,24 +17,43 @@
         <div class="form-group">
             <label for="date_created">Дата создания:</label>
             <input type="date" class="form-control" id="date_created" name="date_created"
-                   value="{{ task.date_created.strftime('%Y-%m-%d') }}" required>
+                   value="{{ task.date_created.strftime('%Y-%m-%d') }}" required disabled>
         </div>
-        <div class="form-group">
+        {% if current_user.is_admin%} <!--только  админ может продлевать(ставить) срок на задания-->
+        <div id = "deadlineField" class="form-group">
             <label for="deadline">Срок:</label>
             <input type="date" class="form-control" id="deadline" name="deadline"
                    value="{% if task.deadline %}{{ task.deadline.strftime('%Y-%m-%d') }}{% endif %}" required>
                    {#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #}
+        </div>
+        {%endif%}
+        <div class="form-group form-check">
+            {%if current_user.is_admin%}
+            <input type="checkbox" class="form-check-input" id="is_бессрочно" name="is_бессрочно" onchange="toggleDeadline()">
+            {%else%}
+            <input type="checkbox" class="form-check-input" id="is_бессрочно" name="is_бессрочно" disabled checked>
+            {%endif%}
+            <label class="form-check-label" for="is_бессрочно">Бессрочно</label>
         </div>
         <div class="form-group">
             <label for="description">Описание:</label>
             <textarea class="form-control" id="description" name="description"
                       required>{{ task.description }}</textarea>
         </div>
+        <!--важно оставить возможность прикреплять файлы при редактировании-->
+        <div class="input-group mb-3 upload-file-input">
+            <div class="input-group upload-file-input">
+                <label for="file" class="input-group-text">Прикрепить файл:</label>
+                <input type="file" value= "{{previous_file_path}}" class="form-control" id="file" name="file" aria-describedby="inputGroupFile" aria-label="Обзор">
+            </div>
+            <div class="text-muted" style="font-size:small">Если Вы желаете оставить файл прежним, то оставьте данное поле пустым</div>
+       </div>
         <div class="form-group form-check">
             <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid"
                    {% if task.is_valid %}checked{% endif %}>
             <label class="form-check-label" for="is_valid">Действителен</label>
         </div>
+        {%if current_user.is_admin%}
         <div class="form-group form-check">
             <input type="checkbox" class="form-check-input" id="extend_deadline" name="extend_deadline">
             <label class="form-check-label" for="extend_deadline">Продлить срок</label>
@@ -43,18 +62,49 @@
             <label for="extended_deadline">Продлить до:</label>
             <input type="date" class="form-control" id="extended_deadline" name="extended_deadline" value="{% if task.extended_deadline %}{{ task.extended_deadline.strftime('%Y-%m-%d') }}{% endif %}">
         </div>
+        {%endif%}
+
+        <input type="hidden" id="sn" name="sn" value="">
+        <input type="hidden" id="p" name="p" value="">
+        
+        
         <button type="submit" class="btn btn-primary">Сохранить</button>
     </form>
 
     <script>
         const extendDeadlineCheckbox = document.getElementById('extend_deadline');
         const extendedDeadlineField = document.getElementById('extended_deadline_field');
+        const fileUploadInput = document.getElementById('file')
+        const editTaskForm = document.getElementById('editTaskForm')
     
+        
+        function toggleDeadline() {
+            let deadlineField = document.getElementById('deadlineField');
+            let deadlineInput = document.getElementById('deadline');
+            let бессрочноCheckbox = document.getElementById('is_бессрочно');
+    
+            if (бессрочноCheckbox.checked) {
+                deadlineField.style.display = 'none';
+                deadlineInput.required = false;  // Снять требование при бессрочной задаче
+                deadlineInput.value = ''; // Очистить значение поля срока
+                extendDeadlineCheckbox.disabled = true;
+                extendDeadlineCheckbox.checked = false;
+                extendedDeadlineField.style.display = 'none';
+            }
+            else {
+                deadlineField.style.display = 'block';
+                deadlineInput.required = true;   // Вернуть требование
+                extendDeadlineCheckbox.disabled = false;
+            }
+        }
+        
         extendDeadlineCheckbox.addEventListener('change', function() {
             if (this.checked) {
                 extendedDeadlineField.style.display = 'block';
+
             } else {
                 extendedDeadlineField.style.display = 'none';
+
             }
         });
     
@@ -65,6 +115,17 @@
             document.getElementById('extend_deadline').checked = true;
             document.getElementById('extended_deadline_field').style.display = 'block';
             {% endif %}
+
+            toggleDeadline();
         });
+
+        editTaskForm.addEventListener('submit', () => {
+            let pInput = document.getElementById("p");
+            let snInput = document.getElementById("sn");
+
+            pInput.value = sessionStorage.getItem('p');
+            snInput.value = sessionStorage.getItem('sn');
+        });
+
     </script>
 {% endblock %}

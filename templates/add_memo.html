@@ -3,12 +3,10 @@
 {% block content %}
 <h1>Служебная записка</h1>
 
-<form method="POST" enctype="multipart/form-data">
+<form id="addMemoForm" method="POST" enctype="multipart/form-data">
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
         <select class="selectpicker show-tick form-control" id="executor" name="executor" data-live-search="true" data-actions-box="true" multiple onchange="updateSelectedExecutors()">
-            <!--<option value="" selected>Не выбрано</option> 
-            <option value="all" data-all="true">Всем</option>-->
             {% for executor in executors %}
                 {% if executor.id != current_user.id %}
                     <option value="{{ executor.id }}">{{ executor.department }}</option>
@@ -17,21 +15,16 @@
         </select>
         <div id="selected-executors" class="mt-2"></div>
     </div>
-
-
-
-
     <div class="form-group">
         <label for="description">Описание:</label>
         <textarea class="form-control" id="description" name="description" required></textarea>
-    </div>
-
- 
+    </div> 
     <div class="input-group mb-3 upload-file-input">
         <label for="file" class="input-group-text">Прикрепить файл:</label>
        <input type="file" class="form-control" id="file" name="file" aria-describedby="inputGroupFile" aria-label="Обзор">
    </div>
-
+   <input type="hidden" id="sn" name="sn" value="">
+   <input type="hidden" id="p" name="p" value="">
     <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
 
@@ -40,6 +33,16 @@
     let allSelected = false; //флаг, указывающий выбрано ли всем
     let executorSelect = document.getElementById('executor');
     let selectedExecutorsDiv = document.getElementById('selected-executors');
+
+    let addMemoForm = document.getElementById("addMemoForm");
+
+    addMemoForm.addEventListener('submit', () => {
+        let pInput = document.getElementById("p");
+        let snInput = document.getElementById("sn");
+
+        pInput.value = sessionStorage.getItem('p');
+        snInput.value = sessionStorage.getItem('sn');
+    });
 
     function updateSelectedExecutors() {
         let executorSelectedOptions = executorSelect.selectedOptions; 

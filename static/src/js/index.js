@@ -26,15 +26,16 @@ document.addEventListener('DOMContentLoaded', () => { //задает значе�
 
     let senderValue = sessionStorage.getItem('sn') ? sessionStorage.getItem('sn') : "in";
 
+    //если есть фильтрация по исполнителю, то значения дропдауна станет "Исходящие"
     if (sessionStorage.getItem('executor')) {
         senderSelect.querySelector("option[value='out']").selected = true;
         
     }
-    else if (sessionStorage.getItem('creator')) {
+    else if (sessionStorage.getItem('creator')) { // если есть фильтрация по создателю, то значение дропдауна станет "Входящие"
         senderSelect.querySelector("option[value='in']").selected = true;
         
     }
-
+    //когда нет фильтра по отправителю,
     document.getElementById("select-task-sender").querySelector("option[value='" + senderValue + "']").selected = true;
 });
 
@@ -63,21 +64,25 @@ filterForm.addEventListener('submit', () => {
         if (input.value == '') input.disabled=true;
     });
 
+    //добавляет спрятанное поле для того, чтобы отпралять параметр "sn" на бэк
     let senderHiddenInput =  document.getElementById("hiddenSender");
     senderHiddenInput.value = senderSelect.value;
 
 });
 
 clearFilterHref.addEventListener('click', () => {
-    sessionStorage.setItem('sn', 'in');
-    window.location.replace(window.location.origin + window.location.pathname);
+    let newUrl =  new URL(window.location.origin + window.location.pathname);
+    sessionStorage.setItem('sn', urlParams.get('sn') ? urlParams.get('sn') : 'in');
+
+    newUrl.searchParams.set('sn', urlParams.get('sn') ? urlParams.get('sn') : 'in');
+    newUrl.searchParams.set('p', 1);
+
+    window.location.replace(newUrl);
 });
 
 function buildQueryString(senderValue){ //построение строки параметров для последующей фильтрации по отправителю
 
     let newUrl =  new URL(window.location.origin + window.location.pathname);
-
-    let urlParams = new URLSearchParams(window.location.search);
 
     newUrl.searchParams.delete('sn');
     newUrl.searchParams.delete('p');
@@ -85,7 +90,6 @@ function buildQueryString(senderValue){ //построение строки па
     urlParams.entries().forEach(([key, value]) => {
         newUrl.searchParams.append(key, value);
     });
-
 
     newUrl.searchParams.set('sn', senderValue);
     newUrl.searchParams.set('p', 1);

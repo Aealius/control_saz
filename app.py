@@ -1,7 +1,7 @@
 import os
-from flask import (Flask, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint)
+from flask import (Flask, session, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint)
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, date
+from datetime import datetime, date, time
 from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -24,6 +24,13 @@ login_manager.login_view = 'login'
 
 UPLOAD_FOLDER = 'uploads'
 PER_PAGE = 20
+FILTER_PARAM_KEYS = ['executor',
+                    'creator',
+                    'month',
+                    'date',
+                    'overdue',
+                    'completed',
+                    'sn']
 
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -65,9 +72,10 @@ class Task(db.Model):
     executor = db.relationship('User', backref=db.backref('tasks', lazy=True), foreign_keys=[executor_id])
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     creator = db.relationship('User', backref=db.backref('created_tasks', lazy=True), foreign_keys=[creator_id])
-    date_created = db.Column(db.Date, nullable=False, default=datetime.utcnow)
+    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #теперь datetime
     deadline = db.Column(db.Date, nullable=True)
     extended_deadline = db.Column(db.Date, nullable=True)
+    edit_datetime = db.Column(db.DateTime, nullable=True) #поле, запоминающее дату последнего редактирования
     description = db.Column(db.Text, nullable=False)
     is_valid = db.Column(db.Boolean, default=True)
     completion_note = db.Column(db.Text)
@@ -77,7 +85,8 @@ class Task(db.Model):
     attached_file = db.Column(db.String(255))  
     creator_file = db.Column(db.String(255))  
     is_бессрочно = db.Column(db.Boolean, default=False)
-    for_review = db.Column(db.Boolean, default=False)  
+    for_review = db.Column(db.Boolean, default=False)
+    is_archived = db.Column(db.Boolean, default = False, nullable = False) #поле, помечающее запись как "архивную" здесь еще в сгенерированнном скрипте нужно будет прописать, что это  поле не nullable
 
     def is_overdue(self):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
@@ -86,40 +95,18 @@ class Task(db.Model):
         return self.extended_deadline or self.deadline or date(9999, 12, 31)
 
 
-'''
-    начальная фильтрация для всех
-    
-    
-'''
+#таблица-перечисление статусов задачи
+class Status(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.String(255), nullable=False)
+
+
 @app.route('/', methods = ['GET'])
 @login_required
 def index():
     
-    FILTER_PARAM_KEYS = ['executor',
-                         'creator',
-                         'month',
-                         'date',
-                         'overdue',
-                         'completed',
-                         'sn']
-    
     filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
-    
-    executor_filter = request.args.get('executor')
-    creator_filter = request.args.get('creator') # новый фильтр
-    month_filter = request.args.get('month') # новый фильтр
-    date_filter = request.args.get('date')
-    overdue_filter = request.args.get('overdue') # новый фильтр
-    completed_filter = request.args.get('completed') # новый фильтр
-    
-    '''
-    варианты значения параметра st:
-        in_work - в работе
-        completance_check - на проверке
-        completed - выполненные
-        overdue - просроченные
-        for_information - для ознакомления
-    '''
+
     #status_filter = request.args.get('st') #параметр для табов (табов пока нет)
     
     '''
@@ -131,72 +118,19 @@ def index():
 
     
     page = request.args.get('p', 1, type=int) #параметр для страницы
-
-    #filter_data= {''}
+    
+    session['p'] = page
+    session['sn'] = filter_params_dict.get('sn')
     
     # Начальный фильтр, если user - admin
     if current_user.is_admin:
-        tasks = Task.query
+        tasks = Task.query.filter(Task.is_archived == False)
     else:
         # Если user - обычный пользователь, то видим только задачи где он - executor, а также те, которые он отправил
        tasks = Task.query.filter(
-            db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))
+            db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id), Task.is_archived == False)
        
-    if sender_filter: #фильтрация по отправителю
-        if sender_filter == 'in':
-            tasks = tasks.filter_by(executor_id = current_user.id)
-        elif sender_filter == 'out':
-            tasks = tasks.filter_by(creator_id = current_user.id)
-        elif sender_filter == 'all':
-            if (not current_user.is_admin):
-                tasks = tasks.filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id))#видит ВСЕ таски, а не только те, которые отправлены или назначены на приемную   
-        else:
-            tasks = tasks.filter(Task.executor_id == current_user.id)   
-       
-    #может видеть исполнителя, если только смотрит те, которые ОН ОТПРАВИЛ 
-    if executor_filter:
-        tasks = tasks.filter_by(executor_id=User.query.filter_by(department=executor_filter).first().id)
-    
-    
-    #может видеть создателя, если только смотрит те, которые ОТПРАВЛЕНЫ ЕМУ
-    if creator_filter:
-        creator = User.query.filter_by(department=creator_filter).first()
-        if creator:
-            tasks = tasks.filter_by(creator_id=creator.id)
-
-    if month_filter:
-        try:
-            year, month = map(int, month_filter.split('-'))
-            tasks = tasks.filter(db.extract('year', Task.date_created) == year,
-                                 db.extract('month', Task.date_created) == month)
-        except ValueError:
-            # Обработка некорректного формата месяца
-            flash("Некорректный формат месяца", "danger")
-    
-    if date_filter:
-        date_filter = datetime.strptime(date_filter, '%Y-%m-%d').date()
-        tasks = tasks.filter(db.cast(Task.date_created, db.Date) == date_filter)
-
-    if overdue_filter:
-        tasks = tasks.filter(Task.deadline < date.today())
-
-    if completed_filter:
-        tasks = tasks.filter_by(completion_confirmed = True)
-    
-
-                
-    #tasks = db.paginate(tasks, page = page, per_page = PER_PAGE)    
-    
-    task_count  = tasks.count();  
-
-    tasks = tasks.options(db.joinedload(Task.executor)).order_by(
-        Task.is_valid.asc(),
-        Task.date_created.desc(),
-        Task.deadline.desc() if not Task.is_бессрочно else Task.id 
-
-    ).paginate(page=page, per_page=PER_PAGE)
-    
-    
+    tasks, task_count = filter_data(tasks, page, **filter_params_dict)
 
     for task in tasks:
         if task.extended_deadline:
@@ -221,7 +155,9 @@ def index():
                                         task_count = task_count,
                                         executors=executors, 
                                         creator_department=creator_department,
-                                        date=date, 
+                                        date=date,
+                                        datetime = datetime,
+                                        time = time,
                                         calculate_penalty=calculate_penalty,
                                         unquote=unquote,
                                         page = page,
@@ -236,8 +172,12 @@ def add():
         flash('У вас нет прав для создания задач.', 'danger')
         return redirect(url_for('index'))
 
-    executors = User.query.all()
+    executors = [executor for executor in User.query.all() if executor.id != current_user.id]
+    
     if request.method == 'POST':
+        sn = request.form['sn']
+        p = request.form['p']
+        
         selected_executors = request.form.get('executor[]')
 
         # Генерируем task_id для новой задачи
@@ -246,7 +186,7 @@ def add():
         # Обработка 'all'
         if 'all' in selected_executors:
             # Добавляем всех пользователей как исполнителей
-            executors_for_task = User.query.all()
+            executors_for_task = executors
             task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator')
             os.makedirs(task_uploads_folder, exist_ok=True)
         else:
@@ -257,7 +197,7 @@ def add():
             task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator')
             os.makedirs(task_uploads_folder, exist_ok=True)
 
-        date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
+        date_created = datetime.combine(datetime.strptime(request.form['date_created'], '%Y-%m-%d'), datetime.now().time())
         is_бессрочно = request.form.get('is_бессрочно') == 'on'
         deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not is_бессрочно else None
         description = request.form['description']
@@ -288,7 +228,7 @@ def add():
             db.session.commit()
 
         flash('Задача успешно добавлена!', 'success')
-        return redirect(url_for('index'))
+        return redirect(url_for('index', sn=sn, p = p))
 
     return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
 
@@ -300,7 +240,14 @@ import shutil
 @login_required
 def add_memo():
     executors = User.query.all()
+    
+    sn = request.form.get('sn', 'in', type=str)
+    p = request.form.get('p', 1, type=int)
+        
     if request.method == 'POST':
+        sn = session['sn']
+        p = session['p']
+        
         selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя 
         if 'all' in selected_executor_id:
             selected_executor_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
@@ -309,7 +256,6 @@ def add_memo():
         description = request.form['description']
         file = request.files.get('file') #  Получаем файл вне цикла
 
-        creator_file_path =''
         creator_file_path = ''
         # Сохраняем файл только один раз
         if file and file.filename != '':
@@ -348,7 +294,7 @@ def add_memo():
             db.session.commit()
 
         flash('Служебная записка успешно отправлена!', 'success')
-        return redirect(url_for('index'))
+        return redirect(url_for('index', sn = sn, p = p))
 
     return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
 
@@ -364,25 +310,53 @@ def edit(task_id):
     executors = User.query.all()
     if request.method == 'POST':
         task.executor_id = request.form['executor']
-        task.date_created = datetime.strptime(request.form['date_created'], '%Y-%m-%d').date()
-        task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
         task.description = request.form['description']
         task.is_valid = request.form.get('is_valid') == 'on'
-        extend_deadline = request.form.get('extend_deadline')
-        if extend_deadline:
-            try:
-                extended_deadline_date = datetime.strptime(request.form['extended_deadline'], '%Y-%m-%d').date()
-                task.extended_deadline = extended_deadline_date
-            except ValueError:
-                flash("Некорректный формат даты продления", "danger")
-                return render_template('edit.html', task=task, executors=executors, datetime=datetime)
+        task.edit_datetime = datetime.now()
+        task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
+        file = request.files.get('file') #получаем у формы файл (вдруг решили изменить его)
+        
+        #параметры запроса
+        
+        sn = request.form['sn']
+        p = request.form['p']
+                
+        if (current_user.is_admin):
+            task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
+            extend_deadline = request.form.get('extend_deadline')
+            if extend_deadline:
+                try:
+                    extended_deadline_date = datetime.strptime(request.form['extended_deadline'], '%Y-%m-%d').date()
+                    task.extended_deadline = extended_deadline_date
+                except ValueError:
+                    flash("Некорректный формат даты продления", "danger")
+                    return render_template('edit.html', task=task,
+                                                        executors=executors,
+                                                        current_user = current_user,
+                                                        datetime=datetime)
+        
+        if file and file.filename != '':
+            filename = file.filename  # Оригинальное имя
+            task_id = str(task_id)
+                
+            memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+            os.makedirs(memo_uploads_folder, exist_ok=True)
 
-
+            # Сохранение файла
+            file.save(os.path.join(memo_uploads_folder, filename)) 
+            creator_file_path = os.path.join(task_id, 'creator', filename)
+            creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
+            task.creator_file = creator_file_path
+        
+        
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
-        return redirect(url_for('index'))
+        return redirect(url_for('index', sn = sn, p = p))
 
-    return render_template('edit.html', task=task, executors=executors, datetime=datetime)
+    return render_template('edit.html', task=task,
+                                        executors=executors,
+                                        current_user = current_user,
+                                        datetime=datetime)
 
 
 
@@ -410,6 +384,9 @@ def complete(task_id):
         return redirect(url_for('index'))
 
     if request.method == 'POST':
+        sn = session['sn']
+        p = session['p']
+        
         file = request.files.get('file')  # Получаем файл, если он есть
 
         if file and file.filename != '':
@@ -429,7 +406,7 @@ def complete(task_id):
         task.completion_confirmed = False
         db.session.commit()
         flash('Отметка о выполнении отправлена администратору.', 'success')
-        return redirect(url_for('index'))
+        return redirect(url_for('index', sn = sn, p = p))
 
     return render_template('complete.html', task=task)
 
@@ -451,14 +428,15 @@ def confirm_task(task_id):
     if not current_user.is_admin:
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
         return redirect(url_for('index'))
-
+    sn = session['sn']
+    p = session['p']
     task = Task.query.get_or_404(task_id)
     task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.form.get('admin_note')
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
-    return redirect(url_for('index'))
+    return redirect(request.referrer or url_for('index', sn=sn, p=p))
 
 
 @app.route('/admin/tasks/<int:task_id>/reject', methods=['POST'])
@@ -468,12 +446,15 @@ def reject_task(task_id):
         flash('У вас нет прав для отклонения выполнения задач.', 'danger')
         return redirect(url_for('index'))
 
+    sn = session['sn']
+    p = session['p']
+    
     task = Task.query.get_or_404(task_id)
     task.completion_confirmed = False
     task.admin_note = request.form.get('admin_note')
     db.session.commit()
     flash('Выполнение задачи отклонено.', 'warning')
-    return redirect(url_for('index'))
+    return redirect(request.referrer or url_for('index', sn = sn, p = p))
 
 
 @app.route('/users')
@@ -539,7 +520,7 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             flash('Вы успешно авторизовались!', 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for('index', sn = 'in', p=1))
         else:
             flash('Неверный логин или пароль', 'danger')
     return render_template('login.html')
@@ -601,11 +582,15 @@ def logout():
 def review(task_id):
     task = Task.query.get_or_404(task_id)
     if request.method == 'POST':  #  Обработка POST-запроса от кнопки "Ознакомлен"
+        
+        sn = session['sn']
+        p = session['p']
+        
         task.completion_confirmed = True
         task.completion_confirmed_at = datetime.now()
         db.session.commit()
         flash('Вы ознакомились с задачей.', 'success')
-        return redirect(url_for('index'))  #  Перенаправление на главную страницу
+        return redirect(url_for('index', sn = sn, p = p))  #  Перенаправление на главную страницу
     return render_template('review.html', task=task)
 
 
@@ -615,6 +600,9 @@ def confirm_task_deputy(task_id):
     if not current_user.is_deputy:
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
         return redirect(url_for('index'))
+    
+    p = session['p']
+    sn = session['sn']
 
     task = Task.query.get_or_404(task_id)
     if task.creator_id != current_user.id:
@@ -626,7 +614,7 @@ def confirm_task_deputy(task_id):
     task.admin_note = request.form.get('admin_note')
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
-    return redirect(url_for('index'))
+    return redirect(request.referrer or url_for('index', sn = sn, p=p))
 
 
 reports_bp = Blueprint('reports', __name__) # Создаем Blueprint
@@ -659,6 +647,105 @@ def reports():
 
     return render_template('reports.html', report_data=report_data, all_users=all_users, date=date, any=any)
 
+@app.route('/archived')
+@login_required
+def archived():
+    
+    filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
+    page = request.args.get('p', 1, type=int) 
+    
+    if current_user.is_admin:
+        archived_data = Task.query.filter(Task.is_archived ==True)
+    else:
+        archived_data = Task.query.filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id),
+                                          Task.is_archived == True)
+
+    archived_data, task_count = filter_data(archived_data, page, **filter_params_dict)
+    executors = User.query.all()
+    
+    for task in archived_data:
+        if task.extended_deadline:
+            task.deadline_for_check = task.extended_deadline
+        elif task.deadline:  # Добавляем проверку на deadline
+            task.deadline_for_check = task.deadline
+        else:
+            task.deadline_for_check = date(9999,12,31)
+    
+    creator_department = {}
+    for task in archived_data:
+        if task.creator_id not in creator_department:  # Проверяем creator_id, а не executor_id
+            creator_department[task.creator_id] = task.creator.department
+        if current_user.is_admin and task.executor and task.executor_id not in creator_department:
+            creator_department[task.executor_id] = task.executor.department
+        elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
+            creator_department[task.executor.id] = task.executor.department 
+    
+    return render_template('archived.html', data = archived_data,
+                                            task_count = task_count,
+                                            executors = executors,
+                                            creator_department = creator_department,
+                                            per_page = PER_PAGE,
+                                            page=page,
+                                            filter_params_dict = filter_params_dict,
+                                            time=time,
+                                            date=date,
+                                            datetime=datetime, 
+                                            unquote = unquote)
+
+
+def filter_data(dataset, page, **params):
+    if params.get('sn'):
+        match params['sn']:
+            case 'in':
+                dataset = dataset.filter(Task.executor_id == current_user.id)
+            case 'out':
+                dataset = dataset.filter(Task.creator_id == current_user.id)
+            case 'all':
+                if (not current_user.is_admin):
+                    dataset = dataset.filter(db.or_(Task.executor_id == current_user.id,
+                                                    Task.creator_id == current_user.id))
+            case _:
+                dataset = dataset.filter(Task.executor_id == current_user.id)
+                
+    if params.get('executor'):
+        dataset = dataset.filter(Task.executor_id == User.query
+                                                            .filter(User.department == params['executor'])
+                                                            .first().id)
+    
+    if params.get('creator'):
+        creator = User.query.filter(User.department == params['creator']).first()
+        if creator:
+            dataset = dataset.filter(Task.creator_id== creator.id)
+    
+    if params.get('month'):
+        try:
+            year, month = map(int, params['month'].split('-'))
+            dataset = dataset.filter(db.extract('year', Task.date_created) == year,
+                                 db.extract('month', Task.date_created) == month)
+        except ValueError:
+            # Обработка некорректного формата месяца
+            flash("Некорректный формат месяца", "danger")
+    
+    if params.get('date'):
+        date_filter = datetime.strptime(params['date'], '%Y-%m-%d').date()
+        dataset = dataset.filter(db.cast(Task.date_created, db.Date) == date_filter)
+    
+    if params.get('overdue'):
+        dataset = dataset.filter(Task.deadline < date.today())
+    
+    if params.get('completed'):
+        dataset = dataset.filter(Task.completion_confirmed == True)
+    
+    dataset_count = dataset.count()
+    
+    dataset = dataset.options(db.joinedload(Task.executor)).order_by(
+        Task.is_valid.desc(),
+        Task.date_created.desc(),
+        Task.deadline.desc() if not Task.is_бессрочно else Task.id).paginate(page=page, per_page=PER_PAGE)
+    
+    return (dataset, dataset_count,)
+        
+    
 
 def calculate_penalty(task):  
     if task.completion_confirmed and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
@@ -671,7 +758,6 @@ def calculate_penalty(task):
 
 
 app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Blueprint
-
 
 
 

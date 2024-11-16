@@ -1,18 +1,27 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Список задач</h1>
+<h1 class="mb-5">Список задач</h1>
 
 
 <!--панель кнопок-->
-<div class="d-flex mb-2"> 
-    <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#filterModal">
-        Фильтрация
-    </button>
-    {% if current_user.is_admin or current_user.is_deputy %}
-    <a href="{{ url_for('add') }}" class="btn btn-success mr-2">Добавить задачу</a>
-    {% endif %}
-    
-    <a href="{{ url_for('add_memo') }}" class="btn btn-success mr-2">Создать служебную записку</a>
+<div class="d-flex justify-content-between align-items-end mb-2">
+    <div>
+        <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#filterModal">
+            Фильтрация
+        </button>
+        {% if current_user.is_admin or current_user.is_deputy %}
+        <a href="{{ url_for('add') }}" class="btn btn-success mr-2">Добавить задачу</a>
+        {% endif %}
+
+        <a href="{{ url_for('add_memo') }}" class="btn btn-success mr-2">Создать служебную записку</a>
+    </div>
+    <div>
+        <select id="select-task-sender" class="selectpicker show-tick">
+            <option value="in">Входящие</option>
+            <option value="out">Исходящие</option>
+            <option value="all">Все</option>
+        </select>
+    </div>
 </div>
 
 <!--модалка на фильтрацию-->
@@ -40,17 +49,17 @@
                         <label for="creatorFilter">Отправитель:</label>
                         <select class="form-control" id="creatorFilter" name="creator">
                             <option value="">Все</option>
-                            {% for creator_id, department in creator_department.items() %}
-                                <option value="{{ department }}" {% if department == request.args.get('creator') %}selected{% endif %}>{{ department }}</option>
+                            {% for executor in executors %}
+                                <option value="{{ executor.department }}" {% if executor.department == request.args.get('creator') %}selected{% endif %}>{{ executor.department }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="monthFilter">Месяц <span class="text-muted">(формат - "год-месяц")</span>: </label>
-                        <input type="month" class="form-control" id="monthFilter" name="month">
+                        <input type="month" class="form-control" id="monthFilter" name="month" {% if request.args.get('month') %}value="{{ request.args.get('month') }}"{% endif %}>
                     </div>
                     <div class="form-group">
-                        <label for="dateFilter">Дата:</label>
+                        <label for="dateFilter">Дата создания:</label>
                         <input type="date" class="form-control" id="dateFilter" name="date" value="{{ request.args.get('date') }}">
                     </div>
                     <div class="mb-4">
@@ -80,37 +89,9 @@
     </div>
 </div>
 
-    <!--Табы для навигации по статусам задач -->
-    <!--<ul class="nav nav-tabs" id="status-filter-tabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <a class="nav-link active" id="in-work-tab" href="{{ url_for('index',st=in_work) }}" aria-current="page">В работе</a>
-        </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link" id="completion-check-tab" href="{{ url_for('index',st=completance_check) }}">На проверке</a>
-        </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link" id="completed-tab" href="{{ url_for('index', st=completed) }}">Выполненные</a>
-        </li>
-        <li class="nav-item" role="presentation">
-          <a class="nav-link" id="overdue-tab" href="{{ url_for('index', st=overdue) }}">Просроченные</a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" id="for-information-tab" href="{{ url_for('index', st=for_information) }}">Для ознакомления</a>
-        </li>
-    </ul>-->
-
-    <!--Фильтрация по dходящиv и исходящим задачам-->
-    <select id="select-task-sender" class="selectpicker show-tick my-2">
-        <option value="in">Входящие</option>
-        <option value="out">Исходящие</option>
-        <option value="all">Все</option>
-    </select>
-    
-
-
 <!--таблица с задачами-->
-<table class="table table-bordered">
-    <thead>
+<table class="table table-bordered ">
+    <thead class="primary-th">
         <tr>
             <th>Исполнитель</th>
             <th>Отправитель</th>
@@ -134,18 +115,26 @@
             <td>{{ creator_department.get(task.creator_id) }}</td>
             <td>
                 {% if task.date_created %}
-                {{ task.date_created.strftime('%d.%m.%Y') }}
+                {% if task.date_created.time() == time.fromisoformat('00:00:00') %}
+                <div>{{ task.date_created.strftime('%d.%m.%Y') }}</div>
+                {% else %}
+                <div>{{ task.date_created.strftime('%d.%m.%Y %H:%M') }}</div>
+                {%endif%}
                 {% else %}
                 -
                 {% endif %}
+
+                {% if task.edit_datetime %}
+                    <div class="text-muted font-italic" style="font-size:smaller">Отредактировано: {{task.edit_datetime.strftime('%d.%m.%Y %H:%M')}}</div>
+                {%endif%}
             </td>
             <td>
                 {% if task.is_бессрочно %}
-                Бессрочно
+                <div>Бессрочно</div>
                 {% elif task.deadline %} 
-                {{ task.deadline.strftime('%d.%m.%Y') }}
+                <div>{{ task.deadline.strftime('%d.%m.%Y') }}</div>
                 {% if task.extended_deadline %}
-<br><small class="text-muted">Продлена до: {{ task.extended_deadline.strftime('%d.%m.%Y') }}</small>
+                <div class="text-muted font-italic" style="font-size:smaller">Продлена до: {{ task.extended_deadline.strftime('%d.%m.%Y') }}</div>
 {% endif %}
                 {% else %}
                 -
@@ -162,15 +151,15 @@
                 {% if task.completion_confirmed and task.for_review %}
                 <span class="badge badge-success">Ознакомлен</span>
                 {% elif task.completion_confirmed and task.deadline_for_check < date.today() %}
-                <span class="badge badge-warning">Выполнено, просрочена на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</span>
+                <span class="badge badge-warning">Выполнено, просрочено на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</span>
                 {% elif task.completion_confirmed %}
                 <span class="badge badge-success">Выполнено</span>
                 {% elif not task.is_valid %}
-                <span class="badge badge-secondary">Недействительна</span>
+                <span class="badge badge-secondary">Недействительно</span>
                 {% elif task.completion_note and not task.completion_confirmed %}
                 <span class="badge badge-info">На проверке</span>
                 {% elif task.is_overdue() %}
-                <span class="badge badge-danger">Просрочена</span>
+                <span class="badge badge-danger">Просрочено</span>
                 {% else %}
                 <span class="badge badge-warning">В работе</span>
                 {% endif %}
@@ -320,6 +309,8 @@
                                         <label for="admin_note">Заметка администратора:</label>
                                         <textarea class="form-control" id="admin_note" name="admin_note"></textarea>
                                     </div>
+                                    <input type="hidden" value=""> <!--TODO: после подтверждения выполнения выкидывает на первую страницу непонятно кого отправленных со всеми приколами-->
+                                    <input type="hidden" value=""> <!--необходимо сделать так, чтобы кидало обратно на ту страницу и на того отправителя, который был до потверждения-->
                                     <button type="submit" class="btn btn-success">Подтвердить</button>
                                 </form>
                                 <form method="POST" action="{{ url_for('reject_task', task_id=task.id) }}">

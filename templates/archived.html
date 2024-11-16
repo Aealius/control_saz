@@ -1,0 +1,215 @@
+{% extends 'base.html'%}
+
+{% block content%}
+
+<h1>Архив задач</h1>
+<p class="text-muted mb-0">
+    Задачи со статусами "Ознакомлен", "Выполнено", "Выполнено, просрочено на (х) дней", "Недействительно", после получения соответствующего статуса по истечении трех дней попадают в архив.
+</p>
+<p class="text-muted">
+    Задачи, перемещенные в архив, больше не будут отображаться на странице активных задач, а также будут доступны только для чтения <br/>(т.е их нельзя редактировать или удалить, а также изменять их статус).
+</p>
+
+<div class="d-flex mb-2 justify-content-between">
+    <button type="button" class="btn archive mr-2" data-toggle="modal" data-target="#filterModal">
+        Фильтрация
+    </button>
+    <!--Фильтрация по dходящиv и исходящим задачам-->
+    <select id="select-task-sender" class="selectpicker show-tick my-2">
+        <option value="in">Входящие</option>
+        <option value="out">Исходящие</option>
+        <option value="all">Все</option>
+    </select>
+</div>
+
+<!--модалка на фильтрацию-->
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true"> 
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Фильтрация задач</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="GET" id="filterForm" action="{{ url_for('archived', p=1, **filter_params_dict) }}">
+                    <div class="form-group">
+                        <label for="executorFilter">Исполнитель:</label>
+                        <select class="form-control" id="executorFilter" name="executor">
+                            <option value="">Все</option>
+                            {% for executor in executors %}
+                                <option value="{{ executor.department }}" {% if executor.department == request.args.get('executor') %}selected{% endif %}>{{ executor.department }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="creatorFilter">Отправитель:</label>
+                        <select class="form-control" id="creatorFilter" name="creator">
+                            <option value="">Все</option>
+                            {% for executor in executors %}
+                                <option value="{{ executor.department }}" {% if executor.department == request.args.get('creator') %}selected{% endif %}>{{ executor.department }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="monthFilter">Месяц <span class="text-muted">(формат - "год-месяц")</span>: </label>
+                        <input type="month" class="form-control" id="monthFilter" name="month" {% if request.args.get('month') %}value="{{ request.args.get('month') }}"{% endif %}>
+                    </div>
+                    <div class="form-group">
+                        <label for="dateFilter">Дата создания:</label>
+                        <input type="date" class="form-control" id="dateFilter" name="date" value="{{ request.args.get('date') }}">
+                    </div>
+                    <div class="mb-4">
+                        <div class="form-check-inline mr-4">
+                            <input class="form-check-input" type="checkbox" value="yes" id="overdueFilter" name="overdue"  {% if request.args.get('overdue') %}checked{% endif %}>
+                            <label class="form-check-label" for="overdueFilter">
+                                Просроченные
+                            </label>
+                        </div>
+                        <div class="form-check-inline">
+                            <input class="form-check-input" type="checkbox" value="yes" id="completedFilter" name="completed" {% if request.args.get('completed') %}checked{% endif %}>
+                            <label class="form-check-label" for="completedFilter">
+                                Выполненные
+                            </label>
+                        </div>
+                        <input type="hidden" id="hiddenSender" name="sn" value="">
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button id="submitFilterFormButton" type="submit" class="btn archive">Применить фильтр</button>
+                        <a id="clearFilterHref" class="text-muted">Очистить фильтр</a>
+                    </div>   
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--таблица с задачами-->
+<table class="table rounded-pill">
+    <thead>
+        <tr>
+            <th scope="col">Исполнитель</th>
+            <th scope="col">Отправитель</th>
+            <th scope="col">Дата создания</th>
+            <th scope="col">Срок</th>
+            <th scope="col">Описание</th>
+            <th scope="col">Статус</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in data %}
+        <tr>
+            <td>{{task.executor.department}}</td>
+
+            <td>{{task.creator.department}}</td>
+
+            <td>
+                {% if task.date_created %}
+                {% if task.date_created.time() == time.fromisoformat('00:00:00') %}
+                <div>{{ task.date_created.strftime('%d.%m.%Y') }}</div>
+                {% else %}
+                <div>{{ task.date_created.strftime('%d.%m.%Y %H:%M') }}</div>
+                {%endif%}
+                {% else %}
+                -
+                {% endif %}
+
+                {% if task.edit_datetime %}
+                    <div class="text-muted font-italic" style="font-size:smaller">Отредактировано: {{task.edit_datetime.strftime('%d.%m.%Y %H:%M')}}</div>
+                {%endif%}
+            </td>
+            <td>
+                {% if task.is_бессрочно %}
+                <div>-</div>
+                {% elif task.deadline %} 
+                <div>{{ task.deadline.strftime('%d.%m.%Y') }}</div>
+                {% if task.extended_deadline %}
+                <div class="text-muted font-italic" style="font-size:smaller">Продлена до: {{ task.extended_deadline.strftime('%d.%m.%Y') }}</div>
+                {% endif %}
+                {% else %}
+                -
+                {% endif %}
+            </td>
+
+            <td>
+                {{task.description}}
+                {% if task.creator_file %}
+                <p><a href="{{ url_for('uploaded_file', filename=task.creator_file) }}" target="_blank"
+                        download="{{ unquote(task.creator_file.split('/')[-1]) }}">{{ unquote(task.creator_file.split('/')[-1]) }}</a>
+                </p>
+                {%endif%}
+            </td>
+            <td>
+                {% if task.completion_confirmed and task.for_review %}
+                <span class="badge badge-success">Ознакомлен</span>
+                {% elif task.completion_confirmed and task.deadline_for_check < date.today() %}
+                <span class="badge badge-warning">Выполнено, просрочено на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</span>
+                {% elif task.completion_confirmed %}
+                <span class="badge badge-success">Выполнено</span>
+                {% elif not task.is_valid %}
+                <span class="badge badge-secondary">Недействительно</span>
+                {% elif task.completion_note and not task.completion_confirmed %}
+                <span class="badge badge-info">На проверке</span>
+                {% elif task.is_overdue() %}
+                <span class="badge badge-danger">Просрочено</span>
+                {% else %}
+                <span class="badge badge-warning">В работе</span>
+                {% endif %}
+
+                {% if task.admin_note %}
+                <br>
+                <span class="badge badge-info">Заметка админа: {{ task.admin_note }}</span>
+                {% endif %}
+                <span class="badge archive p-1 my-0 mx-auto">Архивировано</span>
+            </td>
+        </tr>
+        {%endfor%}
+    </tbody>
+</table>
+
+<!--пагинация-->
+<div class="d-flex justify-content-between">
+    <div>
+        {% if per_page > task_count %}
+        Страница {{page}} | Записи 1-{{task_count}} из {{task_count}}
+        {%else%}
+        {%if page == 1%}
+        Страница {{page}} | Записи 1-{{page * per_page }} из {{task_count}}
+        {%else%}
+        {%if page * per_page > task_count%}
+        Страница {{page}} | Записи {{(page-1) * per_page + 1}}-{{task_count}} из {{task_count}}
+        {%else%}
+        Страница {{page}} | Записи {{(page-1) * per_page + 1}}-{{page * per_page }} из {{task_count}}
+        {%endif%}
+        {%endif%}
+        {%endif%}
+    </div>
+    {% if task_count != 0 %}
+    <nav aria-label="paging">
+        <ul class="pagination justify-content-end">
+
+            <li class="page-item {% if page == 1 %} disabled {% endif %}">
+                <a class="page-link" href="">Предыдущая</a>
+            </li>
+            {% for page_number in data.iter_pages(right_current=2)%}
+            {% if page_number == None %}
+            <li class="page-item disabled"><a class="page-link">...</a></li>
+            {%elif page_number == page%}
+            <li class="page-item active"><a class="page-link">{{page_number}}</a></li>
+            {%else %}
+            <li class="page-item"><a class="page-link" href="{{url_for('archived', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
+            {% endif %}
+            {% endfor %}
+            <li class="page-item {% if page == data.pages %}disabled{% endif %}">
+                <a class="page-link" href="{{url_for('archived', p=page+1, **filter_params_dict)}}">Следующая</a>
+            </li>
+        </ul>
+    </nav>
+    {%endif%}
+</div>
+
+<script src="{{ url_for('static', filename='src/js/index.js')}}"></script>
+{%endblock%}
+

@@ -10,7 +10,10 @@
     <div class="form-group">
         <label for="password">Пароль:</label>
         <input type="password" class="form-control" id="password" name="password" required>
+        <i class="fa-regular fa-eye password-toggle-icon" id="passwordToggle"></i>
     </div>
     <button type="submit" class="btn btn-primary">Войти</button>
 </form>
+
+<script src="{{url_for('static', filename = 'src/js/passwordToggle.js')}}"></script>
 {% endblock %}

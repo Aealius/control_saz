@@ -23,11 +23,15 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
                 {% if current_user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index') }}">Задачи</a>
+                <li class="nav-item" id="taskLink">
+                    <a class="nav-link" href="{{ url_for('index', sn='in', p=1) }}">Задачи</a>
+                </li>
+                <li class="nav-item" id="ataskLink">
+                    <a class="nav-link" href="{{ url_for('archived', sn='in', p=1) }}">Архив</a>
                 </li>
                 {% if current_user.is_admin %}
                 <li class="nav-item">
+                    
                     <a class="nav-link" href="{{ url_for('users') }}">Пользователи</a>
                 </li>
                 <li class="nav-item">
@@ -49,12 +53,13 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <div class="w-75 mt-4 mx-auto">
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
         <div class="alert alert-{{ category }}" role="alert">
             {{ message }}
+            <button style="margin-top: auto; margin-bottom: auto;" type="button" class="close" data-dismiss="alert"><i class="fa-solid fa-xmark"></i></button>
         </div>
         {% endfor %}
         {% endif %}
@@ -74,8 +79,19 @@
 
 <script>
     let logoutLink = document.getElementById("logoutLink");
+    let taskLink = document.getElementById('taskLink');
+    let archTaskLink = document.getElementById('ataskLink');
+
 
     logoutLink.addEventListener('click', () => {
+        sessionStorage.clear();
+    });
+
+    taskLink.addEventListener('click', () => {
+        sessionStorage.clear();
+    });
+
+    archTaskLink.addEventListener('click', () => {
         sessionStorage.clear();
     });
 </script>

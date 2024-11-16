@@ -4,7 +4,9 @@ body{
 /* Добавьте свои стили для красивой таблицы */
 table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse:collapse;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
 }
 
 th, td {
@@ -17,7 +19,8 @@ tr:nth-child(even) {
     background-color: #f2f2f2;
 }
 
-th {
+.primary-th {
+    /*background-color: #4CAF50;*/
     background-color: #4CAF50;
     color: rgb(0, 0, 0);
 }
@@ -59,6 +62,26 @@ th {
 
 .upload-file-input input[type=file] { /*чтобы кнопка загрузки была одним целым с самой формой*/
     margin-left: -2px !important;
-  }
+}
+
+.archive{
+    background-color:rgb(106, 97, 172);
+    color: white; 
+}
+
+button.archive:hover{
+    background-color:rgb(94, 86, 153);
+    color: white; 
+}
+  /* Стиль для иконки отображения пароля */
+.password-toggle-icon {
+    cursor: pointer; 
+    float: right; 
+    margin-left: -25px;  
+    margin-top: -26px; 
+    right: 10px; 
+    position:relative; 
+    z-index: 2;
+}
 
 
