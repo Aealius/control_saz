@@ -120,7 +120,7 @@ def index():
     page = request.args.get('p', 1, type=int) #параметр для страницы
     
     session['p'] = page
-    session['sn'] = filter_params_dict.get('sn')
+    session['sn'] = filter_params_dict.get('sn') 
     
     # Начальный фильтр, если user - admin
     if current_user.is_admin:
@@ -694,18 +694,18 @@ def archived():
 
 
 def filter_data(dataset, page, **params):
-    if params.get('sn'):
-        match params['sn']:
-            case 'in':
-                dataset = dataset.filter(Task.executor_id == current_user.id)
-            case 'out':
-                dataset = dataset.filter(Task.creator_id == current_user.id)
-            case 'all':
-                if (not current_user.is_admin):
-                    dataset = dataset.filter(db.or_(Task.executor_id == current_user.id,
-                                                    Task.creator_id == current_user.id))
-            case _:
-                dataset = dataset.filter(Task.executor_id == current_user.id)
+    
+    match params.get('sn'):
+        case 'in':
+            dataset = dataset.filter(Task.executor_id == current_user.id)
+        case 'out':
+            dataset = dataset.filter(Task.creator_id == current_user.id)
+        case 'all':
+            if (not current_user.is_admin):
+                dataset = dataset.filter(db.or_(Task.executor_id == current_user.id,
+                                                Task.creator_id == current_user.id))
+        case _:
+            dataset = dataset.filter(Task.executor_id == current_user.id)
                 
     if params.get('executor'):
         dataset = dataset.filter(Task.executor_id == User.query
