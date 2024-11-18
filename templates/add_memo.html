@@ -28,6 +28,8 @@
     <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
 
+
+<script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
 <script>
 
     let allSelected = false; //флаг, указывающий выбрано ли всем
@@ -36,9 +38,19 @@
 
     let addMemoForm = document.getElementById("addMemoForm");
 
+    document.getElementById('executor').addEventListener('change', (event) => {
+        let validationResultArray = [checkExecutorSelectValidity(addMemoForm, executorSelect)];
+    
+        if (!validate(validationResultArray, addMemoForm)){
+            event.preventDefault();
+        }
+    });
+
     addMemoForm.addEventListener('submit', () => {
 
-        if (!validate()){
+        let validationResultArray = [checkExecutorSelectValidity(addMemoForm, executorSelect)];
+
+        if (!validate(validationResultArray, addMemoForm)){
             event.preventDefault();
         }
 
@@ -141,88 +153,7 @@
         }
     }
 
-
-    function createErrorView(text, target){
-        let errorMessageDiv = document.createElement('div');
-        errorMessageDiv.className = 'invalid'; //"опознавательный" класс для элементов ошибочной валидации (чтобы было с помощью чего их удалить)
-        errorMessageDiv.style.color = 'red';
-        errorMessageDiv.innerHTML = text;
-    
-        if (target == addMemoForm.querySelector('.dropdown-menu')){ //здесь проверяем, является ли target-ом тот злополучный селект
-            addMemoForm.querySelector('.dropdown.bootstrap-select.show-tick.form-control').classList.add('is-invalid'); //и для него класс is-invalid ставим для родителя, потому что почему-то оно так работает
-        }
-    
-        target.classList.add('is-invalid');
-    
-        target.after(errorMessageDiv);
-    }
-
-    function validate(){
-
-        let validationResultArray = [checkSelectValidity()];
-    
-        validationResultArray.forEach(element => {
-            if (!element.valid) {
-                if(element.target == addMemoForm.querySelector('.dropdown-menu')){
-                    addMemoForm.querySelector('.dropdown.bootstrap-select.show-tick.form-control').classList.remove('is-invalid');
-                }
-                element.target.classList.remove('is-invalid');
-                if (element.target.nextElementSibling){
-                    element.target.nextElementSibling.remove();
-                }
-                createErrorView(element.error, element.target);
-            }
-            else { 
-                if(element.target == addMemoForm.querySelector('.dropdown-menu')){
-                    addMemoForm.querySelector('.dropdown.bootstrap-select.show-tick.form-control').classList.remove('is-invalid');
-                }
-                element.target.classList.remove('is-invalid');
-                if (element.target.nextElementSibling){
-                    element.target.nextElementSibling.remove();
-                }
-            }
-        });
-    
-        return validationResultArray.every(v => v.valid === true);
-    }
-
-    function checkSelectValidity(){
-        text_target = addMemoForm.querySelector('.dropdown-menu'); //здесб передаем как target спрятанные значения дропдауна, потому как с этим селектом дефолтный синтаксис не робит
-    
-        if (executorSelect.selectedOptions.length == 0)
-            return {valid: false, target: text_target, error: "Не выбрано ни одного исполнителя"};
-    
-        return {valid: true, target: text_target};
-    }
-
-    function toggleDeadline() {
-        var deadlineField = document.getElementById('deadline-field');
-        var deadlineInput = document.getElementById('deadline');
-        var бессрочноCheckbox = document.getElementById('is_бессрочно');
-
-        if (бессрочноCheckbox.checked) {
-            deadlineField.style.display = 'none';
-            deadlineInput.required = false;  // Снять требование при бессрочной задаче
-            deadlineInput.value = ''; // Очистить значение поля срока
-        } else {
-            deadlineField.style.display = 'block';
-            deadlineInput.required = true;   // Вернуть требование
-        }
-    }
-
-    // Вызов функции при загрузке страницы для установки начального состояния
-    toggleDeadline();
-
-    // Вызов функции при изменении состояния чекбокса
-    document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);
-
-
-
     updateSelectedExecutors();
-
-
-
-
 </script>
 
 <style>
