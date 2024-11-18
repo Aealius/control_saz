@@ -4,8 +4,10 @@ let selectedExecutorsDiv = document.getElementById('selected-executors'); //ко
 let addTaskForm = document.getElementById('addTaskForm'); //форма добавления задачи
 let бессрочноCheckbox = document.getElementById('is_бессрочно');
 let dateCreatedInput = document.getElementById('date_created');
+let fileInput = document.getElementById('file');
 let deadlineInput = document.getElementById('deadline'); 
 let descriptionInput = document.getElementById('description');
+let files  = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     toggleDeadline();
@@ -48,6 +50,8 @@ document.getElementById('description').addEventListener('change', (event) => {
     }
 });
 
+fileInput.addEventListener('change', handleFileSelect);
+
 addTaskForm.addEventListener('submit', (event) => {
     let validationResultArray = [checkDeadlineDateValidity(deadlineInput, dateCreatedInput), checkDateCreatedValidity(dateCreatedInput), checkDescriptionValidity(descriptionInput), checkExecutorSelectValidity(addTaskForm, executorSelect)];
 
@@ -61,6 +65,51 @@ addTaskForm.addEventListener('submit', (event) => {
     pInput.value = sessionStorage.getItem('p');
     snInput.value = sessionStorage.getItem('sn');
 });
+
+
+function handleFileSelect(e) {
+    const selectedFiles = e.target.files;
+    addFiles(selectedFiles);
+}
+
+function addFiles(newFiles) {
+    files = [...files, ...Array.from(newFiles)];
+    updateFileList();
+}
+
+function updateFileList() {
+    fileList.innerHTML = '';
+    files.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.className = 'file-item';
+        li.innerHTML = `
+            <div class="file-info">
+                <span class="file-name">${file.name}</span>
+                <span class="file-size">${formatFileSize(file.size)}</span>
+            </div>
+            <button class="delete-btn" data-index="${index}">&times;</button>
+        `;
+        fileList.appendChild(li);
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', handleDelete);
+    });
+}
+
+function handleDelete(e) {
+    const index = parseInt(e.target.getAttribute('data-index'));
+    files.splice(index, 1);
+    updateFileList();
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 байт';
+    const k = 1024;
+    const sizes = ['байт', 'Кб', 'Мб', 'Гб'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 function updateSelectedExecutors() {
     let executorSelectedOptions = executorSelect.selectedOptions;

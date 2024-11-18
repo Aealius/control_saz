@@ -139,6 +139,8 @@ def index():
             task.deadline_for_check = task.deadline
         else:
             task.deadline_for_check = date(9999,12,31)
+            
+        task.creator_files = task.creator_file.split(';')
 
 
     creator_department = {}
@@ -203,15 +205,18 @@ def add():
         description = request.form['description']
         is_valid = request.form.get('is_valid') == 'on'
         for_review = request.form.get('for_review') == 'on'
-        file = request.files.get('file')
+        files = request.files.getlist('file') #массив файлов
 
         creator_file_path = ''
         # Сохраняем файл только один раз
-        if file and file.filename != '':
-            filename = file.filename
-            file.save(os.path.join(task_uploads_folder, filename))
-            creator_file_path = os.path.join(task_id, 'creator', filename)
-            creator_file_path = creator_file_path.replace('\\', '/')
+        for file in files:
+            if file and file.filename != '':
+                tmp_file_path = ''
+                filename = file.filename
+                file.save(os.path.join(task_uploads_folder, filename))
+                tmp_file_path = os.path.join(task_id, 'creator', filename)
+                tmp_file_path = tmp_file_path.replace('\\', '/')
+                creator_file_path += tmp_file_path + ';'
 
         for executor in executors_for_task:
             new_task = Task(
@@ -756,6 +761,7 @@ def calculate_penalty(task):
             penalty = min(overdue_days, max_penalty)
             return penalty
     return 0
+    
 
 
 app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Blueprint
