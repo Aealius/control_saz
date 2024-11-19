@@ -6,6 +6,7 @@ let бессрочноCheckbox = document.getElementById('is_бессрочно'
 let dateCreatedInput = document.getElementById('date_created');
 let deadlineInput = document.getElementById('deadline'); 
 let descriptionInput = document.getElementById('description');
+let submitButton = document.getElementById('submit');
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
@@ -59,10 +60,14 @@ dropZone.addEventListener('dragover', (e) => e.preventDefault());
 dropZone.addEventListener('drop', handleDrop);
 
 addTaskForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
     let validationResultArray = [checkDeadlineDateValidity(deadlineInput, dateCreatedInput), checkDateCreatedValidity(dateCreatedInput), checkDescriptionValidity(descriptionInput), checkExecutorSelectValidity(addTaskForm, executorSelect)];
 
+    
+
     if (!validate(validationResultArray, addTaskForm)){
-        event.preventDefault();
+        
     }
 
     formData = new FormData(event.target);
@@ -70,11 +75,6 @@ addTaskForm.addEventListener('submit', async (event) => {
     files.forEach(file => {
         formData.append('files', file);
     });
-    
-
-    let response = await fetch('https://127.0.0.1/add', {
-      method: 'POST',
-      body: formData});
 
     let pInput = document.getElementById("p");
     let snInput = document.getElementById("sn");
@@ -82,6 +82,11 @@ addTaskForm.addEventListener('submit', async (event) => {
     pInput.value = sessionStorage.getItem('p');
     snInput.value = sessionStorage.getItem('sn');
 
+    await fetch('http://127.0.0.1:5000/add', {
+        method: 'POST',
+        body: formData,});
+
+    window.location.replace(document.referrer);
 });
 
 function handleDrop(e) {

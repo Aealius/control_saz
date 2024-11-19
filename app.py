@@ -236,7 +236,7 @@ def add():
             db.session.commit()
 
         flash('Задача успешно добавлена!', 'success')
-        return redirect(url_for('index', sn=sn, p = p))
+        return '', 200
 
     return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
 
@@ -302,7 +302,7 @@ def add_memo():
             db.session.commit()
 
         flash('Служебная записка успешно отправлена!', 'success')
-        return redirect(url_for('index', sn = sn, p = p))
+        return '', 200
 
     return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
 
