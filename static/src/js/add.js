@@ -4,9 +4,12 @@ let selectedExecutorsDiv = document.getElementById('selected-executors'); //ко
 let addTaskForm = document.getElementById('addTaskForm'); //форма добавления задачи
 let бессрочноCheckbox = document.getElementById('is_бессрочно');
 let dateCreatedInput = document.getElementById('date_created');
-let fileInput = document.getElementById('file');
 let deadlineInput = document.getElementById('deadline'); 
 let descriptionInput = document.getElementById('description');
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+
 let files  = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -51,21 +54,41 @@ document.getElementById('description').addEventListener('change', (event) => {
 });
 
 fileInput.addEventListener('change', handleFileSelect);
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', (e) => e.preventDefault());
+dropZone.addEventListener('drop', handleDrop);
 
-addTaskForm.addEventListener('submit', (event) => {
+addTaskForm.addEventListener('submit', async (event) => {
     let validationResultArray = [checkDeadlineDateValidity(deadlineInput, dateCreatedInput), checkDateCreatedValidity(dateCreatedInput), checkDescriptionValidity(descriptionInput), checkExecutorSelectValidity(addTaskForm, executorSelect)];
 
     if (!validate(validationResultArray, addTaskForm)){
         event.preventDefault();
     }
 
+    formData = new FormData(event.target);
+
+    files.forEach(file => {
+        formData.append('files', file);
+    });
+    
+
+    let response = await fetch('https://127.0.0.1/add', {
+      method: 'POST',
+      body: formData});
+
     let pInput = document.getElementById("p");
     let snInput = document.getElementById("sn");
 
     pInput.value = sessionStorage.getItem('p');
     snInput.value = sessionStorage.getItem('sn');
+
 });
 
+function handleDrop(e) {
+    e.preventDefault();
+    const droppedFiles = e.dataTransfer.files;
+    addFiles(droppedFiles);
+}
 
 function handleFileSelect(e) {
     const selectedFiles = e.target.files;
@@ -81,13 +104,15 @@ function updateFileList() {
     fileList.innerHTML = '';
     files.forEach((file, index) => {
         const li = document.createElement('li');
-        li.className = 'file-item';
+        li.className = 'file-item mb-1';
         li.innerHTML = `
-            <div class="file-info">
-                <span class="file-name">${file.name}</span>
-                <span class="file-size">${formatFileSize(file.size)}</span>
-            </div>
-            <button class="delete-btn" data-index="${index}">&times;</button>
+            <div class="card justify-content-between flex-row p-1" style="box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                <div class="ml-3">
+                    <span class="file-name">${file.name}</span>
+                    <span class="file-size ml-2">${formatFileSize(file.size)}</span>
+                </div>
+                <button class="delete-btn" data-index="${index}"><i class="fa-solid fa-xmark"></i></button>
+            </div>  
         `;
         fileList.appendChild(li);
     });

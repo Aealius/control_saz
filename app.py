@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename, safe_join
 from urllib.parse import quote, unquote
+from flask_cors import CORS
 import shutil
 
 app = Flask(__name__)
@@ -16,6 +17,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345@localhost/co
 app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
+CORS(app)
 migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
@@ -205,7 +207,7 @@ def add():
         description = request.form['description']
         is_valid = request.form.get('is_valid') == 'on'
         for_review = request.form.get('for_review') == 'on'
-        files = request.files.getlist('file') #массив файлов
+        files = request.files.getlist('files') #массив файлов
 
         creator_file_path = ''
         # Сохраняем файл только один раз
