@@ -5,6 +5,7 @@ let addTaskForm = document.getElementById('addTaskForm'); //форма доба�
 let бессрочноCheckbox = document.getElementById('is_бессрочно');
 let dateCreatedInput = document.getElementById('date_created');
 let deadlineInput = document.getElementById('deadline'); 
+let descriptionInput = document.getElementById('description');
 
 document.addEventListener('DOMContentLoaded', () => {
     toggleDeadline();
@@ -23,6 +24,9 @@ document.getElementById('executor').addEventListener('change', (event) => {
 document.getElementById('date_created').addEventListener('change', (event) => {
     let validationResultArray = [checkDateCreatedValidity(dateCreatedInput)];
 
+    if (!deadlineInput.disabled && deadlineInput.value){
+        validationResultArray = [checkDateCreatedValidity(dateCreatedInput),checkDeadlineDateValidity(deadlineInput, dateCreatedInput)];
+    }
     if (!validate(validationResultArray, addTaskForm)){
         event.preventDefault();
     }
@@ -36,8 +40,16 @@ document.getElementById('deadline').addEventListener('change', (event) => {
     }
 });
 
+document.getElementById('description').addEventListener('change', (event) => {
+    let validationResultArray = [checkDescriptionValidity(descriptionInput)];
+
+    if (!validate(validationResultArray, addTaskForm)){
+        event.preventDefault();
+    }
+});
+
 addTaskForm.addEventListener('submit', (event) => {
-    let validationResultArray = [checkDeadlineDateValidity(deadlineInput, dateCreatedInput), checkDateCreatedValidity(dateCreatedInput), checkExecutorSelectValidity(addTaskForm, executorSelect)];
+    let validationResultArray = [checkDeadlineDateValidity(deadlineInput, dateCreatedInput), checkDateCreatedValidity(dateCreatedInput), checkDescriptionValidity(descriptionInput), checkExecutorSelectValidity(addTaskForm, executorSelect)];
 
     if (!validate(validationResultArray, addTaskForm)){
         event.preventDefault();
@@ -149,13 +161,11 @@ function toggleDeadline() {
 
     if (бессрочноCheckbox.checked) {
         deadlineField.style.display = 'none';
-        deadlineInput.required = false;  // Снять требование при бессрочной задаче
         deadlineInput.value = ''; // Очистить значение поля срока
         deadlineInput.disabled = true;
     }
     else {
         deadlineField.style.display = 'block';
-        deadlineInput.required = true;   // Вернуть требование
         deadlineInput.disabled  = false;
     }
 }

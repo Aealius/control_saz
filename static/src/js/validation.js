@@ -56,8 +56,9 @@ function checkExecutorSelectValidity(form, select){ // HTMLElement | null
 function checkDateCreatedValidity(dateCreatedInput){
     let dateCreatedParts = dateCreatedInput.value.split("-");
     let dateCreatedYear  = parseInt(dateCreatedParts[0]);
-
-    if (dateCreatedYear > 2050 || dateCreatedYear < 2024){
+    let currentYear = new Date().getFullYear();
+    
+    if (!dateCreatedInput.value || (dateCreatedYear > currentYear + 1 || dateCreatedYear < currentYear)){
         console.log('invalid date_created')
         return {valid: false, target: dateCreatedInput, error: "Некорректная дата создания"};
     }
@@ -70,22 +71,27 @@ function checkDeadlineDateValidity(deadlineInput, dateCreatedInput){
 
     let deadlineParts = deadlineInput.value.split("-");
     let deadlineYear = parseInt(deadlineParts[0]);
+    let currentYear = new Date().getFullYear();
 
     if (deadlineInput.disabled === false) {
-        if (deadlineYear > 2050 || deadlineYear < 2024) {
+        if (!deadlineInput.value || (deadlineYear > currentYear + 1 || deadlineYear < currentYear) 
+            || dateCreatedInput.value > deadlineInput.value) {
             console.log('invalid deadline');
             return { valid: false, target: deadlineInput, error: "Некорректная дата окончания срока" };
         }
-    
-        if (dateCreatedInput.value > deadlineInput.value) {
-            console.log('invalid deadline');
-            return { valid: false, target: deadlineInput, error: "Некорректная дата окончания срока" };
-        } 
     }
 
     return {valid: true, target: deadlineInput};
 }
 
+// Описание
+function checkDescriptionValidity(descriptionInput){    
+    if (!descriptionInput.value) {
+        console.log('invalid description');
+        return { valid: false, target: descriptionInput, error: "Необходимо добавить описание" };
+    }
+    return {valid: true, target: descriptionInput};
+}
 
 
 

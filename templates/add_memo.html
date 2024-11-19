@@ -17,7 +17,7 @@
     </div>
     <div class="form-group">
         <label for="description">Описание:</label>
-        <textarea class="form-control" id="description" name="description" required></textarea>
+        <textarea class="form-control" id="description" name="description"></textarea>
     </div> 
     <div class="input-group mb-3 upload-file-input">
         <label for="file" class="input-group-text">Прикрепить файл:</label>
@@ -35,7 +35,8 @@
     let allSelected = false; //флаг, указывающий выбрано ли всем
     let executorSelect = document.getElementById('executor');
     let selectedExecutorsDiv = document.getElementById('selected-executors');
-
+    let descriptionInput = document.getElementById('description');
+    
     let addMemoForm = document.getElementById("addMemoForm");
 
     document.getElementById('executor').addEventListener('change', (event) => {
@@ -46,9 +47,17 @@
         }
     });
 
+    document.getElementById('description').addEventListener('change', (event) => {
+        let validationResultArray = [checkDescriptionValidity(descriptionInput)];
+    
+        if (!validate(validationResultArray, addMemoForm)){
+            event.preventDefault();
+        }
+    });
+
     addMemoForm.addEventListener('submit', () => {
 
-        let validationResultArray = [checkExecutorSelectValidity(addMemoForm, executorSelect)];
+        let validationResultArray = [checkExecutorSelectValidity(addMemoForm, executorSelect), checkDescriptionValidity(descriptionInput)];
 
         if (!validate(validationResultArray, addMemoForm)){
             event.preventDefault();
