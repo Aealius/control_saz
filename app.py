@@ -17,7 +17,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345@localhost/co
 app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
-CORS(app)
 migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
