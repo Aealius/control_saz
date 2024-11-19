@@ -64,8 +64,6 @@ addTaskForm.addEventListener('submit', async (event) => {
 
     let validationResultArray = [checkDeadlineDateValidity(deadlineInput, dateCreatedInput), checkDateCreatedValidity(dateCreatedInput), checkDescriptionValidity(descriptionInput), checkExecutorSelectValidity(addTaskForm, executorSelect)];
 
-    
-
     if (validate(validationResultArray, addTaskForm)) {
         formData = new FormData(event.target);
 
@@ -86,8 +84,6 @@ addTaskForm.addEventListener('submit', async (event) => {
 
         window.location.replace(document.referrer);
     }
-
-    
 });
 
 function handleDrop(e) {

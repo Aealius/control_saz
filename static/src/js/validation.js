@@ -92,23 +92,3 @@ function checkDescriptionValidity(descriptionInput){
     }
     return {valid: true, target: descriptionInput};
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
