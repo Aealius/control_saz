@@ -66,27 +66,28 @@ addTaskForm.addEventListener('submit', async (event) => {
 
     
 
-    if (!validate(validationResultArray, addTaskForm)){
-        
+    if (validate(validationResultArray, addTaskForm)) {
+        formData = new FormData(event.target);
+
+        files.forEach(file => {
+            formData.append('files', file);
+        });
+
+        let pInput = document.getElementById("p");
+        let snInput = document.getElementById("sn");
+
+        pInput.value = sessionStorage.getItem('p');
+        snInput.value = sessionStorage.getItem('sn');
+
+        await fetch('http://127.0.0.1:5000/add', {
+            method: 'POST',
+            body: formData,
+        });
+
+        window.location.replace(document.referrer);
     }
 
-    formData = new FormData(event.target);
-
-    files.forEach(file => {
-        formData.append('files', file);
-    });
-
-    let pInput = document.getElementById("p");
-    let snInput = document.getElementById("sn");
-
-    pInput.value = sessionStorage.getItem('p');
-    snInput.value = sessionStorage.getItem('sn');
-
-    await fetch('http://127.0.0.1:5000/add', {
-        method: 'POST',
-        body: formData,});
-
-    window.location.replace(document.referrer);
+    
 });
 
 function handleDrop(e) {
