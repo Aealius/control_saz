@@ -8,7 +8,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename, safe_join
 from urllib.parse import quote, unquote
-from flask_cors import CORS
 import shutil
 
 app = Flask(__name__)
