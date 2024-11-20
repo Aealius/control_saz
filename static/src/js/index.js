@@ -115,7 +115,7 @@ function buildQueryString(senderValue){ //построение строки па
     newUrl.searchParams.delete('sn');
     newUrl.searchParams.delete('p');
 
-    urlParams.entries().forEach(([key, value]) => {
+    [...urlParams.entries()].forEach(([key, value]) => {
         newUrl.searchParams.append(key, value);
     });
 
