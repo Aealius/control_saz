@@ -83,7 +83,7 @@ class Task(db.Model):
     completion_confirmed_at = db.Column(db.DateTime)
     admin_note = db.Column(db.Text)
     attached_file = db.Column(db.String(255))  
-    creator_file = db.Column(db.String(255))  
+    creator_file = db.Column(db.String(2048))  
     is_бессрочно = db.Column(db.Boolean, default=False)
     for_review = db.Column(db.Boolean, default=False)
     is_archived = db.Column(db.Boolean, default = False, nullable = False) #поле, помечающее запись как "архивную" здесь еще в сгенерированнном скрипте нужно будет прописать, что это  поле не nullable
