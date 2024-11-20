@@ -41,11 +41,13 @@
                       required>{{ task.description }}</textarea>
         </div>
         <!--важно оставить возможность прикреплять файлы при редактировании-->
+        <div id="dropZone" class="drop-zone">
+            <p class="text-muted m-0">Нажмите, чтобы загрузить файл, либо перетащите их</p>
+            <p class="text-muted m-0">Подсказка: удерживая клавишу Ctrl, можно выбрать несколько файлов</p>
+            <input  type="file" id="fileInput" multiple class="hidden">
+        </div>
+        <ul id="fileList"></ul>
         <div class="input-group mb-3 upload-file-input">
-            <div class="input-group upload-file-input">
-                <label for="file" class="input-group-text">Прикрепить файл:</label>
-                <input type="file" value= "{{previous_file_path}}" class="form-control" id="file" name="file" aria-describedby="inputGroupFile" aria-label="Обзор">
-            </div>
             <div class="text-muted" style="font-size:small">Если Вы желаете оставить файл прежним, то оставьте данное поле пустым</div>
        </div>
         <div class="form-group form-check">
@@ -72,6 +74,7 @@
     </form>
 
     <script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
+    <script src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
     <script src="{{url_for('static', filename = 'src/js/edit.js')}}"></script>
     <script>
         

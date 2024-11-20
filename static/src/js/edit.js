@@ -8,8 +8,11 @@ const extendedDeadlineField = document.getElementById('extended_deadline_field')
 const dateCreatedInput = document.getElementById('date_created');
 const fileUploadInput = document.getElementById('file')
 const editTaskForm = document.getElementById('editTaskForm')
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
 
-files = [];
+let files = [];
 
 
 document.getElementById('executor').addEventListener('change', (event) => {
@@ -63,6 +66,9 @@ editTaskForm.addEventListener('submit', async (event) => {
         document.location.replace(document.referrer);
     }
 });
+
+// Функция из файла fileUpload.js для добавления addEventListener к инпуту
+addUploadEventListeners(fileInput, dropZone)
 
 function toggleDeadline() {
     let deadlineField = document.getElementById('deadlineField');

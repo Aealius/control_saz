@@ -312,7 +312,7 @@ def edit(task_id):
         task.is_valid = request.form.get('is_valid') == 'on'
         task.edit_datetime = datetime.now()
         task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
-        file = request.files.get('file') #получаем у формы файл (вдруг решили изменить его)
+        files = request.files.getlist('files') #массив файлов
         
         #параметры запроса
         
@@ -333,20 +333,24 @@ def edit(task_id):
                                                         current_user = current_user,
                                                         datetime=datetime)
         
-        if file and file.filename != '':
-            filename = file.filename  # Оригинальное имя
-            task_id = str(task_id)
+        creator_file_path = ''
+        
+        for file in files:
+            if file and file.filename != '':
+                filename = file.filename  # Оригинальное имя
+                task_id = str(task_id)
+                tmp_file_path = ''
                 
-            memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
-            os.makedirs(memo_uploads_folder, exist_ok=True)
+                memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+                os.makedirs(memo_uploads_folder, exist_ok=True)
 
-            # Сохранение файла
-            file.save(os.path.join(memo_uploads_folder, filename)) 
-            creator_file_path = os.path.join(task_id, 'creator', filename)
-            creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
-            task.creator_file = creator_file_path
+                # Сохранение файла
+                file.save(os.path.join(memo_uploads_folder, filename)) 
+                tmp_file_path = os.path.join(task_id, 'creator', filename)
+                tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
+                creator_file_path += tmp_file_path + ';'
         
-        
+        task.creator_file = creator_file_path 
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
         return '', 200
