@@ -177,9 +177,7 @@ def add():
     executors = [executor for executor in User.query.all() if executor.id != current_user.id]
     
     if request.method == 'POST':
-        sn = request.form['sn']
-        p = request.form['p']
-        
+
         selected_executors = request.form.get('executor[]')
 
         # Генерируем task_id для новой задачи
@@ -246,45 +244,39 @@ import shutil
 @login_required
 def add_memo():
     executors = User.query.all()
-    
-    sn = request.form.get('sn', 'in', type=str)
-    p = request.form.get('p', 1, type=int)
         
     if request.method == 'POST':
-        sn = session['sn']
-        p = session['p']
-        
         selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя 
         if 'all' in selected_executor_id:
             selected_executor_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
         else:
             selected_executor_id = [int(executor) for executor in selected_executor_id.split(',')]
         description = request.form['description']
-        file = request.files.get('file') #  Получаем файл вне цикла
+        files = request.files.getlist('files') #  Получаем файл вне цикла
 
-        creator_file_path = ''
-        # Сохраняем файл только один раз
-        if file and file.filename != '':
-            filename = file.filename  # Оригинальное имя
-
-            # Счетчик для task_id при "all"
-            if 'all' in selected_executor_id:
-                all_count = 1 
-                # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
-                while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
-                    all_count += 1
-                task_id = f'all{all_count}' # Использовать "all" + счетчик
-            else:
-                # Генерируем task_id для "не all"
-                task_id = str(len(Task.query.all()) + 1) 
+        if 'all' in selected_executor_id:
+            all_count = 1 
+            # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
+            while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
+                all_count += 1
+            task_id = f'all{all_count}' # Использовать "all" + счетчик
+        else:
+            # Генерируем task_id для "не all"
+            task_id = str(len(Task.query.all()) + 1) 
                 
             memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
             os.makedirs(memo_uploads_folder, exist_ok=True)
-
-            # Сохранение файла
-            file.save(os.path.join(memo_uploads_folder, filename)) 
-            creator_file_path = os.path.join(task_id, 'creator', filename)
-            creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
+        
+        creator_file_path = ''
+        # Сохраняем файл только один раз
+        for file in files:
+            if file and file.filename != '':
+                tmp_file_path = ''
+                filename = file.filename  
+                file.save(os.path.join(memo_uploads_folder, filename)) 
+                tmp_file_path = os.path.join(task_id, 'creator', filename)
+                tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
+                creator_file_path += tmp_file_path + ';'
 
         for executor_id in selected_executor_id:
             new_memo = Task(
@@ -357,7 +349,7 @@ def edit(task_id):
         
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
-        return redirect(url_for('index', sn = sn, p = p))
+        return '', 200
 
     return render_template('edit.html', task=task,
                                         executors=executors,
@@ -705,6 +697,9 @@ def archived():
             task.deadline_for_check = task.deadline
         else:
             task.deadline_for_check = date(9999,12,31)
+            
+        task.creator_files = task.creator_file.split(';')
+ 
     
     creator_department = {}
     for task in archived_data:

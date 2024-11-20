@@ -143,7 +143,7 @@
             <td>{{ task.description }}
                 {% if task.creator_file %}
                 {%for file in task.creator_files%}
-                <div><a class="long-href" href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
+                <div><a title="{{ unquote(file.split('/')[-1]) }}" class="long-href" href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
                         download="{{ unquote(file.split('/')[-1]) }}">{{ unquote(file.split('/')[-1]) }}</a></div>
                 {% endfor %}
                 {% endif %}
@@ -234,7 +234,7 @@
                 {% if current_user.is_admin and task.completion_note and not task.completion_confirmed %} 
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
-                    Подтвердить выполнение
+                    Контроль выполнения
                 </button>
 
                 <div class="modal fade" id="confirmModal{{ task.id }}" tabindex="-1" role="dialog"
@@ -242,7 +242,7 @@
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="confirmModalLabel{{ task.id }}">Подтверждение выполнения
+                                <h5 class="modal-title" id="confirmModalLabel{{ task.id }}">Контроль выполнения
                                     задачи
                                 </h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -258,16 +258,15 @@
                                         target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{ unquote(task.attached_file.split('/')[-1]) }} </a>
                                 </p>
                                 {% endif %}
-                                <div>
+                                <div class="form-group">
                                     <label for="admin_note">Заметка администратора:</label>
-                                    <textarea type="text" id="admin_note_{{ task.id }}" name="admin_note_{{ task.id }}"></textarea>
+                                    <textarea class ="form-control" type="text" id="admin_note_{{ task.id }}" name="admin_note_{{ task.id }}"></textarea>
                                 </div>
-                                <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'admin')" type="submit" class="btn btn-success">Подтвердить</button>
-                                <div>
-                                    <label for="admin_reject_note">Причина отклонения:</label>
-                                    <textarea type="text" id="admin_reject_note_{{ task.id }}" name="admin_reject_note_{{ task.id }}"></textarea>
+                                <div class="w-50 mx-auto d-flex justify-content-between">
+                                    <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'admin')" type="submit"
+                                        class="btn btn-success">Подтвердить</button>
+                                    <button onclick="taskConfirmation('{{task.id}}', 'reject', 'admin')" class="btn btn-danger">Отклонить</button>
                                 </div>
-                                <button onclick="taskConfirmation('{{task.id}}', 'reject', 'admin')" class="btn btn-danger">Отклонить</button>
                             </div>
                         </div>
                     </div>
@@ -285,7 +284,7 @@
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="confirmModalLabel{{ task.id }}">Подтверждение выполнения
+                                <h5 class="modal-title" id="confirmModalLabel{{ task.id }}">Контроль выполнения
                                     задачи
                                 </h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -296,10 +295,10 @@
                                 <p>Задача: {{ task.description }}</p>
                                 <p>Заметка исполнителя: {{ task.completion_note }}</p>
                                 {% if task.attached_file %}
-                                <p>Прикрепленный файл: <a
+                                <div>Прикрепленный файл: <a
                                         href="{{ url_for('uploaded_file', filename=task.attached_file) }}"
                                         target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{ unquote(task.attached_file.split('/')[-1]) }} </a>
-                                </p>
+                                </div>
                                 {% endif %}
                                 <div>
                                     <label for="deputy_note">Заметка администратора:</label>
@@ -307,12 +306,10 @@
                                 </div>
                                 <input type="hidden" value=""> <!--TODO: после подтверждения выполнения выкидывает на первую страницу непонятно кого отправленных со всеми приколами-->
                                 <input type="hidden" value=""> <!--необходимо сделать так, чтобы кидало обратно на ту страницу и на того отправителя, который был до потверждения-->
-                                <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'deputy')" class="btn btn-success">Подтвердить</button>
-                                <div>
-                                    <label for="deputy_reject_note">Причина отклонения:</label>
-                                    <textarea type="text" id="deputy_reject_note_{{ task.id }}" name="deputy_reject_note_{{ task.id }}"></textarea>
-                                </div>
-                                <button onclick="taskConfirmation('{{task.id}}', 'reject', 'deputy')" class="btn btn-danger">Отклонить</button>
+                                <div class="w-50 mx-auto d-flex justify-content-between">
+                                    <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'deputy')" class="btn btn-success">Подтвердить</button>
+                                    <button onclick="taskConfirmation('{{task.id}}', 'reject', 'deputy')" class="btn btn-danger">Отклонить</button>
+                                </div>      
                             </div>
                         </div>
                     </div>

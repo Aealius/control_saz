@@ -8,12 +8,7 @@ function taskConfirmation(id, path, role) {
     var base_url = window.location.origin;
     let addNote = '';
 
-    if(path == 'reject'){
-        addNote = document.getElementById(role + "_reject_note_" + id).value;
-    }
-    else{
-        addNote = document.getElementById(role + "_note_"+ id).value;
-    }
+    addNote = document.getElementById(role + "_note_"+ id).value;
 
     console.log(addNote);
     const myHeaders = new Headers();
@@ -140,7 +135,7 @@ function buildQueryString(senderValue){ //построение строки па
     newUrl.searchParams.delete('sn');
     newUrl.searchParams.delete('p');
 
-    urlParams.entries().forEach(([key, value]) => {
+    [...urlParams.entries()].forEach(([key, value]) => {
         newUrl.searchParams.append(key, value);
     });
 

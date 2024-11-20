@@ -7,9 +7,9 @@ const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
 let files = [];
+const base_url = window.location.origin;
 
 document.addEventListener('DOMContentLoaded', () => {
-    toggleDeadline();
     updateSelectedExecutors();
 });
 
@@ -53,7 +53,7 @@ addMemoForm.addEventListener('submit', async (event) => {
         pInput.value = sessionStorage.getItem('p');
         snInput.value = sessionStorage.getItem('sn');
 
-        await fetch('http://127.0.0.1:5000/add', {
+        await fetch(base_url + '/add_memo', {
             method: 'POST',
             body: formData,
         });
