@@ -8,8 +8,9 @@ function taskConfirmation(id, path, role) {
     var base_url = window.location.origin;
     let addNote = '';
 
-    addNote = document.getElementById(role + "_note").value;
+    addNote = document.getElementById(role + "_note_"+ id).value;
 
+    console.log(addNote);
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
@@ -28,7 +29,26 @@ function taskConfirmation(id, path, role) {
                 return response.text();
             })
             .then(html => {
+                let oldValue = document.getElementById("select-task-sender").value;
                 document.documentElement.innerHTML = html;
+
+                // Тк после обновления html селект ломается, необходимо заного привязывать on change
+                // TODO: если возможно, разобраться подробнее в чем причина поломки и убрать это полукостыльное решение
+                $('.selectpicker').selectpicker();
+                $('#select-task-sender').val(oldValue); 
+                $('#select-task-sender').change();
+                document.getElementById("select-task-sender").addEventListener('change', Event => {
+                    let options = Event.target.options;
+                    let senderValue = "in";
+
+                    for(let i = 0; i < options.length; i++){
+                        if(options[i].selected){
+                            senderValue = options[i].value;
+                        }
+                    }
+                
+                    window.location.href = buildQueryString(senderValue);
+                });
             })
       })
 }

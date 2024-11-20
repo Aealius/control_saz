@@ -73,6 +73,7 @@ function toggleDeadline() {
     }
     else {
         deadlineField.style.display = 'block';
+        deadlineInput.disabled  = false;
         extendDeadlineCheckbox.disabled = false;
     }
 }

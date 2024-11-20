@@ -260,7 +260,7 @@
                                 {% endif %}
                                 <div class="form-group">
                                     <label for="admin_note">Заметка администратора:</label>
-                                    <textarea class ="form-control" type="text" id="admin_note" name="admin_note"></textarea>
+                                    <textarea class ="form-control" type="text" id="admin_note_{{ task.id }}" name="admin_note_{{ task.id }}"></textarea>
                                 </div>
                                 <div class="w-50 mx-auto d-flex justify-content-between">
                                     <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'admin')" type="submit"
@@ -302,15 +302,14 @@
                                 {% endif %}
                                 <div>
                                     <label for="deputy_note">Заметка администратора:</label>
-                                    <textarea type="text" id="deputy_note" name="deputy_note"></textarea>
+                                    <textarea type="text" id="deputy_note_{{ task.id }}" name="deputy_note_{{ task.id }}"></textarea>
                                 </div>
                                 <input type="hidden" value=""> <!--TODO: после подтверждения выполнения выкидывает на первую страницу непонятно кого отправленных со всеми приколами-->
                                 <input type="hidden" value=""> <!--необходимо сделать так, чтобы кидало обратно на ту страницу и на того отправителя, который был до потверждения-->
                                 <div class="w-50 mx-auto d-flex justify-content-between">
                                     <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'deputy')" class="btn btn-success">Подтвердить</button>
                                     <button onclick="taskConfirmation('{{task.id}}', 'reject', 'deputy')" class="btn btn-danger">Отклонить</button>
-                                </div>
-                                
+                                </div>      
                             </div>
                         </div>
                     </div>
