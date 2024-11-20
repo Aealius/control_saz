@@ -54,7 +54,13 @@ editTaskForm.addEventListener('submit', async (event) => {
         pInput.value = sessionStorage.getItem('p');
         snInput.value = sessionStorage.getItem('sn');
 
-        // сюда фетч и редирект потом
+        var base_url = window.location.origin;
+        await fetch(base_url + window.location.pathname, {
+            method: 'POST',
+            body: formData,
+        });
+
+        document.location.replace(document.referrer);
     }
 });
 

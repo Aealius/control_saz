@@ -320,7 +320,7 @@ def edit(task_id):
         p = request.form['p']
                 
         if (current_user.is_admin):
-            task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
+            task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not task.is_бессрочно else None
             extend_deadline = request.form.get('extend_deadline')
             if extend_deadline:
                 try:
