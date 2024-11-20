@@ -1,15 +1,19 @@
 
 const deadlineInput = document.getElementById('deadline'); 
+const executorSelect = document.getElementById('executor');
 const descriptionInput = document.getElementById('description');
 const selectedExecutorsDiv = document.getElementById('selected-executors');
 const extendDeadlineCheckbox = document.getElementById('extend_deadline');
 const extendedDeadlineField = document.getElementById('extended_deadline_field');
+const dateCreatedInput = document.getElementById('date_created');
 const fileUploadInput = document.getElementById('file')
 const editTaskForm = document.getElementById('editTaskForm')
 
+files = [];
+
 
 document.getElementById('executor').addEventListener('change', (event) => {
-    let validationResultArray = [checkExecutorSelectValidity(addTaskForm, executorSelect)];
+    let validationResultArray = [checkSimpleExecutorSelect(executorSelect)];
 
     if (!validate(validationResultArray, editTaskForm)){
         event.preventDefault();
@@ -35,7 +39,7 @@ document.getElementById('description').addEventListener('change', (event) => {
 editTaskForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    let validationResultArray = [checkDeadlineDateValidity(deadlineInput),  checkDescriptionValidity(descriptionInput), checkExecutorSelectValidity(editTaskForm, executorSelect)];
+    let validationResultArray = [checkDeadlineDateValidity(deadlineInput, dateCreatedInput),  checkDescriptionValidity(descriptionInput), checkSimpleExecutorSelect(executorSelect)];
 
     if (validate(validationResultArray, event.target)) {
         let formData = new FormData(event.target);
@@ -63,6 +67,7 @@ function toggleDeadline() {
         deadlineField.style.display = 'none';
         deadlineInput.value = ''; // Очистить значение поля срока
         extendDeadlineCheckbox.disabled = true;
+        deadlineInput.disabled = true; 
         extendDeadlineCheckbox.checked = false;
         extendedDeadlineField.style.display = 'none';
     }
