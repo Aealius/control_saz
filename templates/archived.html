@@ -122,7 +122,7 @@
             </td>
             <td>
                 {% if task.is_бессрочно %}
-                <div>-</div>
+                <div>Бессрочно</div>
                 {% elif task.deadline %} 
                 <div>{{ task.deadline.strftime('%d.%m.%Y') }}</div>
                 {% if task.extended_deadline %}
@@ -136,9 +136,11 @@
             <td>
                 {{task.description}}
                 {% if task.creator_file %}
-                <p><a href="{{ url_for('uploaded_file', filename=task.creator_file) }}" target="_blank"
+                {%for file in task.creator_files%}
+                <div><a title="{{ unquote(task.creator_file.split('/')[-1]) }}" class="long-href" href="{{ url_for('uploaded_file', filename=task.creator_file) }}" target="_blank"
                         download="{{ unquote(task.creator_file.split('/')[-1]) }}">{{ unquote(task.creator_file.split('/')[-1]) }}</a>
-                </p>
+                </div>
+                {%endfor%}
                 {%endif%}
             </td>
             <td>

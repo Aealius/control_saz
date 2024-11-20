@@ -17,156 +17,25 @@
     </div>
     <div class="form-group">
         <label for="description">Описание:</label>
-        <textarea class="form-control" id="description" name="description" required></textarea>
+        <textarea class="form-control" id="description" name="description"></textarea>
     </div> 
-    <div class="input-group mb-3 upload-file-input">
-        <label for="file" class="input-group-text">Прикрепить файл:</label>
-       <input type="file" class="form-control" id="file" name="file" aria-describedby="inputGroupFile" aria-label="Обзор">
-   </div>
+    
+    <div id="dropZone" class="drop-zone">
+        <p class="text-muted m-0">Нажмите, чтобы загрузить файл, либо перетащите их</p>
+        <p class="text-muted m-0">Подсказка: удерживая клавишу Ctrl, можно выбрать несколько файлов</p>
+        <input  type="file" id="fileInput" multiple class="hidden">
+    </div>
+    <ul id="fileList"></ul>
+
    <input type="hidden" id="sn" name="sn" value="">
    <input type="hidden" id="p" name="p" value="">
     <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
 
-<script>
 
-    let allSelected = false; //флаг, указывающий выбрано ли всем
-    let executorSelect = document.getElementById('executor');
-    let selectedExecutorsDiv = document.getElementById('selected-executors');
-
-    let addMemoForm = document.getElementById("addMemoForm");
-
-    addMemoForm.addEventListener('submit', () => {
-        let pInput = document.getElementById("p");
-        let snInput = document.getElementById("sn");
-
-        pInput.value = sessionStorage.getItem('p');
-        snInput.value = sessionStorage.getItem('sn');
-    });
-
-    function updateSelectedExecutors() {
-        let executorSelectedOptions = executorSelect.selectedOptions; 
-        let selectedValuesArray = [];
-        let selectedTextArray = [];
-        
-        for(let i = 0; i < executorSelectedOptions.length; i++){
-            selectedValuesArray.push(executorSelectedOptions[i].value);
-            selectedTextArray.push(executorSelectedOptions[i].innerHTML);
-        }
-
-        addExecutorToSelected(selectedValuesArray, selectedTextArray);
-    }
-
-    function addExecutorToSelected(value, text) {
-        selectedExecutorsDiv.innerHTML = "";
-
-        let hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'executor[]'; 
-        
-        if (executorSelect.options.length == executorSelect.selectedOptions.length){
-            let allSpan = document.createElement('span');
-            allSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
-            allSpan.textContent = 'Всем';
-            allSpan.setAttribute('data-value', 'all');
-
-            let closeButton = document.createElement('button');
-            closeButton.type = 'button';
-            closeButton.classList.add('close', 'small-close');
-            closeButton.innerHTML = '×';
-            allSpan.appendChild(closeButton);
-            selectedExecutorsDiv.appendChild(allSpan);
-            closeButton.addEventListener('click', function () {
-                this.parentNode.remove();
-                $('.selectpicker').selectpicker('deselectAll'); 
-            });
-            allSpan.appendChild(hiddenInput);
-            hiddenInput.value = 'all';
-        }
-        else{
-            for (let i = 0; i < value.length; i++){
-
-                let executorSpan = document.createElement('span');
-                executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
-                executorSpan.textContent = text[i];
-                executorSpan.setAttribute('data-value', value[i]);
-    
-                let closeButton = document.createElement('button');
-                closeButton.type = 'button';
-                closeButton.classList.add('close', 'small-close');
-                closeButton.innerHTML = '×';
-                closeButton.addEventListener('click', function () {
-                    let currentValue = this.parentNode.dataset.value;  // get the value
-                    if (currentValue == 'all') { // Удаление  allSelected  
-                        allSelected = false // ставим false allSelected
-                        
-                    }
-                    this.parentNode.remove();
-                    
-    
-                    let elements = executorSelect.selectedOptions;
-                    let selectedText = document.querySelector(".filter-option-inner-inner");
-    
-                    for (let i = 0; i < elements.length; i++){
-                        if ((elements[i].value) == currentValue){
-                            let removeText = elements[i].innerHTML;
-                            elements[i].selected = false;  
-                            if (i == selectedExecutorsDiv.childElementCount){
-                                if(elements.length == 0){ //когда никого не остается в выбранных
-                                    $('.selectpicker').selectpicker('deselectAll'); //убираем всех отовсюду, чтобы показало дефолтное состояние дропдауна 
-                                }
-                                else{
-                                    selectedText.innerHTML = (selectedText.innerHTML.replace( ', '  + removeText , ''));
-                                }
-                            }
-                            else{
-                                selectedText.innerHTML = (selectedText.innerHTML.replace(removeText + ', ', ''));
-                            }                    
-                        }   
-                    }
-    
-                    updateSelectedExecutors()
-                    
-                });
-                executorSpan.appendChild(closeButton);
-                selectedExecutorsDiv.appendChild(executorSpan);
-                executorSpan.appendChild(hiddenInput);
-            }
-            hiddenInput.value = value;
-        }
-    }
-
-
-
-    function toggleDeadline() {
-        var deadlineField = document.getElementById('deadline-field');
-        var deadlineInput = document.getElementById('deadline');
-        var бессрочноCheckbox = document.getElementById('is_бессрочно');
-
-        if (бессрочноCheckbox.checked) {
-            deadlineField.style.display = 'none';
-            deadlineInput.required = false;  // Снять требование при бессрочной задаче
-            deadlineInput.value = ''; // Очистить значение поля срока
-        } else {
-            deadlineField.style.display = 'block';
-            deadlineInput.required = true;   // Вернуть требование
-        }
-    }
-
-    // Вызов функции при загрузке страницы для установки начального состояния
-    toggleDeadline();
-
-    // Вызов функции при изменении состояния чекбокса
-    document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);
-
-
-
-    updateSelectedExecutors();
-
-
-
-
-</script>
+<script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
+<script src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
+<script src="{{url_for('static', filename = 'src/js/add_memo.js')}}"></script>
 
 <style>
     .small-close {

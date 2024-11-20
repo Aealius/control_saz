@@ -139,6 +139,8 @@ def index():
             task.deadline_for_check = task.deadline
         else:
             task.deadline_for_check = date(9999,12,31)
+            
+        task.creator_files = task.creator_file.split(';')
 
 
     creator_department = {}
@@ -175,9 +177,7 @@ def add():
     executors = [executor for executor in User.query.all() if executor.id != current_user.id]
     
     if request.method == 'POST':
-        sn = request.form['sn']
-        p = request.form['p']
-        
+
         selected_executors = request.form.get('executor[]')
 
         # Генерируем task_id для новой задачи
@@ -203,15 +203,18 @@ def add():
         description = request.form['description']
         is_valid = request.form.get('is_valid') == 'on'
         for_review = request.form.get('for_review') == 'on'
-        file = request.files.get('file')
+        files = request.files.getlist('files') #массив файлов
 
         creator_file_path = ''
         # Сохраняем файл только один раз
-        if file and file.filename != '':
-            filename = file.filename
-            file.save(os.path.join(task_uploads_folder, filename))
-            creator_file_path = os.path.join(task_id, 'creator', filename)
-            creator_file_path = creator_file_path.replace('\\', '/')
+        for file in files:
+            if file and file.filename != '':
+                tmp_file_path = ''
+                filename = file.filename
+                file.save(os.path.join(task_uploads_folder, filename))
+                tmp_file_path = os.path.join(task_id, 'creator', filename)
+                tmp_file_path = tmp_file_path.replace('\\', '/')
+                creator_file_path += tmp_file_path + ';'
 
         for executor in executors_for_task:
             new_task = Task(
@@ -220,6 +223,7 @@ def add():
                 deadline=deadline,
                 description=description,
                 is_valid=is_valid,
+                is_бессрочно=is_бессрочно,
                 creator_id=current_user.id,
                 for_review=for_review,
                 creator_file=creator_file_path  
@@ -228,7 +232,7 @@ def add():
             db.session.commit()
 
         flash('Задача успешно добавлена!', 'success')
-        return redirect(url_for('index', sn=sn, p = p))
+        return '', 200
 
     return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
 
@@ -240,45 +244,39 @@ import shutil
 @login_required
 def add_memo():
     executors = User.query.all()
-    
-    sn = request.form.get('sn', 'in', type=str)
-    p = request.form.get('p', 1, type=int)
         
     if request.method == 'POST':
-        sn = session['sn']
-        p = session['p']
-        
         selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя 
         if 'all' in selected_executor_id:
             selected_executor_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
         else:
             selected_executor_id = [int(executor) for executor in selected_executor_id.split(',')]
         description = request.form['description']
-        file = request.files.get('file') #  Получаем файл вне цикла
+        files = request.files.getlist('files') #  Получаем файл вне цикла
 
-        creator_file_path = ''
-        # Сохраняем файл только один раз
-        if file and file.filename != '':
-            filename = file.filename  # Оригинальное имя
-
-            # Счетчик для task_id при "all"
-            if 'all' in selected_executor_id:
-                all_count = 1 
-                # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
-                while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
-                    all_count += 1
-                task_id = f'all{all_count}' # Использовать "all" + счетчик
-            else:
-                # Генерируем task_id для "не all"
-                task_id = str(len(Task.query.all()) + 1) 
+        if 'all' in selected_executor_id:
+            all_count = 1 
+            # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
+            while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
+                all_count += 1
+            task_id = f'all{all_count}' # Использовать "all" + счетчик
+        else:
+            # Генерируем task_id для "не all"
+            task_id = str(len(Task.query.all()) + 1) 
                 
             memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
             os.makedirs(memo_uploads_folder, exist_ok=True)
-
-            # Сохранение файла
-            file.save(os.path.join(memo_uploads_folder, filename)) 
-            creator_file_path = os.path.join(task_id, 'creator', filename)
-            creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
+        
+        creator_file_path = ''
+        # Сохраняем файл только один раз
+        for file in files:
+            if file and file.filename != '':
+                tmp_file_path = ''
+                filename = file.filename  
+                file.save(os.path.join(memo_uploads_folder, filename)) 
+                tmp_file_path = os.path.join(task_id, 'creator', filename)
+                tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
+                creator_file_path += tmp_file_path + ';'
 
         for executor_id in selected_executor_id:
             new_memo = Task(
@@ -294,7 +292,7 @@ def add_memo():
             db.session.commit()
 
         flash('Служебная записка успешно отправлена!', 'success')
-        return redirect(url_for('index', sn = sn, p = p))
+        return '', 200
 
     return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
 
@@ -314,7 +312,7 @@ def edit(task_id):
         task.is_valid = request.form.get('is_valid') == 'on'
         task.edit_datetime = datetime.now()
         task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
-        file = request.files.get('file') #получаем у формы файл (вдруг решили изменить его)
+        files = request.files.getlist('files') #массив файлов
         
         #параметры запроса
         
@@ -322,7 +320,7 @@ def edit(task_id):
         p = request.form['p']
                 
         if (current_user.is_admin):
-            task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if request.form['deadline'] else None
+            task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not task.is_бессрочно else None
             extend_deadline = request.form.get('extend_deadline')
             if extend_deadline:
                 try:
@@ -335,23 +333,28 @@ def edit(task_id):
                                                         current_user = current_user,
                                                         datetime=datetime)
         
-        if file and file.filename != '':
-            filename = file.filename  # Оригинальное имя
-            task_id = str(task_id)
-                
-            memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
-            os.makedirs(memo_uploads_folder, exist_ok=True)
-
-            # Сохранение файла
-            file.save(os.path.join(memo_uploads_folder, filename)) 
-            creator_file_path = os.path.join(task_id, 'creator', filename)
-            creator_file_path = creator_file_path.replace('\\', '/') # Запись пути к файлу в базу
-            task.creator_file = creator_file_path
+        creator_file_path = ''
         
+        if(len(files) > 0):
+            for file in files:
+                if file and file.filename != '':
+                    filename = file.filename  # Оригинальное имя
+                    task_id = str(task_id)
+                    tmp_file_path = ''
+                
+                    memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+                    os.makedirs(memo_uploads_folder, exist_ok=True)
+
+                    # Сохранение файла
+                    file.save(os.path.join(memo_uploads_folder, filename)) 
+                    tmp_file_path = os.path.join(task_id, 'creator', filename)
+                    tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
+                    creator_file_path += tmp_file_path + ';'
+            task.creator_file = creator_file_path
         
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
-        return redirect(url_for('index', sn = sn, p = p))
+        return '', 200
 
     return render_template('edit.html', task=task,
                                         executors=executors,
@@ -433,10 +436,10 @@ def confirm_task(task_id):
     task = Task.query.get_or_404(task_id)
     task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
-    task.admin_note = request.form.get('admin_note')
+    task.admin_note = request.json.get('note')
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
-    return redirect(request.referrer or url_for('index', sn=sn, p=p))
+    return '', 200
 
 
 @app.route('/admin/tasks/<int:task_id>/reject', methods=['POST'])
@@ -450,12 +453,64 @@ def reject_task(task_id):
     p = session['p']
     
     task = Task.query.get_or_404(task_id)
+    
+    if task.attached_file != None and task.attached_file != "":
+        os.remove(task.attached_file)
+    task.attached_file = None
+    task.completion_note = None
     task.completion_confirmed = False
-    task.admin_note = request.form.get('admin_note')
+    task.admin_note = request.json.get('note')
     db.session.commit()
     flash('Выполнение задачи отклонено.', 'warning')
-    return redirect(request.referrer or url_for('index', sn = sn, p = p))
+    return '', 200
 
+@app.route('/deputy/tasks/<int:task_id>/confirm', methods=['POST'])
+@login_required
+def confirm_task_deputy(task_id):
+    if not current_user.is_deputy:
+        flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
+        return redirect(url_for('index'))
+    
+    p = session['p']
+    sn = session['sn']
+
+    task = Task.query.get_or_404(task_id)
+    if task.creator_id != current_user.id:
+        flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
+        return redirect(url_for('index'))
+
+    task.completion_confirmed = True
+    task.completion_confirmed_at = datetime.now()
+    task.admin_note = request.json.get('note')
+    db.session.commit()
+    flash('Выполнение задачи подтверждено.', 'success')
+    return '', 200
+
+@app.route('/deputy/tasks/<int:task_id>/reject', methods=['POST'])
+@login_required
+def reject_task_deputy(task_id):
+    if not current_user.is_deputy:
+        flash('У вас нет прав для отклонения задач.', 'danger')
+        return redirect(url_for('index'))
+
+    sn = session['sn']
+    p = session['p']
+    
+    task = Task.query.get_or_404(task_id)
+    if task.creator_id != current_user.id:
+        flash('Вы можете отклоненять только задачи, которые вы выдали.', 'danger')
+        return redirect(url_for('index'))
+    
+    if task.attached_file != None and task.attached_file != "":
+        os.remove(task.attached_file)
+    task.attached_file = None
+    task.completion_note = None
+    task.completion_confirmed = False
+    task.admin_note = request.json.get('note')
+    
+    db.session.commit()
+    flash('Выполнение задачи отклонено.', 'warning')
+    return '', 200
 
 @app.route('/users')
 @login_required
@@ -594,29 +649,6 @@ def review(task_id):
     return render_template('review.html', task=task)
 
 
-@app.route('/deputy/tasks/<int:task_id>/confirm', methods=['POST'])
-@login_required
-def confirm_task_deputy(task_id):
-    if not current_user.is_deputy:
-        flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
-        return redirect(url_for('index'))
-    
-    p = session['p']
-    sn = session['sn']
-
-    task = Task.query.get_or_404(task_id)
-    if task.creator_id != current_user.id:
-        flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
-        return redirect(url_for('index'))
-
-    task.completion_confirmed = True
-    task.completion_confirmed_at = datetime.now()
-    task.admin_note = request.form.get('admin_note')
-    db.session.commit()
-    flash('Выполнение задачи подтверждено.', 'success')
-    return redirect(request.referrer or url_for('index', sn = sn, p=p))
-
-
 reports_bp = Blueprint('reports', __name__) # Создаем Blueprint
 
 
@@ -670,6 +702,9 @@ def archived():
             task.deadline_for_check = task.deadline
         else:
             task.deadline_for_check = date(9999,12,31)
+            
+        task.creator_files = task.creator_file.split(';')
+ 
     
     creator_department = {}
     for task in archived_data:
@@ -755,6 +790,7 @@ def calculate_penalty(task):
             penalty = min(overdue_days, max_penalty)
             return penalty
     return 0
+    
 
 
 app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Blueprint

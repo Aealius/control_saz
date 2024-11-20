@@ -94,4 +94,39 @@ button.archive:hover{
     vertical-align: top;
 }
 
+/* для li в /add, /add_memo, /edit */
+#fileList{
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.delete-btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.file-size {
+    font-size: 12px;
+    color: #666;
+}
+
+.drop-zone{
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 16px;
+}
+
+.drop-zone:hover {
+    background-color: #ebebeb;
+}
+
+.hidden {
+    display: none;
+}
 

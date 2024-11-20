@@ -4,6 +4,54 @@ let clearFilterHref = document.getElementById("clearFilterHref"); //строка
 let submitFilterFormButton = document.getElementById("submitFilterformButton"); //кнопка "применить фильтр" на форме фильтрации
 let urlParams  = new URLSearchParams(window.location.search);
 
+function taskConfirmation(id, path, role) {
+    var base_url = window.location.origin;
+    let addNote = '';
+
+    addNote = document.getElementById(role + "_note_"+ id).value;
+
+    console.log(addNote);
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    fetch(base_url + "/"+ role +"/tasks/" + id + "/" + path, {
+        method: "POST",
+        body: JSON.stringify({ note: addNote }),
+        headers: myHeaders,
+      }).then((response) => {
+        console.log(response);
+      }).then(() =>{
+        const queryString = window.location.search;
+
+        fetch(base_url + "/" + queryString, 
+            {method: "GET"})
+            .then(response => {
+                return response.text();
+            })
+            .then(html => {
+                let oldValue = document.getElementById("select-task-sender").value;
+                document.documentElement.innerHTML = html;
+
+                // Тк после обновления html селект ломается, необходимо заного привязывать on change
+                // TODO: если возможно, разобраться подробнее в чем причина поломки и убрать это полукостыльное решение
+                $('.selectpicker').selectpicker();
+                $('#select-task-sender').val(oldValue); 
+                $('#select-task-sender').change();
+                document.getElementById("select-task-sender").addEventListener('change', Event => {
+                    let options = Event.target.options;
+                    let senderValue = "in";
+
+                    for(let i = 0; i < options.length; i++){
+                        if(options[i].selected){
+                            senderValue = options[i].value;
+                        }
+                    }
+                
+                    window.location.href = buildQueryString(senderValue);
+                });
+            })
+      })
+}
 
 //получение параметров сохраненных в localStorage или отображенных в searchParams
 document.addEventListener('DOMContentLoaded', () => { //задает значение дропдауна из значения, переданного в строке параметров
@@ -87,7 +135,7 @@ function buildQueryString(senderValue){ //построение строки па
     newUrl.searchParams.delete('sn');
     newUrl.searchParams.delete('p');
 
-    urlParams.entries().forEach(([key, value]) => {
+    [...urlParams.entries()].forEach(([key, value]) => {
         newUrl.searchParams.append(key, value);
     });
 
