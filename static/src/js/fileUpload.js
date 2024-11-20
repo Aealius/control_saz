@@ -32,7 +32,7 @@ function updateFileList() {
                     <span class="file-name">${file.name}</span>
                     <span class="file-size ml-2">${formatFileSize(file.size)}</span>
                 </div>
-                <button class="delete-btn" data-index="${index}"><i class="fa-solid fa-xmark"></i></button>
+                <button class="delete-btn" data-index="${index}">&times</button>
             </div>  
         `;
         fileList.appendChild(li);
