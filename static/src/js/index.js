@@ -8,12 +8,7 @@ function taskConfirmation(id, path, role) {
     var base_url = window.location.origin;
     let addNote = '';
 
-    if(path == 'reject'){
-        addNote = document.getElementById(role + "_reject_note").value;
-    }
-    else{
-        addNote = document.getElementById(role + "_note").value;
-    }
+    addNote = document.getElementById(role + "_note").value;
 
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
