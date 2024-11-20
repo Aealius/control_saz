@@ -335,22 +335,23 @@ def edit(task_id):
         
         creator_file_path = ''
         
-        for file in files:
-            if file and file.filename != '':
-                filename = file.filename  # Оригинальное имя
-                task_id = str(task_id)
-                tmp_file_path = ''
+        if(len(files) > 0):
+            for file in files:
+                if file and file.filename != '':
+                    filename = file.filename  # Оригинальное имя
+                    task_id = str(task_id)
+                    tmp_file_path = ''
                 
-                memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
-                os.makedirs(memo_uploads_folder, exist_ok=True)
+                    memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+                    os.makedirs(memo_uploads_folder, exist_ok=True)
 
-                # Сохранение файла
-                file.save(os.path.join(memo_uploads_folder, filename)) 
-                tmp_file_path = os.path.join(task_id, 'creator', filename)
-                tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
-                creator_file_path += tmp_file_path + ';'
+                    # Сохранение файла
+                    file.save(os.path.join(memo_uploads_folder, filename)) 
+                    tmp_file_path = os.path.join(task_id, 'creator', filename)
+                    tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
+                    creator_file_path += tmp_file_path + ';'
+            task.creator_file = creator_file_path
         
-        task.creator_file = creator_file_path 
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
         return '', 200
