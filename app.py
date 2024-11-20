@@ -442,7 +442,7 @@ def confirm_task(task_id):
     task.admin_note = request.json.get('note')
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
-    return redirect(request.referrer or url_for('index', sn=sn, p=p))
+    return '', 200
 
 
 @app.route('/admin/tasks/<int:task_id>/reject', methods=['POST'])
@@ -456,12 +456,64 @@ def reject_task(task_id):
     p = session['p']
     
     task = Task.query.get_or_404(task_id)
+    
+    if task.attached_file != None and task.attached_file != "":
+        os.remove(task.attached_file)
+    task.attached_file = None
+    task.completion_note = None
     task.completion_confirmed = False
     task.admin_note = request.json.get('note')
     db.session.commit()
     flash('Выполнение задачи отклонено.', 'warning')
-    return redirect(request.referrer or url_for('index', sn = sn, p = p))
+    return '', 200
 
+@app.route('/deputy/tasks/<int:task_id>/confirm', methods=['POST'])
+@login_required
+def confirm_task_deputy(task_id):
+    if not current_user.is_deputy:
+        flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
+        return redirect(url_for('index'))
+    
+    p = session['p']
+    sn = session['sn']
+
+    task = Task.query.get_or_404(task_id)
+    if task.creator_id != current_user.id:
+        flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
+        return redirect(url_for('index'))
+
+    task.completion_confirmed = True
+    task.completion_confirmed_at = datetime.now()
+    task.admin_note = request.json.get('note')
+    db.session.commit()
+    flash('Выполнение задачи подтверждено.', 'success')
+    return '', 200
+
+@app.route('/deputy/tasks/<int:task_id>/reject', methods=['POST'])
+@login_required
+def reject_task_deputy(task_id):
+    if not current_user.is_deputy:
+        flash('У вас нет прав для отклонения задач.', 'danger')
+        return redirect(url_for('index'))
+
+    sn = session['sn']
+    p = session['p']
+    
+    task = Task.query.get_or_404(task_id)
+    if task.creator_id != current_user.id:
+        flash('Вы можете отклоненять только задачи, которые вы выдали.', 'danger')
+        return redirect(url_for('index'))
+    
+    if task.attached_file != None and task.attached_file != "":
+        os.remove(task.attached_file)
+    task.attached_file = None
+    task.completion_note = None
+    task.completion_confirmed = False
+    task.admin_note = request.json.get('note')
+    
+    db.session.commit()
+    flash('Выполнение задачи отклонено.', 'warning')
+    return '', 200
 
 @app.route('/users')
 @login_required
@@ -598,29 +650,6 @@ def review(task_id):
         flash('Вы ознакомились с задачей.', 'success')
         return redirect(url_for('index', sn = sn, p = p))  #  Перенаправление на главную страницу
     return render_template('review.html', task=task)
-
-
-@app.route('/deputy/tasks/<int:task_id>/confirm', methods=['POST'])
-@login_required
-def confirm_task_deputy(task_id):
-    if not current_user.is_deputy:
-        flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
-        return redirect(url_for('index'))
-    
-    p = session['p']
-    sn = session['sn']
-
-    task = Task.query.get_or_404(task_id)
-    if task.creator_id != current_user.id:
-        flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
-        return redirect(url_for('index'))
-
-    task.completion_confirmed = True
-    task.completion_confirmed_at = datetime.now()
-    task.admin_note = request.json.get('note')
-    db.session.commit()
-    flash('Выполнение задачи подтверждено.', 'success')
-    return redirect(request.referrer or url_for('index', sn = sn, p=p))
 
 
 reports_bp = Blueprint('reports', __name__) # Создаем Blueprint
