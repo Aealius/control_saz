@@ -257,20 +257,16 @@
                                         target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{ unquote(task.attached_file.split('/')[-1]) }} </a>
                                 </p>
                                 {% endif %}
-                                <form method="POST" action="{{ url_for('confirm_task', task_id=task.id) }}">
-                                    <div class="form-group">
-                                        <label for="admin_note">Заметка администратора:</label>
-                                        <textarea class="form-control" id="admin_note" name="admin_note"></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-success">Подтвердить</button>
-                                </form>
-                                <form method="POST" action="{{ url_for('reject_task', task_id=task.id) }}">
-                                    <div class="form-group">
-                                        <label for="admin_note">Причина отклонения:</label>
-                                        <textarea class="form-control" id="admin_note" name="admin_note"></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-danger">Отклонить</button>
-                                </form>
+                                <div>
+                                    <label for="admin_note">Заметка администратора:</label>
+                                    <textarea type="text" id="admin_note" name="admin_note"></textarea>
+                                </div>
+                                <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'admin')" type="submit" class="btn btn-success">Подтвердить</button>
+                                <div>
+                                    <label for="admin_reject_note">Причина отклонения:</label>
+                                    <textarea type="text" id="admin_reject_note" name="admin_reject_note"></textarea>
+                                </div>
+                                <button onclick="taskConfirmation('{{task.id}}', 'reject', 'admin')" class="btn btn-danger">Отклонить</button>
                             </div>
                         </div>
                     </div>
@@ -304,22 +300,18 @@
                                         target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{ unquote(task.attached_file.split('/')[-1]) }} </a>
                                 </p>
                                 {% endif %}
-                                <form method="POST" action="{{ url_for('confirm_task_deputy', task_id=task.id) }}">
-                                    <div class="form-group">
-                                        <label for="admin_note">Заметка администратора:</label>
-                                        <textarea class="form-control" id="admin_note" name="admin_note"></textarea>
-                                    </div>
-                                    <input type="hidden" value=""> <!--TODO: после подтверждения выполнения выкидывает на первую страницу непонятно кого отправленных со всеми приколами-->
-                                    <input type="hidden" value=""> <!--необходимо сделать так, чтобы кидало обратно на ту страницу и на того отправителя, который был до потверждения-->
-                                    <button type="submit" class="btn btn-success">Подтвердить</button>
-                                </form>
-                                <form method="POST" action="{{ url_for('reject_task', task_id=task.id) }}">
-                                    <div class="form-group">
-                                        <label for="admin_note">Причина отклонения:</label>
-                                        <textarea class="form-control" id="admin_note" name="admin_note"></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-danger">Отклонить</button>
-                                </form>
+                                <div>
+                                    <label for="deputy_note">Заметка администратора:</label>
+                                    <textarea type="text" id="deputy_note" name="deputy_note"></textarea>
+                                </div>
+                                <input type="hidden" value=""> <!--TODO: после подтверждения выполнения выкидывает на первую страницу непонятно кого отправленных со всеми приколами-->
+                                <input type="hidden" value=""> <!--необходимо сделать так, чтобы кидало обратно на ту страницу и на того отправителя, который был до потверждения-->
+                                <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'deputy')" class="btn btn-success">Подтвердить</button>
+                                <div>
+                                    <label for="deputy_reject_note">Причина отклонения:</label>
+                                    <textarea type="text" id="deputy_reject_note" name="deputy_reject_note"></textarea>
+                                </div>
+                                <button onclick="taskConfirmation('{{task.id}}', 'reject', 'deputy')" class="btn btn-danger">Отклонить</button>
                             </div>
                         </div>
                     </div>

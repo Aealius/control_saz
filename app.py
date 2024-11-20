@@ -434,7 +434,7 @@ def confirm_task(task_id):
     task = Task.query.get_or_404(task_id)
     task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
-    task.admin_note = request.form.get('admin_note')
+    task.admin_note = request.json.get('note')
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
     return redirect(request.referrer or url_for('index', sn=sn, p=p))
@@ -452,7 +452,7 @@ def reject_task(task_id):
     
     task = Task.query.get_or_404(task_id)
     task.completion_confirmed = False
-    task.admin_note = request.form.get('admin_note')
+    task.admin_note = request.json.get('note')
     db.session.commit()
     flash('Выполнение задачи отклонено.', 'warning')
     return redirect(request.referrer or url_for('index', sn = sn, p = p))
@@ -612,7 +612,7 @@ def confirm_task_deputy(task_id):
 
     task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
-    task.admin_note = request.form.get('admin_note')
+    task.admin_note = request.json.get('note')
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
     return redirect(request.referrer or url_for('index', sn = sn, p=p))

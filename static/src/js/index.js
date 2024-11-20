@@ -4,6 +4,39 @@ let clearFilterHref = document.getElementById("clearFilterHref"); //строка
 let submitFilterFormButton = document.getElementById("submitFilterformButton"); //кнопка "применить фильтр" на форме фильтрации
 let urlParams  = new URLSearchParams(window.location.search);
 
+function taskConfirmation(id, path, role) {
+    var base_url = window.location.origin;
+    let addNote = '';
+
+    if(path == 'reject'){
+        addNote = document.getElementById(role + "_reject_note").value;
+    }
+    else{
+        addNote = document.getElementById(role + "_note").value;
+    }
+
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    fetch(base_url + "/"+ role +"/tasks/" + id + "/" + path, {
+        method: "POST",
+        body: JSON.stringify({ note: addNote }),
+        headers: myHeaders,
+      }).then((response) => {
+        console.log(response);
+      }).then(() =>{
+        const queryString = window.location.search;
+
+        fetch(base_url + "/" + queryString, 
+            {method: "GET"})
+            .then(response => {
+                return response.text();
+            })
+            .then(html => {
+                document.documentElement.innerHTML = html;
+            })
+      })
+}
 
 //получение параметров сохраненных в localStorage или отображенных в searchParams
 document.addEventListener('DOMContentLoaded', () => { //задает значение дропдауна из значения, переданного в строке параметров
