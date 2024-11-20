@@ -212,13 +212,14 @@
                             <div class="modal-body">
                                 <p>Описание задачи: {{ task.description }}</p>
                                 {% if task.creator_file %}
+                                {% for file in task.creator_files%}
                                 <p>
-                                    <p><a href="{{ url_for('uploaded_file', filename=task.creator_file) }}"
+                                    <div><a href="{{ url_for('uploaded_file', filename=file) }}"
                                             target="_blank"
-                                            download="{{ unquote(task.creator_file.split('/')[-1]) }}">{{ unquote(task.creator_file.split('/')[-1]) }}</a>
-                                    </p>
+                                            download="{{ unquote(file.split('/')[-1]) }}">{{ unquote(file.split('/')[-1]) }}</a>
+                                    </div>
                                 </p>
-
+                                {%endfor%}
                                 {% endif %}
                                 <form method="POST" action="{{ url_for('review', task_id=task.id) }}">
                                     <button type="submit" class="btn btn-primary">Ознакомлен</button>
@@ -276,7 +277,7 @@
                 {% if current_user.is_deputy and task.creator_id == current_user.id and task.completion_note and not task.completion_confirmed %} 
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
-                    Подтвердить выполнение
+                    Контроль выполнения
                 </button>
                 <!--модалка на подтверждение выполнения задачи-->
                 <div class="modal fade" id="confirmModal{{ task.id }}" tabindex="-1" role="dialog"
