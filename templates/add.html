@@ -45,15 +45,17 @@
         <input type="checkbox" class="form-check-input" id="for_review" name="for_review">
         <label class="form-check-label" for="for_review">Для ознакомления</label>
     </div>
-    <div class="input-group mb-3 upload-file-input">
-        <label for="file" class="input-group-text">Прикрепить файл:</label>
-       <input type="file" class="form-control" id="file" name="file" aria-describedby="inputGroupFile" aria-label="Обзор">
-   </div>
+    <div id="dropZone" class="drop-zone">
+        <p class="text-muted m-0">Нажмите, чтобы загрузить файл, либо перетащите их</p>
+        <p class="text-muted m-0">Подсказка: удерживая клавишу Ctrl, можно выбрать несколько файлов</p>
+        <input  type="file" id="fileInput" multiple class="hidden">
+    </div>
+   <ul id="fileList"></ul>
 
     <input type="hidden" id="sn" name="sn" value="">
     <input type="hidden" id="p" name="p" value="">
 
-    <button type="submit" class="btn btn-primary">Добавить</button>
+    <button id="submit" class="btn btn-primary mt-3">Добавить</button>
 </form>
 
 <script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>

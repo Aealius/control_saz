@@ -1,47 +1,22 @@
 let allSelected = false; //флаг, указывающий выбрано ли всем
-let executorSelect = document.getElementById('executor'); //множественный select дял выбора исполнителя
-let selectedExecutorsDiv = document.getElementById('selected-executors'); //контейнер для полосочек с выбранными исполнителями
-let addTaskForm = document.getElementById('addTaskForm'); //форма добавления задачи
-let бессрочноCheckbox = document.getElementById('is_бессрочно');
-let dateCreatedInput = document.getElementById('date_created');
-let deadlineInput = document.getElementById('deadline'); 
+let executorSelect = document.getElementById('executor');
+let selectedExecutorsDiv = document.getElementById('selected-executors');
 let descriptionInput = document.getElementById('description');
-let submitButton = document.getElementById('submit');
+let addMemoForm = document.getElementById("addMemoForm");
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
-
-let files  = [];
+let files = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     toggleDeadline();
     updateSelectedExecutors();
 });
 
-document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);
 document.getElementById('executor').addEventListener('change', (event) => {
-    let validationResultArray = [checkExecutorSelectValidity(addTaskForm, executorSelect)];
+    let validationResultArray = [checkExecutorSelectValidity(addMemoForm, executorSelect)];
 
-    if (!validate(validationResultArray, addTaskForm)){
-        event.preventDefault();
-    }
-});
-
-document.getElementById('date_created').addEventListener('change', (event) => {
-    let validationResultArray = [checkDateCreatedValidity(dateCreatedInput)];
-
-    if (!deadlineInput.disabled && deadlineInput.value){
-        validationResultArray = [checkDateCreatedValidity(dateCreatedInput),checkDeadlineDateValidity(deadlineInput, dateCreatedInput)];
-    }
-    if (!validate(validationResultArray, addTaskForm)){
-        event.preventDefault();
-    }
-});
-
-document.getElementById('deadline').addEventListener('change', (event) => {
-    let validationResultArray = [checkDeadlineDateValidity(deadlineInput, dateCreatedInput)];
-
-    if (!validate(validationResultArray, addTaskForm)){
+    if (!validate(validationResultArray, addMemoForm)) {
         event.preventDefault();
     }
 });
@@ -49,7 +24,7 @@ document.getElementById('deadline').addEventListener('change', (event) => {
 document.getElementById('description').addEventListener('change', (event) => {
     let validationResultArray = [checkDescriptionValidity(descriptionInput)];
 
-    if (!validate(validationResultArray, addTaskForm)){
+    if (!validate(validationResultArray, addMemoForm)) {
         event.preventDefault();
     }
 });
@@ -59,12 +34,13 @@ dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', (e) => e.preventDefault());
 dropZone.addEventListener('drop', handleDrop);
 
-addTaskForm.addEventListener('submit', async (event) => {
+addMemoForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    let validationResultArray = [checkDeadlineDateValidity(deadlineInput, dateCreatedInput), checkDateCreatedValidity(dateCreatedInput), checkDescriptionValidity(descriptionInput), checkExecutorSelectValidity(addTaskForm, executorSelect)];
+    let validationResultArray = [checkExecutorSelectValidity(addMemoForm, executorSelect), checkDescriptionValidity(descriptionInput)];
 
-    if (validate(validationResultArray, addTaskForm)) {
+    if (validate(validationResultArray, addMemoForm)) {
+
         formData = new FormData(event.target);
 
         files.forEach(file => {
@@ -83,8 +59,9 @@ addTaskForm.addEventListener('submit', async (event) => {
         });
 
         window.location.replace(document.referrer);
-    }
+    }    
 });
+
 
 function handleDrop(e) {
     e.preventDefault();
@@ -149,10 +126,9 @@ function updateSelectedExecutors() {
     }
 
     addExecutorToSelected(selectedValuesArray, selectedTextArray);
-} 
+}
 
 function addExecutorToSelected(value, text) {
-
     selectedExecutorsDiv.innerHTML = "";
 
     let hiddenInput = document.createElement('input');
@@ -230,21 +206,3 @@ function addExecutorToSelected(value, text) {
         hiddenInput.value = value;
     }
 }
-
-function toggleDeadline() {
-    var deadlineField = document.getElementById('deadline-field');
-    var deadlineInput = document.getElementById('deadline');
-
-    if (бессрочноCheckbox.checked) {
-        deadlineField.style.display = 'none';
-        deadlineInput.value = ''; // Очистить значение поля срока
-        deadlineInput.disabled = true;
-    }
-    else {
-        deadlineField.style.display = 'block';
-        deadlineInput.disabled  = false;
-    }
-}
-
-
-

@@ -6,7 +6,7 @@
     <form id="editTaskForm" method="POST" enctype="multipart/form-data">
         <div class="form-group">
             <label for="executor">Исполнитель:</label>
-            <select class="form-control" id="executor" name="executor" required>
+            <select class="form-control" id="executor" name="executor">
                 {% for executor in executors %}
                     <option value="{{ executor.id }}" {% if executor.id == task.executor_id %}selected{% endif %}>
                         {{ executor.department }}
@@ -17,13 +17,13 @@
         <div class="form-group">
             <label for="date_created">Дата создания:</label>
             <input type="date" class="form-control" id="date_created" name="date_created"
-                   value="{{ task.date_created.strftime('%Y-%m-%d') }}" required disabled>
+                   value="{{ task.date_created.strftime('%Y-%m-%d') }}" disabled>
         </div>
         {% if current_user.is_admin%} <!--только  админ может продлевать(ставить) срок на задания-->
         <div id = "deadlineField" class="form-group">
             <label for="deadline">Срок:</label>
             <input type="date" class="form-control" id="deadline" name="deadline"
-                   value="{% if task.deadline %}{{ task.deadline.strftime('%Y-%m-%d') }}{% endif %}" required>
+                   value="{% if task.deadline %}{{ task.deadline.strftime('%Y-%m-%d') }}{% endif %}">
                    {#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #}
         </div>
         {%endif%}
@@ -71,44 +71,10 @@
         <button type="submit" class="btn btn-primary">Сохранить</button>
     </form>
 
+    <script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
+    <script src="{{url_for('static', filename = 'src/js/edit.js')}}"></script>
     <script>
-        const extendDeadlineCheckbox = document.getElementById('extend_deadline');
-        const extendedDeadlineField = document.getElementById('extended_deadline_field');
-        const fileUploadInput = document.getElementById('file')
-        const editTaskForm = document.getElementById('editTaskForm')
-    
         
-        function toggleDeadline() {
-            let deadlineField = document.getElementById('deadlineField');
-            let deadlineInput = document.getElementById('deadline');
-            let бессрочноCheckbox = document.getElementById('is_бессрочно');
-    
-            if (бессрочноCheckbox.checked) {
-                deadlineField.style.display = 'none';
-                deadlineInput.required = false;  // Снять требование при бессрочной задаче
-                deadlineInput.value = ''; // Очистить значение поля срока
-                extendDeadlineCheckbox.disabled = true;
-                extendDeadlineCheckbox.checked = false;
-                extendedDeadlineField.style.display = 'none';
-            }
-            else {
-                deadlineField.style.display = 'block';
-                deadlineInput.required = true;   // Вернуть требование
-                extendDeadlineCheckbox.disabled = false;
-            }
-        }
-        
-        extendDeadlineCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                extendedDeadlineField.style.display = 'block';
-
-            } else {
-                extendedDeadlineField.style.display = 'none';
-
-            }
-        });
-    
-    
         // Для отображения поля при загрузке, если задача уже продлена
         window.addEventListener('load', function() {
             {% if task.extended_deadline %}
@@ -117,14 +83,6 @@
             {% endif %}
 
             toggleDeadline();
-        });
-
-        editTaskForm.addEventListener('submit', () => {
-            let pInput = document.getElementById("p");
-            let snInput = document.getElementById("sn");
-
-            pInput.value = sessionStorage.getItem('p');
-            snInput.value = sessionStorage.getItem('sn');
         });
 
     </script>
