@@ -29,7 +29,7 @@
         {%endif%}
         <div class="form-group form-check">
             {%if current_user.is_admin%}
-            <input type="checkbox" class="form-check-input" id="is_бессрочно" name="is_бессрочно" onchange="toggleDeadline()">
+            <input type="checkbox" class="form-check-input" id="is_бессрочно" name="is_бессрочно" {% if task.is_бессрочно %}checked{% endif %} onchange="toggleDeadline()">
             {%else%}
             <input type="checkbox" class="form-check-input" id="is_бессрочно" name="is_бессрочно" disabled checked>
             {%endif%}
