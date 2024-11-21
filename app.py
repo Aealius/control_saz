@@ -36,9 +36,6 @@ FILTER_PARAM_KEYS = ['executor',
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
-
-
-
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -99,6 +96,15 @@ class Task(db.Model):
 class Status(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(255), nullable=False)
+    
+class Executive(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    surname = db.Column(db.String(255), nullable=False)
+    patronymic = db.Column(db.String(255), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship("User", backref=db.backref("executive", lazy=True), foreign_keys=[user_id])
+    
 
 
 @app.route('/', methods = ['GET'])
@@ -115,10 +121,8 @@ def index():
         out - исходящие таски    
     '''
     sender_filter = request.args.get('sn', 'in', type=str) #параметр для отправителей и получателей
-
-    
-    page = request.args.get('p', 1, type=int) #параметр для страницы
-    
+    page = request.args.get('p', 1, type=int) #параметр для страницы 
+            
     session['p'] = page
     session['sn'] = filter_params_dict.get('sn') 
     
@@ -789,9 +793,7 @@ def calculate_penalty(task):
             max_penalty = 20
             penalty = min(overdue_days, max_penalty)
             return penalty
-    return 0
-    
-
+    return 0  
 
 app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Blueprint
 
