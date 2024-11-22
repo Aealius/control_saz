@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename, safe_join
 from urllib.parse import quote, unquote
+from enums.status_enum import Status
 import shutil
 
 app = Flask(__name__)
@@ -28,8 +29,7 @@ FILTER_PARAM_KEYS = ['executor',
                     'creator',
                     'month',
                     'date',
-                    'overdue',
-                    'completed',
+                    'status',
                     'sn']
 
 
@@ -163,7 +163,8 @@ def index():
                                         unquote=unquote,
                                         page = page,
                                         filter_params_dict = filter_params_dict,
-                                        per_page = PER_PAGE) 
+                                        per_page = PER_PAGE,
+                                        status = Status) 
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -200,7 +201,15 @@ def add():
         is_бессрочно = request.form.get('is_бессрочно') == 'on'
         deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not is_бессрочно else None
         description = request.form['description']
-        is_valid = request.form.get('is_valid') == 'on'
+        
+        if(request.form.get('is_valid') == 'on'):
+            is_valid = True
+            status_id = Status.in_work.value
+        else:
+            is_valid =False
+            status_id = Status.invalid.value
+        
+        
         for_review = request.form.get('for_review') == 'on'
         files = request.files.getlist('files') #массив файлов
 
@@ -225,7 +234,8 @@ def add():
                 is_бессрочно=is_бессрочно,
                 creator_id=current_user.id,
                 for_review=for_review,
-                creator_file=creator_file_path  
+                creator_file=creator_file_path,
+                status_id = status_id
             )
             db.session.add(new_task)
             db.session.commit()
@@ -285,7 +295,8 @@ def add_memo():
                 is_бессрочно=True,
                 for_review=True,
                 description=description,
-                creator_file=creator_file_path # Запись пути к файлу в базу
+                creator_file=creator_file_path, # Запись пути к файлу в базу
+                status_id = Status.in_work.value                
             )
             db.session.add(new_memo)
             db.session.commit()
@@ -308,15 +319,16 @@ def edit(task_id):
     if request.method == 'POST':
         task.executor_id = request.form['executor']
         task.description = request.form['description']
-        task.is_valid = request.form.get('is_valid') == 'on'
+        
+        if (request.form.get('is_valid') == 'on'):
+            task.is_valid = True
+        else:
+            task.is_valid = False
+            task.status_id = Status.invalid.value
+            
         task.edit_datetime = datetime.now()
         task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
         files = request.files.getlist('files') #массив файлов
-        
-        #параметры запроса
-        
-        sn = request.form['sn']
-        p = request.form['p']
                 
         if (current_user.is_admin):
             task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not task.is_бессрочно else None
@@ -406,6 +418,7 @@ def complete(task_id):
 
         task.completion_note = request.form.get('completion_note')
         task.completion_confirmed = False
+        task.status_id = Status.at_check.value
         db.session.commit()
         flash('Отметка о выполнении отправлена администратору.', 'success')
         return redirect(url_for('index', sn = sn, p = p))
@@ -430,12 +443,12 @@ def confirm_task(task_id):
     if not current_user.is_admin:
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
         return redirect(url_for('index'))
-    sn = session['sn']
-    p = session['p']
+    
     task = Task.query.get_or_404(task_id)
     task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
+    task.status_id = Status.completed.value
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
     return '', 200
@@ -447,9 +460,6 @@ def reject_task(task_id):
     if not current_user.is_admin:
         flash('У вас нет прав для отклонения выполнения задач.', 'danger')
         return redirect(url_for('index'))
-
-    sn = session['sn']
-    p = session['p']
     
     task = Task.query.get_or_404(task_id)
     
@@ -459,6 +469,7 @@ def reject_task(task_id):
     task.completion_note = None
     task.completion_confirmed = False
     task.admin_note = request.json.get('note')
+    task.status_id = Status.in_work.value
     db.session.commit()
     flash('Выполнение задачи отклонено.', 'warning')
     return '', 200
@@ -470,9 +481,6 @@ def confirm_task_deputy(task_id):
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
         return redirect(url_for('index'))
     
-    p = session['p']
-    sn = session['sn']
-
     task = Task.query.get_or_404(task_id)
     if task.creator_id != current_user.id:
         flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
@@ -481,6 +489,7 @@ def confirm_task_deputy(task_id):
     task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
+    task.status_id = Status.completed.value
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
     return '', 200
@@ -491,9 +500,6 @@ def reject_task_deputy(task_id):
     if not current_user.is_deputy:
         flash('У вас нет прав для отклонения задач.', 'danger')
         return redirect(url_for('index'))
-
-    sn = session['sn']
-    p = session['p']
     
     task = Task.query.get_or_404(task_id)
     if task.creator_id != current_user.id:
@@ -506,6 +512,7 @@ def reject_task_deputy(task_id):
     task.completion_note = None
     task.completion_confirmed = False
     task.admin_note = request.json.get('note')
+    task.status_id = Status.in_work.value
     
     db.session.commit()
     flash('Выполнение задачи отклонено.', 'warning')
@@ -642,6 +649,8 @@ def review(task_id):
         
         task.completion_confirmed = True
         task.completion_confirmed_at = datetime.now()
+        task.status_id = Status.reviewed.value
+        
         db.session.commit()
         flash('Вы ознакомились с задачей.', 'success')
         return redirect(url_for('index', sn = sn, p = p))  #  Перенаправление на главную страницу
@@ -740,6 +749,24 @@ def filter_data(dataset, page, **params):
                                                 Task.creator_id == current_user.id))
         case _:
             dataset = dataset.filter(Task.executor_id == current_user.id)
+                
+    match params.get('status'):
+        case 'in_work':
+            dataset = dataset.filter(Task.status_id == 1)
+        case 'at_check':
+            dataset = dataset.filter(Task.status_id == 2)
+        case 'reviewed':
+            dataset = dataset.filter(Task.status_id == 3)
+        case 'completed':
+            dataset = dataset.filter(Task.status_id == 4)
+        case 'complete_delayed':
+            dataset = dataset.filter(Task.status_id == 5)
+        case 'delayed':
+            dataset = dataset.filter(Task.status_id == 6)
+        case 'invalid':
+            dataset = dataset.filter(Task.status_id == 7)
+        case _:
+            pass      
                 
     if params.get('executor'):
         dataset = dataset.filter(Task.executor_id == User.query
