@@ -83,19 +83,14 @@ class Task(db.Model):
     creator_file = db.Column(db.String(2048))  
     is_бессрочно = db.Column(db.Boolean, default=False)
     for_review = db.Column(db.Boolean, default=False)
-    is_archived = db.Column(db.Boolean, default = False, nullable = False) #поле, помечающее запись как "архивную" здесь еще в сгенерированнном скрипте нужно будет прописать, что это  поле не nullable
+    is_archived = db.Column(db.Boolean, default = False, nullable = False)
+    status_id = db.Column(db.SmallInteger, default=1, nullable=False)
 
     def is_overdue(self):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
     
     def get_deadline_for_check(self):
         return self.extended_deadline or self.deadline or date(9999, 12, 31)
-
-
-#таблица-перечисление статусов задачи
-class Status(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    description = db.Column(db.String(255), nullable=False)
     
 class Executive(db.Model):
     id = db.Column(db.Integer, primary_key=True)
