@@ -137,8 +137,8 @@
                 {{task.description}}
                 {% if task.creator_file %}
                 {%for file in task.creator_files%}
-                <div><a title="{{ unquote(task.creator_file.split('/')[-1]) }}" class="long-href" href="{{ url_for('uploaded_file', filename=task.creator_file) }}" target="_blank"
-                        download="{{ unquote(task.creator_file.split('/')[-1]) }}">{{ unquote(task.creator_file.split('/')[-1]) }}</a>
+                <div><a title="{{ unquote(file.split('/')[-1]) }}" class="long-href" href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
+                        download="{{ unquote(file.split('/')[-1]) }}">{{ unquote(file.split('/')[-1]) }}</a>
                 </div>
                 {%endfor%}
                 {%endif%}
