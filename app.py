@@ -90,7 +90,7 @@ class Task(db.Model):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
     
     def get_deadline_for_check(self):
-        return self.extended_deadline or self.deadline or date(9999, 12, 31)
+        return self.extended_deadline or self.deadline or datetime(9999, 12, 31)
     
 class Executive(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -448,7 +448,14 @@ def confirm_task(task_id):
     task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
-    task.status_id = Status.completed.value
+    
+    
+    
+    if(task.get_deadline_for_check() < datetime.now().date()):
+        task.status_id = Status.complete_delayed.value
+    else:
+        task.status_id = Status.completed.value
+        
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
     return '', 200
@@ -489,7 +496,11 @@ def confirm_task_deputy(task_id):
     task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
-    task.status_id = Status.completed.value
+    
+    if(task.get_deadline_for_check() < task.completion_confirmed_at):
+        task.status_id = Status.complete_delayed.value
+    else:
+        task.status_id = Status.completed.value
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
     return '', 200
@@ -733,7 +744,8 @@ def archived():
                                             time=time,
                                             date=date,
                                             datetime=datetime, 
-                                            unquote = unquote)
+                                            unquote = unquote,
+                                            status = Status)
 
 
 def filter_data(dataset, page, **params):
