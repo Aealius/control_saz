@@ -21,35 +21,7 @@ function taskConfirmation(id, path, role) {
       }).then((response) => {
         console.log(response);
       }).then(() =>{
-        const queryString = window.location.search;
-
-        fetch(base_url + "/" + queryString, 
-            {method: "GET"})
-            .then(response => {
-                return response.text();
-            })
-            .then(html => {
-                let oldValue = document.getElementById("select-task-sender").value;
-                document.documentElement.innerHTML = html;
-
-                // Тк после обновления html селект ломается, необходимо заного привязывать on change
-                // TODO: если возможно, разобраться подробнее в чем причина поломки и убрать это полукостыльное решение
-                $('.selectpicker').selectpicker();
-                $('#select-task-sender').val(oldValue); 
-                $('#select-task-sender').change();
-                document.getElementById("select-task-sender").addEventListener('change', Event => {
-                    let options = Event.target.options;
-                    let senderValue = "in";
-
-                    for(let i = 0; i < options.length; i++){
-                        if(options[i].selected){
-                            senderValue = options[i].value;
-                        }
-                    }
-                
-                    window.location.href = buildQueryString(senderValue);
-                });
-            })
+        updateIndex();
       })
 }
 
@@ -61,38 +33,120 @@ function taskReview(id) {
       }).then((response) => {
         console.log(response);
       }).then(() =>{
-        const queryString = window.location.search;
-
-        fetch(base_url + "/" + queryString, 
-            {method: "GET"})
-            .then(response => {
-                return response.text();
-            })
-            .then(html => {
-                let oldValue = document.getElementById("select-task-sender").value;
-                document.documentElement.innerHTML = html;
-
-                // Тк после обновления html селект ломается, необходимо заного привязывать on change
-                // TODO: если возможно, разобраться подробнее в чем причина поломки и убрать это полукостыльное решение
-                $('.selectpicker').selectpicker();
-                $('#select-task-sender').val(oldValue); 
-                $('#select-task-sender').change();
-                document.getElementById("select-task-sender").addEventListener('change', Event => {
-                    let options = Event.target.options;
-                    let senderValue = "in";
-
-                    for(let i = 0; i < options.length; i++){
-                        if(options[i].selected){
-                            senderValue = options[i].value;
-                        }
-                    }
-                
-                    window.location.href = buildQueryString(senderValue);
-                });
-            })
+        updateIndex();
       })
 }
 
+// Здесь document.documentElement.innerHTML меняется напрямую, вследствие чего слетает js код и 
+// некоторые вещи могут перестать работать. Приходится заного навешивать все ивенты на html элементы.
+// 
+// TODO: По хорошему найти другой способ обновить отдельную строку или хотя бы целую страницу и убрать
+// это костыльное решение
+function updateIndex() {
+    var base_url = window.location.origin;
+    const queryString = window.location.search;
+
+    fetch(base_url + "/" + queryString, 
+        {method: "GET"})
+        .then(response => {
+            return response.text();
+        })
+        .then(html => {
+            let oldValue = document.getElementById("select-task-sender").value;
+            document.documentElement.innerHTML = html;
+
+            senderSelect = document.getElementById("select-task-sender");
+            filterForm = document.getElementById("filterForm");
+            clearFilterHref = document.getElementById("clearFilterHref");
+            submitFilterFormButton = document.getElementById("submitFilterformButton");
+            
+            $('.selectpicker').selectpicker();
+            $('#select-task-sender').val(oldValue); 
+            $('#select-task-sender').change();
+            document.getElementById("select-task-sender").addEventListener('change', Event => {
+                let options = Event.target.options;
+                let senderValue = "in";
+
+                for(let i = 0; i < options.length; i++){
+                    if(options[i].selected){
+                        senderValue = options[i].value;
+                    }
+                }
+            
+                window.location.href = buildQueryString(senderValue);
+            });
+
+            //получение параметров сохраненных в localStorage или отображенных в searchParams
+            document.addEventListener('DOMContentLoaded', () => { //задает значение дропдауна из значения, переданного в строке параметров
+                let keys = [
+                    'creator',
+                    'executor',
+                    'month',
+                    'date',
+                    'overdue',
+                    'completed',
+                    'sn',
+                    'p'
+                ];
+            
+                keys.forEach(key => {
+                    if (urlParams.has(key)){
+                        sessionStorage.setItem(key, urlParams.get(key));
+                    }
+                });
+            
+                let senderValue = sessionStorage.getItem('sn') ? sessionStorage.getItem('sn') : "in";
+            
+                //если есть фильтрация по исполнителю, то значения дропдауна станет "Исходящие"
+                if (sessionStorage.getItem('executor')) {
+                    senderSelect.querySelector("option[value='out']").selected = true;
+                    
+                }
+                else if (sessionStorage.getItem('creator')) { // если есть фильтрация по создателю, то значение дропдауна станет "Входящие"
+                    senderSelect.querySelector("option[value='in']").selected = true;
+                    
+                }
+                //когда нет фильтра по отправителю,
+                document.getElementById("select-task-sender").querySelector("option[value='" + senderValue + "']").selected = true;
+            });
+
+
+            //дизейблит поля формы фильтрации, чтобы они не попадали в searchString
+            filterForm.addEventListener('submit', () => {
+                filterForm.querySelectorAll('select').forEach( input => {
+                    if (input.value == '') input.disabled=true;
+                });
+            
+                filterForm.querySelectorAll('input[type=month]').forEach( input => {
+                    if (input.value == '') input.disabled=true;
+                });
+            
+                filterForm.querySelectorAll('input[type=date]').forEach( input => {
+                    if (input.value == '') input.disabled=true;
+                });
+            
+                filterForm.querySelectorAll('input[type=checkbox]').forEach( input => {
+                    if (input.value == '') input.disabled=true;
+                });
+            
+                //добавляет спрятанное поле для того, чтобы отпралять параметр "sn" на бэк
+                let senderHiddenInput =  document.getElementById("hiddenSender");
+                senderHiddenInput.value = senderSelect.value;
+            
+            });
+
+
+            clearFilterHref.addEventListener('click', () => {
+                let newUrl =  new URL(window.location.origin + window.location.pathname);
+                sessionStorage.setItem('sn', urlParams.get('sn') ? urlParams.get('sn') : 'in');
+            
+                newUrl.searchParams.set('sn', urlParams.get('sn') ? urlParams.get('sn') : 'in');
+                newUrl.searchParams.set('p', 1);
+            
+                window.location.replace(newUrl);
+            });
+        })  
+}
 
 //получение параметров сохраненных в localStorage или отображенных в searchParams
 document.addEventListener('DOMContentLoaded', () => { //задает значение дропдауна из значения, переданного в строке параметров
