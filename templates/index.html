@@ -136,10 +136,10 @@
     <tbody>
         {% for task in tasks %}
         <tr class="
-        {% if task.completion_confirmed and task.deadline_for_check < date.today() %}table-warning
-        {% elif task.completion_confirmed %}table-success
-        {% elif not task.is_valid %}table-secondary
-        {% elif task.deadline_for_check < date.today() %}table-danger 
+        {% if task.status_id == status.complete_delayed.value %}table-warning
+        {% elif task.status_id == status.completed.value or task.status_id == status.reviewed.value %}table-success
+        {% elif task.status_id == status.invalid.value %}table-secondary
+        {% elif (task.status_id == status.delayed.value) or (task.deadline_for_check < date.today()) %}table-danger 
         {% endif %}
     ">
             <td>{{ task.executor.department}}

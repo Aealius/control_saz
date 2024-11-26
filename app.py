@@ -440,7 +440,12 @@ def edit(task_id):
                                                         executors=executors,
                                                         current_user = current_user,
                                                         datetime=datetime)
-
+        if (task.status_id != Status.invalid):
+            if (task.deadline < datetime.now().date()):
+                task.status_id = Status.delayed.value
+            elif (task.deadline >= datetime.now().date()):
+                task.status_id = Status.in_work.value
+        
         creator_file_path = ''
 
         if(len(files) > 0):
@@ -495,8 +500,6 @@ def complete(task_id):
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        sn = session['sn']
-        p = session['p']
 
         file = request.files.get('file')  # Получаем файл, если он есть
 
@@ -900,11 +903,6 @@ def filter_data(dataset, page, **params):
     if params.get('date'):
         date_filter = datetime.strptime(params['date'], '%Y-%m-%d').date()
         dataset = dataset.filter(db.cast(Task.date_created, db.Date) == date_filter)
-    if params.get('overdue'):
-        dataset = dataset.filter(Task.deadline < date.today())
-
-    if params.get('completed'):
-        dataset = dataset.filter(Task.completion_confirmed == True)
 
     dataset_count = dataset.count()
     
