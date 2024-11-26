@@ -239,3 +239,83 @@ function buildQueryString(senderValue){ //построение строки па
 
     return newUrl;
 }
+
+// Для модалки пересылки
+function updateEmployee() {
+    let executorResendSelect = document.getElementById('executorResend'); //множественный select дял выбора исполнителя
+
+    let executorSelectedOptions = executorResendSelect.selectedOptions;
+
+    let divSelectEmployee = document.getElementById('selectpicker2');
+
+    // Пока что удаляем все значения и получаем их с бэка заново.
+    // В дальнейшем подумать о том, как это улучшить,
+    // тк слишком много запросов получится, особенно если будет много отделов
+    $('#employee').find('[value!=\'\']').remove();
+
+    // Для теста пока добавляем только глав буху, поэтому тут проверка на id бухгалтерии
+    // В дальнейшем это можно/нужно улучшить
+    if(executorSelectedOptions[0].value.includes('27')){
+        divSelectEmployee.style.display = 'block';
+
+        // Опять же пока заглушка чисто для бухгалтерии
+        let employeeId = '27';
+        $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
+
+        const base_url = window.location.origin;
+
+        // Получение из бэка сотрудников отдела
+        fetch(base_url + "/getEmployees/" + employeeId, {
+            method: "GET"
+        }).then((response) => {
+            console.log(response);
+            return response.text();
+        }).then((text) => {
+            let obj = JSON.parse(text);
+            let selectEmployee = document.getElementById('employee');
+
+            for (var i = 0; i < obj.length; i++) {
+                var opt = document.createElement('option');
+                opt.value = obj[i].id;
+                opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+                selectEmployee.appendChild(opt);
+            }
+
+            // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+            $('.selectpicker').selectpicker('refresh');
+        })          
+    }
+    else {
+        divSelectEmployee.style.display = 'none';
+        $('.selectpicker').selectpicker('refresh');
+    }
+} 
+
+// Пересылка задачи
+function resendTask(){
+    var base_url = window.location.origin;
+    let executorResend = '';
+    let employee = '';
+
+    executorResend = document.getElementById('executorResend').value;
+    employee = document.getElementById('employee').value;
+
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    fetch(base_url + "/resend/" + globalTaskId, {
+        method: "POST",
+        body: JSON.stringify({ executorResend: executorResend, employee: employee }),
+        headers: myHeaders,
+      }).then((response) => {
+        console.log(response);
+      }).then(() =>{
+        updateIndex();
+      })
+}
+
+let globalTaskId = '';
+
+function setTaskId(taskId){
+    globalTaskId = taskId;
+}

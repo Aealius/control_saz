@@ -1,5 +1,5 @@
 import os
-from flask import (Flask, session, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint)
+from flask import (Flask, session, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, time
 from flask_bootstrap import Bootstrap
@@ -9,6 +9,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.utils import secure_filename, safe_join
 from urllib.parse import quote, unquote
 from enums.status_enum import Status
+from dataclasses import dataclass
 import shutil
 
 app = Flask(__name__)
@@ -92,6 +93,8 @@ class Task(db.Model):
     creator_file = db.Column(db.String(2048))  
     is_бессрочно = db.Column(db.Boolean, default=False)
     for_review = db.Column(db.Boolean, default=False)
+    employeeId = db.Column(db.Integer, db.ForeignKey('executive.id'), nullable=True)
+    employee = db.relationship('Executive', backref=db.backref('executed_tasks', lazy=True), foreign_keys=[employeeId])
     is_archived = db.Column(db.Boolean, default = False, nullable = False)
     status_id = db.Column(db.SmallInteger, default=1, nullable=False)
 
@@ -100,8 +103,15 @@ class Task(db.Model):
     
     def get_deadline_for_check(self):
         return self.extended_deadline or self.deadline or datetime(9999, 12, 31).date()
-    
+
+@dataclass
 class Executive(db.Model):
+    id: int
+    name: str
+    surname: str
+    patronymic: str
+    user_id: int
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     surname = db.Column(db.String(255), nullable=False)
@@ -126,7 +136,7 @@ def index():
     '''
     sender_filter = request.args.get('sn', 'in', type=str) #параметр для отправителей и получателей
     page = request.args.get('p', 1, type=int) #параметр для страницы 
-            
+
     session['p'] = page
     session['sn'] = filter_params_dict.get('sn') 
     
@@ -161,6 +171,7 @@ def index():
             creator_department[task.executor.id] = task.executor.department        
     
     executors = User.query.all()
+    employees = Executive.query.all()
     return render_template('index.html',tasks=tasks,
                                         task_count = task_count,
                                         executors=executors, 
@@ -171,6 +182,8 @@ def index():
                                         calculate_penalty=calculate_penalty,
                                         unquote=unquote,
                                         page = page,
+                                        employees = employees,
+                                        executive = Executive,
                                         filter_params_dict = filter_params_dict,
                                         per_page = PER_PAGE,
                                         status = Status, 
@@ -235,6 +248,12 @@ def add():
                 creator_file_path += tmp_file_path + ';'
 
         for executor in executors_for_task:
+            # заглушка только для бухгалтерии для тестов
+            if executor.id == 27:
+                employeeId = request.form.get('employee') or None
+            else:
+                employeeId = None
+
             new_task = Task(
                 executor_id=executor.id,
                 date_created=date_created,
@@ -243,6 +262,7 @@ def add():
                 is_valid=is_valid,
                 is_бессрочно=is_бессрочно,
                 creator_id=current_user.id,
+                employeeId = employeeId,
                 for_review=for_review,
                 creator_file=creator_file_path,
                 status_id = status_id
@@ -255,7 +275,7 @@ def add():
 
     return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
 
-import shutil 
+import shutil
 
 
 
@@ -263,9 +283,9 @@ import shutil
 @login_required
 def add_memo():
     executors = User.query.all()
-        
+
     if request.method == 'POST':
-        selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя 
+        selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя
         if 'all' in selected_executor_id:
             selected_executor_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
         else:
@@ -274,15 +294,15 @@ def add_memo():
         files = request.files.getlist('files') #  Получаем файл вне цикла
 
         if 'all' in selected_executor_id:
-            all_count = 1 
+            all_count = 1
             # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
             while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
                 all_count += 1
             task_id = f'all{all_count}' # Использовать "all" + счетчик
         else:
             # Генерируем task_id для "не all"
-            task_id = str(len(Task.query.all()) + 1) 
-                
+            task_id = str(len(Task.query.all()) + 1)
+
             memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
             os.makedirs(memo_uploads_folder, exist_ok=True)
         
@@ -292,14 +312,15 @@ def add_memo():
             if file and file.filename != '':
                 tmp_file_path = ''
                 filename = file.filename  
-                file.save(os.path.join(memo_uploads_folder, filename)) 
+                filename = file.filename
+                file.save(os.path.join(memo_uploads_folder, filename))
                 tmp_file_path = os.path.join(task_id, 'creator', filename)
                 tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
                 creator_file_path += tmp_file_path + ';'
 
         for executor_id in selected_executor_id:
             new_memo = Task(
-                executor_id=int(executor_id), 
+                executor_id=int(executor_id),
                 creator_id=current_user.id,
                 date_created=datetime.now(),
                 is_бессрочно=True,
@@ -315,6 +336,72 @@ def add_memo():
         return '', 200
 
     return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
+
+@app.route('/resend/<int:task_id>', methods=['POST'])
+@login_required
+def resend(task_id):
+    if not current_user.is_admin and not current_user.is_deputy:  # Проверка прав
+        flash('У вас нет прав для создания задач.', 'danger')
+        return redirect(url_for('index'))
+
+    # Генерируем new_task_id для новой задачи
+    new_task_id = str(len(Task.query.all()) + 1)
+    task = Task.query.get_or_404(task_id)
+
+    executor_for_task_id = request.json.get('executorResend')
+    task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], new_task_id, 'creator')
+    os.makedirs(task_uploads_folder, exist_ok=True)
+
+    date_created = datetime.now()
+    is_бессрочно = task.is_бессрочно
+    deadline = task.deadline
+    description = task.description
+    is_valid = task.is_valid
+    for_review = task.for_review
+
+    try:        
+        creator_file_path = ''
+        uploadFolder = os.getcwd() + '/' + app.config['UPLOAD_FOLDER'] + '/'
+
+        file_path_arr = task.creator_file.split(';')
+        # Сохраняем файл только один раз
+        for filePath in file_path_arr:
+            if filePath != '':
+                shutil.copy2(uploadFolder + filePath, task_uploads_folder)
+                tmp_file_path = ''
+                filename = os.path.basename(filePath)
+                tmp_file_path = os.path.join(new_task_id, 'creator', filename)
+                tmp_file_path = tmp_file_path.replace('\\', '/')
+                creator_file_path += tmp_file_path + ';'
+    except Exception as e:
+        s = str(e)
+        flash("Произошла ошибка: " + s, 'danger')
+        return '', 500
+    
+    # заглушка только для бухгалтерии для тестов
+    if executor_for_task_id == '27':
+        employeeId = request.json.get('employee') or None
+    else:
+        employeeId = None
+
+    new_task = Task(
+        executor_id=executor_for_task_id,
+        date_created=date_created,
+        deadline=deadline,
+        description=description,
+        is_valid=is_valid,
+        is_бессрочно=is_бессрочно,
+        creator_id=current_user.id,
+        employeeId = employeeId,
+        for_review=for_review,
+        creator_file=creator_file_path
+    )
+    db.session.add(new_task)
+    db.session.commit()
+
+    flash('Задача успешно добавлена!', 'success')
+    return '', 200
+
 
 
 @app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
@@ -353,16 +440,16 @@ def edit(task_id):
                                                         executors=executors,
                                                         current_user = current_user,
                                                         datetime=datetime)
-        
+
         creator_file_path = ''
-        
+
         if(len(files) > 0):
             for file in files:
                 if file and file.filename != '':
                     filename = file.filename  # Оригинальное имя
                     task_id = str(task_id)
                     tmp_file_path = ''
-                
+
                     memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
                     os.makedirs(memo_uploads_folder, exist_ok=True)
 
@@ -410,7 +497,7 @@ def complete(task_id):
     if request.method == 'POST':
         sn = session['sn']
         p = session['p']
-        
+
         file = request.files.get('file')  # Получаем файл, если он есть
 
         if file and file.filename != '':
@@ -423,7 +510,7 @@ def complete(task_id):
 
             task.attached_file = os.path.join(str(task_id), 'executor', filename) #  Оригинальное имя в базе
             task.attached_file = task.attached_file.replace('\\', '/')
-            
+
 
 
         task.completion_note = request.form.get('completion_note')
@@ -436,7 +523,7 @@ def complete(task_id):
     return render_template('complete.html', task=task)
 
 
-@app.route('/uploads/<path:filename>') 
+@app.route('/uploads/<path:filename>')
 @login_required
 def uploaded_file(filename):
     uploads_folder = app.config['UPLOAD_FOLDER']
@@ -479,7 +566,7 @@ def reject_task(task_id):
         return redirect(url_for('index'))
     
     task = Task.query.get_or_404(task_id)
-    
+
     if task.attached_file != None and task.attached_file != "":
         os.remove(task.attached_file)
     task.attached_file = None
@@ -526,7 +613,7 @@ def reject_task_deputy(task_id):
     if task.creator_id != current_user.id:
         flash('Вы можете отклоненять только задачи, которые вы выдали.', 'danger')
         return redirect(url_for('index'))
-    
+
     if task.attached_file != None and task.attached_file != "":
         os.remove(task.attached_file)
     task.attached_file = None
@@ -674,6 +761,11 @@ def review(task_id):
         return '', 200  #  Перенаправление на главную страницу
     return render_template('review.html', task=task)
 
+@app.route('/getEmployees/<int:user_id>', methods=['GET'])
+@login_required
+def getEmployees(user_id):
+    employees = Executive.query.filter(Executive.user_id == user_id).all()
+    return jsonify(employees).json
 
 reports_bp = Blueprint('reports', __name__) # Создаем Blueprint
 
@@ -695,7 +787,7 @@ def reports():
                 Task.executor_id == user.id,
                 db.extract('month', Task.date_created) == month
             ).all()
-            
+
             total_penalty = 0
             for task in tasks_in_month:
                 task.deadline_for_check = task.get_deadline_for_check() # используем метод модели
@@ -708,10 +800,9 @@ def reports():
 @app.route('/archived')
 @login_required
 def archived():
-    
+
     filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
-    page = request.args.get('p', 1, type=int) 
-    
+    page = request.args.get('p', 1, type=int)
     if current_user.is_admin:
         archived_data = Task.query.filter(Task.is_archived ==True)
     else:
@@ -720,7 +811,7 @@ def archived():
 
     archived_data, task_count = filter_data(archived_data, page, **filter_params_dict)
     executors = User.query.all()
-    
+
     for task in archived_data:
         if task.extended_deadline:
             task.deadline_for_check = task.extended_deadline
@@ -728,10 +819,9 @@ def archived():
             task.deadline_for_check = task.deadline
         else:
             task.deadline_for_check = date(9999,12,31)
-            
+
         task.creator_files = task.creator_file.split(';')
- 
-    
+
     creator_department = {}
     for task in archived_data:
         if task.creator_id not in creator_department:  # Проверяем creator_id, а не executor_id
@@ -739,8 +829,8 @@ def archived():
         if current_user.is_admin and task.executor and task.executor_id not in creator_department:
             creator_department[task.executor_id] = task.executor.department
         elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor.id] = task.executor.department 
-    
+            creator_department[task.executor.id] = task.executor.department
+
     return render_template('archived.html', data = archived_data,
                                             task_count = task_count,
                                             executors = executors,
@@ -757,7 +847,7 @@ def archived():
 
 
 def filter_data(dataset, page, **params):
-    
+
     match params.get('sn'):
         case 'in':
             dataset = dataset.filter(Task.executor_id == current_user.id)
@@ -792,7 +882,7 @@ def filter_data(dataset, page, **params):
         dataset = dataset.filter(Task.executor_id == User.query
                                                             .filter(User.department == params['executor'])
                                                             .first().id)
-    
+
     if params.get('creator'):
         creator = User.query.filter(User.department == params['creator']).first()
         if creator:
@@ -806,27 +896,25 @@ def filter_data(dataset, page, **params):
         except ValueError:
             # Обработка некорректного формата месяца
             flash("Некорректный формат месяца", "danger")
-    
+
     if params.get('date'):
         date_filter = datetime.strptime(params['date'], '%Y-%m-%d').date()
         dataset = dataset.filter(db.cast(Task.date_created, db.Date) == date_filter)
-    
     if params.get('overdue'):
         dataset = dataset.filter(Task.deadline < date.today())
-    
+
     if params.get('completed'):
         dataset = dataset.filter(Task.completion_confirmed == True)
-    
+
     dataset_count = dataset.count()
     
+
     dataset = dataset.options(db.joinedload(Task.executor)).order_by(
         Task.is_valid.desc(),
         Task.date_created.desc(),
         Task.deadline.desc() if not Task.is_бессрочно else Task.id).paginate(page=page, per_page=PER_PAGE)
     
     return (dataset, dataset_count,)
-        
-    
 
 def calculate_penalty(task):  
     if task.status_id == Status.completed and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
@@ -835,7 +923,7 @@ def calculate_penalty(task):
             max_penalty = 20
             penalty = min(overdue_days, max_penalty)
             return penalty
-    return 0  
+    return 0
 
 app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Blueprint
 

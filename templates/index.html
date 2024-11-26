@@ -84,6 +84,42 @@
     </div>
 </div>
 
+<!--модалка на пересылку-->
+<div class="modal fade" id="resendModal" tabindex="-1" role="dialog" aria-labelledby="resendModalLabel" aria-hidden="true"> 
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resendModalLabel">Переслать задачу</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="form-group">
+                        <label for="executorResend">Исполнитель:</label>
+                        <select onchange="updateEmployee()" class="form-control" id="executorResend" name="executorResend">
+                            <option value="">Все</option>
+                            {% for executor in executors %}
+                                <option value="{{ executor.id }}">{{ executor.department }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="display: none;" id="selectpicker2" class="form-group">
+                        <label id="employeeLabel" for="employee">Сотрудник:</label>
+                        <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true" data-actions-box="true">
+                            <option value=""></option>
+                        </select>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button onclick="resendTask()" id="submitFilterFormButton" class="btn btn-primary">Переслать</button>
+                    </div>   
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!--таблица с задачами-->
 <table class="table table-bordered ">
     <thead class="primary-th">
@@ -106,7 +142,13 @@
         {% elif task.deadline_for_check < date.today() %}table-danger 
         {% endif %}
     ">
-            <td>{{ task.executor.department }}</td>
+            <td>{{ task.executor.department}}
+                {% if task.employeeId %}
+                <div class="text-muted font-italic" style="font-size:smaller">
+                    {{ "Отв. лицо: " + executive.query.filter_by(id = task.employeeId).first().surname + ' ' + executive.query.filter_by(id = task.employeeId).first().name[0] + "." + executive.query.filter_by(id = task.employeeId).first().patronymic[0] + "." }}
+                </div>     
+                {%endif%}
+            </td>
             <td>{{ creator_department.get(task.creator_id) }}</td>
             <td>
                 {% if task.date_created %}
@@ -199,6 +241,11 @@
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </form>
+                    <div class="d-inline-block">
+                        <button onclick="setTaskId('{{task.id}}')" data-toggle="modal" data-target="#resendModal" class="btn btn-secondary btn-sm" title="Переслать">
+                            <i class="fa-solid fa-share"></i>
+                        </button>
+                    </div>
                 </div>
                 {% endif %}
 
