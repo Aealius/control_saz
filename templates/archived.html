@@ -142,24 +142,6 @@
             </td>
             <td>
                 <div>
-                    {% if task.completion_confirmed and task.for_review %}
-                    <span class="badge badge-success">Ознакомлен</span>
-                    {% elif task.completion_confirmed and task.deadline_for_check < date.today() %} <span
-                    class="badge badge-warning">Выполнено, просрочено на ({{ (task.completion_confirmed_at.date() -
-                    task.deadline_for_check).days }} дн.)</span>
-                    {% elif task.completion_confirmed %}
-                    <span class="badge badge-success">Выполнено</span>
-                    {% elif not task.is_valid %}
-                    <span class="badge badge-secondary">Недействительно</span>
-                    {% elif task.completion_note and not task.completion_confirmed %}
-                    <span class="badge badge-info">На проверке</span>
-                    {% elif task.is_overdue() %}
-                    <span class="badge badge-danger">Просрочено</span>
-                    {% else %}
-                    <span class="badge badge-warning">В работе</span>
-                    {% endif %}
-                </div>
-                <div>
                     {% if task.status_id == status.reviewed.value %}
                     <span class="badge badge-success">Ознакомлен</span>
                     {% elif task.status_id == status.complete_delayed.value %}

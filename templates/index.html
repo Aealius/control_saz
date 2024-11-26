@@ -144,7 +144,7 @@
                 {% endif %}
             </td>
             <td>
-                <div>
+                <!--<div> старые статусы
                 {% if task.completion_confirmed and task.for_review %}
                 <span class="badge badge-success">Ознакомлен</span>
                 {% elif task.completion_confirmed and task.deadline_for_check < date.today() %}
@@ -160,24 +160,24 @@
                 {% else %}
                 <span class="badge badge-warning">В работе</span>
                 {% endif %}
-            </div>
-            <div>
-                {% if task.status_id == status.reviewed.value %}
-                <span class="badge badge-success">Ознакомлен</span>
-                {% elif task.status_id == status.complete_delayed.value %}
-                <span class="badge badge-warning">Выполнено, просрочено на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</span>
-                {% elif task.status_id == status.completed.value %}
-                <span class="badge badge-success">Выполнено</span>
-                {% elif task.status_id == status.invalid.value %}
-                <span class="badge badge-secondary">Недействительно</span>
-                {% elif task.status_id == status.at_check.value %}
-                <span class="badge badge-info">На проверке</span>
-                {% elif task.status_id == status.delayed.value %}
-                <span class="badge badge-danger">Просрочено</span>
-                {% elif task.status_id == status.in_work.value %}
-                <span class="badge badge-warning">В работе</span>
-                {% endif %}
-            </div>
+                </div>-->
+                <div>
+                    {% if task.status_id == status.reviewed.value %}
+                    <span class="badge badge-success">Ознакомлен</span>
+                    {% elif task.status_id == status.complete_delayed.value %}
+                    <span class="badge badge-warning">Выполнено, просрочено на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</span>
+                    {% elif task.status_id == status.completed.value %}
+                    <span class="badge badge-success">Выполнено</span>
+                    {% elif task.status_id == status.invalid.value %}
+                    <span class="badge badge-secondary">Недействительно</span>
+                    {% elif task.status_id == status.at_check.value %}
+                    <span class="badge badge-info">На проверке</span>
+                    {% elif task.status_id == status.delayed.value %}
+                    <span class="badge badge-danger">Просрочено</span>
+                    {% elif task.status_id == status.in_work.value %}
+                    <span class="badge badge-warning">В работе</span>
+                    {% endif %}
+                </div>
 
                 {% if task.admin_note %}
                 <br>
