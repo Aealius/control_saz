@@ -53,6 +53,47 @@ function taskConfirmation(id, path, role) {
       })
 }
 
+function taskReview(id) {
+    var base_url = window.location.origin;
+
+    fetch(base_url + "/review/" + id, {
+        method: "POST",
+      }).then((response) => {
+        console.log(response);
+      }).then(() =>{
+        const queryString = window.location.search;
+
+        fetch(base_url + "/" + queryString, 
+            {method: "GET"})
+            .then(response => {
+                return response.text();
+            })
+            .then(html => {
+                let oldValue = document.getElementById("select-task-sender").value;
+                document.documentElement.innerHTML = html;
+
+                // Тк после обновления html селект ломается, необходимо заного привязывать on change
+                // TODO: если возможно, разобраться подробнее в чем причина поломки и убрать это полукостыльное решение
+                $('.selectpicker').selectpicker();
+                $('#select-task-sender').val(oldValue); 
+                $('#select-task-sender').change();
+                document.getElementById("select-task-sender").addEventListener('change', Event => {
+                    let options = Event.target.options;
+                    let senderValue = "in";
+
+                    for(let i = 0; i < options.length; i++){
+                        if(options[i].selected){
+                            senderValue = options[i].value;
+                        }
+                    }
+                
+                    window.location.href = buildQueryString(senderValue);
+                });
+            })
+      })
+}
+
+
 //получение параметров сохраненных в localStorage или отображенных в searchParams
 document.addEventListener('DOMContentLoaded', () => { //задает значение дропдауна из значения, переданного в строке параметров
     let keys = [

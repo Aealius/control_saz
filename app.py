@@ -32,6 +32,15 @@ FILTER_PARAM_KEYS = ['executor',
                     'status',
                     'sn']
 
+STATUS_DICT =  {'in_work' : 'В работе',
+                'at_check' : 'На проверке',
+                'reviewed' : 'Ознакомлен',
+                'completed' : 'Выполнено',
+                'complete_delayed' :'Выполнено, просрочено',
+                'delayed' :'Просрочено',
+                'invalid' :'Недействительно'} 
+
+
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
@@ -90,7 +99,7 @@ class Task(db.Model):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
     
     def get_deadline_for_check(self):
-        return self.extended_deadline or self.deadline or datetime(9999, 12, 31)
+        return self.extended_deadline or self.deadline or datetime(9999, 12, 31).date()
     
 class Executive(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -149,7 +158,7 @@ def index():
         if current_user.is_admin and task.executor and task.executor_id not in creator_department:
             creator_department[task.executor_id] = task.executor.department
         elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor.id] = task.executor.department 
+            creator_department[task.executor.id] = task.executor.department        
     
     executors = User.query.all()
     return render_template('index.html',tasks=tasks,
@@ -164,7 +173,8 @@ def index():
                                         page = page,
                                         filter_params_dict = filter_params_dict,
                                         per_page = PER_PAGE,
-                                        status = Status) 
+                                        status = Status, 
+                                        status_dict = STATUS_DICT) 
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -421,7 +431,7 @@ def complete(task_id):
         task.status_id = Status.at_check.value
         db.session.commit()
         flash('Отметка о выполнении отправлена администратору.', 'success')
-        return redirect(url_for('index', sn = sn, p = p))
+        return '', 200
 
     return render_template('complete.html', task=task)
 
@@ -655,16 +665,13 @@ def review(task_id):
     task = Task.query.get_or_404(task_id)
     if request.method == 'POST':  #  Обработка POST-запроса от кнопки "Ознакомлен"
         
-        sn = session['sn']
-        p = session['p']
-        
         task.completion_confirmed = True
         task.completion_confirmed_at = datetime.now()
         task.status_id = Status.reviewed.value
         
         db.session.commit()
         flash('Вы ознакомились с задачей.', 'success')
-        return redirect(url_for('index', sn = sn, p = p))  #  Перенаправление на главную страницу
+        return '', 200  #  Перенаправление на главную страницу
     return render_template('review.html', task=task)
 
 
@@ -745,7 +752,8 @@ def archived():
                                             date=date,
                                             datetime=datetime, 
                                             unquote = unquote,
-                                            status = Status)
+                                            status = Status,
+                                            status_dict = STATUS_DICT)
 
 
 def filter_data(dataset, page, **params):

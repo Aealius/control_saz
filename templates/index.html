@@ -67,13 +67,9 @@
                             <label for="statusFilter">Статус:</label>
                             <select id="statusFilter" name="status" class="form-control">
                                 <option value="">Все</option>
-                                <option value="in_work">В работе</option>
-                                <option value="at_check">На проверке</option>
-                                <option value="reviewed">Ознакомлен</option>
-                                <option value="completed">Выполнено</option>
-                                <option value="complete_delayed">Выполнено, просрочено</option>
-                                <option value="delayed">Просрочено</option>
-                                <option value="invalid">Недействительно</option>
+                                {%for value, inner_text in status_dict.items()%}
+                                <option value="{{value}}" {% if value == request.args.get('status') %}selected{% endif %}>{{inner_text}}</option>
+                                {%endfor%}
                             </select>
                         </div>
                         <input type="hidden" id="hiddenSender" name="sn" value="">
@@ -239,9 +235,9 @@
                                 </div>
                                 {%endfor%}
                                 {% endif %}
-                                <form class="mt-3" method="POST" action="{{ url_for('review', task_id=task.id) }}">
-                                    <button type="submit" class="btn btn-primary">Ознакомлен</button>
-                                </form>
+                                <div class="mt-3">
+                                    <button onclick="taskReview({{task.id}})" class="btn btn-primary">Ознакомлен</button>
+                                </div>
                             </div>
 
                         </div>
