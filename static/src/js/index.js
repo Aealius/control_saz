@@ -1,6 +1,7 @@
 let senderSelect = document.getElementById("select-task-sender"); //дропдаун с выбором входящих/исходящих тасок
 let filterForm = document.getElementById("filterForm"); //форма фильтрации
 let resendForm = document.getElementById("resendForm");
+let resendModal = document.getElementById("resendModal");
 let clearFilterHref = document.getElementById("clearFilterHref"); //строка "очистить фильтр" на форме фильтрации
 let submitFilterFormButton = document.getElementById("submitFilterformButton"); //кнопка "применить фильтр" на форме фильтрации
 let urlParams  = new URLSearchParams(window.location.search);
@@ -240,6 +241,11 @@ function buildQueryString(senderValue){ //построение строки па
 
     return newUrl;
 }
+
+
+$(document).on('show.bs.modal','#resendModal', function () {
+    document.getElementById('executorResend').value = "";
+});
 
 // Для модалки пересылки
 function updateEmployee() {
