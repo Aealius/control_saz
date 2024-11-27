@@ -1,5 +1,6 @@
 let senderSelect = document.getElementById("select-task-sender"); //дропдаун с выбором входящих/исходящих тасок
 let filterForm = document.getElementById("filterForm"); //форма фильтрации
+let resendForm = document.getElementById("resendForm");
 let clearFilterHref = document.getElementById("clearFilterHref"); //строка "очистить фильтр" на форме фильтрации
 let submitFilterFormButton = document.getElementById("submitFilterformButton"); //кнопка "применить фильтр" на форме фильтрации
 let urlParams  = new URLSearchParams(window.location.search);
@@ -293,25 +294,28 @@ function updateEmployee() {
 
 // Пересылка задачи
 function resendTask(){
-    var base_url = window.location.origin;
-    let executorResend = '';
-    let employee = '';
 
-    executorResend = document.getElementById('executorResend').value;
-    employee = document.getElementById('employee').value;
+    if (validate([checkSimpleExecutorSelect(document.getElementById("executorResend"))], resendForm)) {
+        var base_url = window.location.origin;
+        let executorResend = '';
+        let employee = '';
 
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
+        executorResend = document.getElementById('executorResend').value;
+        employee = document.getElementById('employee').value;
 
-    fetch(base_url + "/resend/" + globalTaskId, {
-        method: "POST",
-        body: JSON.stringify({ executorResend: executorResend, employee: employee }),
-        headers: myHeaders,
-      }).then((response) => {
-        console.log(response);
-      }).then(() =>{
-        updateIndex();
-      })
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        fetch(base_url + "/resend/" + globalTaskId, {
+            method: "POST",
+            body: JSON.stringify({ executorResend: executorResend, employee: employee }),
+            headers: myHeaders,
+        }).then((response) => {
+            console.log(response);
+        }).then(() => {
+            updateIndex();
+        })
+    }
 }
 
 let globalTaskId = '';
@@ -319,3 +323,5 @@ let globalTaskId = '';
 function setTaskId(taskId){
     globalTaskId = taskId;
 }
+
+

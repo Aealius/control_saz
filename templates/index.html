@@ -94,7 +94,7 @@
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" id="resendForm">
                 <div class="form-group">
                     <label for="executorResend">Исполнитель:</label>
                     <select onchange="updateEmployee()" class="form-control" id="executorResend" name="executorResend">
@@ -106,10 +106,7 @@
                 </div>
                 <div style="display: none;" id="selectpicker2" class="form-group">
                     <label id="employeeLabel" for="employee">Сотрудник:</label>
-                    <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true"
-                        data-actions-box="true">
-                        <option value=""></option>
-                    </select>
+                    <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true"></select>
                 </div>
                 <button onclick="resendTask()" id="submitFilterFormButton" class="btn btn-primary">Переслать</button>
             </div>
@@ -424,7 +421,7 @@
 </div>
 
 
-
+<script src="{{ url_for('static', filename='src/js/validation.js') }}"></script>
 <script src="{{ url_for('static', filename='src/js/index.js') }}"></script>
 <script>
     $(function () {
