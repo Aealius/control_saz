@@ -14,6 +14,15 @@
                 {% endfor %}
             </select>
         </div>
+        {% if current_user.is_deputy%}
+        <div id="selectpicker2" class="form-group">
+            <label id="employeeLabel" for="employee">Сотрудник:</label>
+            <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true"
+                data-actions-box="true">
+                <option value=""></option>
+            </select>
+        </div>
+        {% endif %}
         <div class="form-group">
             <label for="date_created">Дата создания:</label>
             <input type="date" class="form-control" id="date_created" name="date_created"

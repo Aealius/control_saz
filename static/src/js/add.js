@@ -207,9 +207,7 @@ function addExecutorToSelected(value, text) {
                         }
                     }
                 }
-
-                updateSelectedExecutors()
-
+                updateSelectedExecutors();
             });
             executorSpan.appendChild(closeButton);
             selectedExecutorsDiv.appendChild(executorSpan);

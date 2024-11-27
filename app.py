@@ -434,7 +434,11 @@ def edit(task_id):
         task.edit_datetime = datetime.now()
         task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
         files = request.files.getlist('files') #массив файлов
-                
+        
+        if str(task.executor_id) in app.config['CanGetResendedTasksArr']:
+                task.employeeId = request.form.get('employee') or None
+      
+        
         if (current_user.is_admin):
             task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not task.is_бессрочно else None
             extend_deadline = request.form.get('extend_deadline')

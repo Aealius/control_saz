@@ -11,6 +11,7 @@ const editTaskForm = document.getElementById('editTaskForm')
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
+const base_url = window.location.origin;
 
 let files = [];
 
@@ -21,6 +22,8 @@ document.getElementById('executor').addEventListener('change', (event) => {
     if (!validate(validationResultArray, editTaskForm)){
         event.preventDefault();
     }
+
+    handleDepartmentAppearing(executorSelect);
 });
 
 document.getElementById('deadline').addEventListener('change', (event) => {
@@ -102,4 +105,46 @@ extendDeadlineCheckbox.addEventListener('change', function () {
     }
 });
 
+function handleDepartmentAppearing(executorSelect){
+    let divSelectEmployee = document.getElementById('selectpicker2');
+
+    // Пока что удаляем все значения и получаем их с бэка заново.
+    // В дальнейшем подумать о том, как это улучшить,
+    // тк слишком много запросов получится, особенно если будет много отделов
+    $('#employee').find('[value!=\'\']').remove();
+
+    // Для теста пока добавляем только глав буху, поэтому тут проверка на id бухгалтерии
+    // В дальнейшем это можно/нужно улучшить
+    if(executorSelect.value  == '27'){
+        divSelectEmployee.style.display = 'block';
+
+        // Опять же пока заглушка чисто для бухгалтерии
+        let employeeId = '27';
+        $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
+    
+        // Получение из бэка сотрудников отдела
+        fetch(base_url + "/getEmployees/" + employeeId, {
+            method: "GET"
+        }).then((response) => {
+            return response.text();
+        }).then((text) => {
+            let obj = JSON.parse(text);
+            let selectEmployee = document.getElementById('employee');
+
+            for (var i = 0; i < obj.length; i++) {
+                var opt = document.createElement('option');
+                opt.value = obj[i].id;
+                opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+                selectEmployee.appendChild(opt);
+            }
+
+            // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+            $('.selectpicker').selectpicker('refresh');
+        })          
+    }
+    else {
+        divSelectEmployee.style.display = 'none';
+        $('.selectpicker').selectpicker('refresh');
+    }
+}
 
