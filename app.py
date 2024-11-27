@@ -42,7 +42,8 @@ STATUS_DICT =  {'in_work' : 'В работе',
                 'invalid' :'Недействительно'} 
 
 
-
+# Id отделов, у которых можно выбрать конкретного исполнителя
+app.config['CanGetResendedTasksArr'] = ['27'] # Бухгалтерия
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
@@ -250,8 +251,7 @@ def add():
                 creator_file_path += tmp_file_path + ';'
 
         for executor in executors_for_task:
-            # заглушка только для бухгалтерии для тестов
-            if executor.id == 27:
+            if str(executor.id) in app.config['CanGetResendedTasksArr']:
                 employeeId = request.form.get('employee') or None
             else:
                 employeeId = None
@@ -380,8 +380,7 @@ def resend(task_id):
         flash("Произошла ошибка: " + s, 'danger')
         return '', 500
     
-    # заглушка только для бухгалтерии для тестов
-    if executor_for_task_id == '27':
+    if executor_for_task_id in app.config['CanGetResendedTasksArr']:
         employeeId = request.json.get('employee') or None
     else:
         employeeId = None
