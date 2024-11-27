@@ -24,12 +24,8 @@
             <input type="date" class="form-control" id="deadline" name="deadline"
                    value="{% if task.deadline %}{{ task.deadline.strftime('%Y-%m-%d') }}{% endif %}">
         </div>
-        <div class="form-group form-check">
-            {%if current_user.is_admin%}
+        <div class="form-group form-check {%if not current_user.is_admin or not current_user.is_deputy%}hidden{%endif%}">
             <input type="checkbox" class="form-check-input" id="is_бессрочно" name="is_бессрочно" {% if task.is_бессрочно %}checked{% endif %} onchange="toggleDeadline()">
-            {%else%}
-            <input type="checkbox" class="form-check-input" id="is_бессрочно" name="is_бессрочно" disabled checked>
-            {%endif%}
             <label class="form-check-label" for="is_бессрочно">Бессрочно</label>
         </div>
         <div class="form-group">
@@ -52,7 +48,7 @@
                    {% if task.is_valid %}checked{% endif %}>
             <label class="form-check-label" for="is_valid">Действителен</label>
         </div>
-        <div class="form-group form-check">
+        <div class="form-group form-check {%if not current_user.is_admin or not current_user.is_deputy%}hidden{%endif%}">
             <input type="checkbox" class="form-check-input" id="extend_deadline" name="extend_deadline">
             <label class="form-check-label" for="extend_deadline">Продлить срок</label>
         </div>

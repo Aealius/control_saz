@@ -441,11 +441,13 @@ def edit(task_id):
                                                         executors=executors,
                                                         current_user = current_user,
                                                         datetime=datetime)
-        if (task.status_id != Status.invalid):
-            if (task.deadline < datetime.now().date()):
-                task.status_id = Status.delayed.value
-            elif (task.deadline >= datetime.now().date()):
-                task.status_id = Status.in_work.value
+        
+        if task.deadline:
+            if (task.status_id != Status.invalid):
+                if (task.deadline < datetime.now().date()):
+                    task.status_id = Status.delayed.value
+                elif (task.deadline >= datetime.now().date()):
+                    task.status_id = Status.in_work.value
         
         creator_file_path = ''
 
