@@ -319,6 +319,12 @@ def add_memo():
                 tmp_file_path = os.path.join(task_id, 'creator', filename)
                 tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
                 creator_file_path += tmp_file_path + ';'
+                
+        for executor in selected_executor_id:
+            if str(executor.id) in app.config['CanGetResendedTasksArr']:
+                employeeId = request.form.get('employee') or None
+            else:
+                employeeId = None        
 
         for executor_id in selected_executor_id:
             new_memo = Task(
@@ -329,7 +335,8 @@ def add_memo():
                 for_review=True,
                 description=description,
                 creator_file=creator_file_path, # Запись пути к файлу в базу
-                status_id = Status.in_work.value                
+                status_id = Status.in_work.value,
+                employeeId = employeeId                
             )
             db.session.add(new_memo)
             db.session.commit()
