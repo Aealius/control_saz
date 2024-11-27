@@ -97,6 +97,8 @@ class Task(db.Model):
     employee = db.relationship('Executive', backref=db.backref('executed_tasks', lazy=True), foreign_keys=[employeeId])
     is_archived = db.Column(db.Boolean, default = False, nullable = False)
     status_id = db.Column(db.SmallInteger, default=1, nullable=False)
+    parent_task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=True)
+    parent_task =db.relationship('Task',backref=db.backref('parent_task', lazy=True), foreign_keys=[parent_task_id])
 
     def is_overdue(self):
         return self.deadline < datetime.today().date() if self.deadline is not None else False

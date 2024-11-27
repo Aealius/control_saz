@@ -9,7 +9,7 @@ class Status(Enum):
     complete_delayed = 5 #выполнено, просрочено
     delayed = 6 #просрочено
     invalid = 7 #недействительно
-    
+    pending = 8 #ожидается выполнение
     
     
     
