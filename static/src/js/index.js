@@ -1,5 +1,7 @@
 let senderSelect = document.getElementById("select-task-sender"); //дропдаун с выбором входящих/исходящих тасок
 let filterForm = document.getElementById("filterForm"); //форма фильтрации
+let resendForm = document.getElementById("resendForm");
+let resendModal = document.getElementById("resendModal");
 let clearFilterHref = document.getElementById("clearFilterHref"); //строка "очистить фильтр" на форме фильтрации
 let submitFilterFormButton = document.getElementById("submitFilterformButton"); //кнопка "применить фильтр" на форме фильтрации
 let urlParams  = new URLSearchParams(window.location.search);
@@ -240,8 +242,13 @@ function buildQueryString(senderValue){ //построение строки па
     return newUrl;
 }
 
+
+$(document).on('show.bs.modal','#resendModal', function () {
+    document.getElementById('executorResend').value = "";
+});
+
 // Для модалки пересылки
-function updateEmployee() {
+async function updateEmployee() {
     let executorResendSelect = document.getElementById('executorResend'); //множественный select дял выбора исполнителя
 
     let executorSelectedOptions = executorResendSelect.selectedOptions;
@@ -265,7 +272,7 @@ function updateEmployee() {
         const base_url = window.location.origin;
 
         // Получение из бэка сотрудников отдела
-        fetch(base_url + "/getEmployees/" + employeeId, {
+        await fetch(base_url + "/api/users/" + employeeId + "/employees", {
             method: "GET"
         }).then((response) => {
             console.log(response);
@@ -292,26 +299,29 @@ function updateEmployee() {
 } 
 
 // Пересылка задачи
-function resendTask(){
-    var base_url = window.location.origin;
-    let executorResend = '';
-    let employee = '';
+async function resendTask(){
 
-    executorResend = document.getElementById('executorResend').value;
-    employee = document.getElementById('employee').value;
+    if (validate([checkSimpleExecutorSelect(document.getElementById("executorResend"))], resendForm)) {
+        var base_url = window.location.origin;
+        let executorResend = '';
+        let employee = '';
 
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
+        executorResend = document.getElementById('executorResend').value;
+        employee = document.getElementById('employee').value;
 
-    fetch(base_url + "/resend/" + globalTaskId, {
-        method: "POST",
-        body: JSON.stringify({ executorResend: executorResend, employee: employee }),
-        headers: myHeaders,
-      }).then((response) => {
-        console.log(response);
-      }).then(() =>{
-        updateIndex();
-      })
+        const myHeaders = new Headers();
+        myHeaders.append("Content-Type", "application/json");
+
+        await fetch(base_url + "/resend/" + globalTaskId, {
+            method: "POST",
+            body: JSON.stringify({ executorResend: executorResend, employee: employee }),
+            headers: myHeaders,
+        }).then((response) => {
+            console.log(response);
+        }).then(() => {
+            updateIndex();
+        })
+    }
 }
 
 let globalTaskId = '';
@@ -319,3 +329,5 @@ let globalTaskId = '';
 function setTaskId(taskId){
     globalTaskId = taskId;
 }
+
+

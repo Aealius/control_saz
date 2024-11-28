@@ -79,13 +79,11 @@ addTaskForm.addEventListener('submit', async (event) => {
         await fetch(base_url + '/add', {
             method: 'POST',
             body: formData,
-        });
-
-        window.location.replace(document.referrer);
+        }).then( () => window.location.replace(document.referrer));
     }
 });
 
-function updateSelectedExecutors() {
+async function updateSelectedExecutors() {
     let executorSelectedOptions = executorSelect.selectedOptions;
     let selectedValuesArray = [];
     let selectedTextArray = [];
@@ -98,6 +96,7 @@ function updateSelectedExecutors() {
     addExecutorToSelected(selectedValuesArray, selectedTextArray);
 
     let divSelectEmployee = document.getElementById('selectpicker2');
+    let selectEmployee = document.getElementById('employee');
 
     // Пока что удаляем все значения и получаем их с бэка заново.
     // В дальнейшем подумать о том, как это улучшить,
@@ -108,19 +107,19 @@ function updateSelectedExecutors() {
     // В дальнейшем это можно/нужно улучшить
     if(selectedValuesArray.includes('27')){
         divSelectEmployee.style.display = 'block';
+        selectEmployee.disabled = false;
 
         // Опять же пока заглушка чисто для бухгалтерии
         let employeeId = '27';
         $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
     
         // Получение из бэка сотрудников отдела
-        fetch(base_url + "/getEmployees/" + employeeId, {
+        await fetch(base_url + "/api/users/" + employeeId + "/employees", {
             method: "GET"
         }).then((response) => {
             return response.text();
         }).then((text) => {
             let obj = JSON.parse(text);
-            let selectEmployee = document.getElementById('employee');
 
             for (var i = 0; i < obj.length; i++) {
                 var opt = document.createElement('option');
@@ -128,13 +127,14 @@ function updateSelectedExecutors() {
                 opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
                 selectEmployee.appendChild(opt);
             }
-
+            
             // Оставляем здесь, ибо если вынести из then - сработает слишком рано
             $('.selectpicker').selectpicker('refresh');
         })          
     }
     else {
         divSelectEmployee.style.display = 'none';
+        selectEmployee.disabled = true;
         $('.selectpicker').selectpicker('refresh');
     }
 } 
@@ -207,9 +207,7 @@ function addExecutorToSelected(value, text) {
                         }
                     }
                 }
-
-                updateSelectedExecutors()
-
+                updateSelectedExecutors();
             });
             executorSpan.appendChild(closeButton);
             selectedExecutorsDiv.appendChild(executorSpan);
