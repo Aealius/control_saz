@@ -14,7 +14,7 @@ import shutil
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345@localhost/control_saz'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Temp543_H@localhost/control_saz'
 app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
@@ -39,7 +39,8 @@ STATUS_DICT =  {'in_work' : 'В работе',
                 'completed' : 'Выполнено',
                 'complete_delayed' :'Выполнено, просрочено',
                 'delayed' :'Просрочено',
-                'invalid' :'Недействительно'} 
+                'invalid' :'Недействительно',
+                'pending' :'Ожидается выполнение'} 
 
 
 # Id отделов, у которых можно выбрать конкретного исполнителя
@@ -352,6 +353,10 @@ def resend(task_id):
     # Генерируем new_task_id для новой задачи
     new_task_id = str(len(Task.query.all()) + 1)
     task = Task.query.get_or_404(task_id)
+    
+    # Пока что меняем статус только для задач. Для служебных записок не меняем.
+    if not task.for_review:
+        task.status_id = Status.pending.value
 
     executor_for_task_id = request.json.get('executorResend')
     task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], new_task_id, 'creator')
@@ -398,7 +403,8 @@ def resend(task_id):
         creator_id=current_user.id,
         employeeId = employeeId,
         for_review=for_review,
-        creator_file=creator_file_path
+        creator_file=creator_file_path,
+        parent_task_id = task_id
     )
     db.session.add(new_task)
     db.session.commit()
@@ -450,8 +456,8 @@ def edit(task_id):
                                                         executors=executors,
                                                         current_user = current_user,
                                                         datetime=datetime)
-        
-        if task.deadline:
+      
+        if task.deadline:            
             if (task.status_id != Status.invalid):
                 if (task.deadline < datetime.now().date()):
                     task.status_id = Status.delayed.value
@@ -562,9 +568,11 @@ def confirm_task(task_id):
     task.admin_note = request.json.get('note')
     
     
-    
-    if(task.get_deadline_for_check() < datetime.now().date()):
-        task.status_id = Status.complete_delayed.value
+    if task.deadline:
+        if(task.get_deadline_for_check() < datetime.now().date()):
+            task.status_id = Status.complete_delayed.value
+        else:
+            task.status_id = Status.completed.value
     else:
         task.status_id = Status.completed.value
         
@@ -609,10 +617,51 @@ def confirm_task_deputy(task_id):
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
     
-    if(task.get_deadline_for_check() < task.completion_confirmed_at):
-        task.status_id = Status.complete_delayed.value
+    if task.deadline:
+        if(task.get_deadline_for_check() < task.completion_confirmed_at.date()):
+            task.status_id = Status.complete_delayed.value
+        else:
+            task.status_id = Status.completed.value
     else:
         task.status_id = Status.completed.value
+        
+    # Если задача была дочерней, то работаем с родителем
+    if task.parent_task_id != None:
+        parentTask = Task.query.filter_by(id = task.parent_task_id).first()
+        
+        # Пока что для служебных записок с родителем ничего не делаем
+        # Также проверяем, что родительская таска сама в работе
+        if parentTask != None and (not parentTask.for_review) and (parentTask.status_id == Status.in_work.value or parentTask.status_id == Status.delayed.value or parentTask.status_id == Status.pending.value): 
+            parentTask.status_id = Status.at_check.value
+            parentTask.completion_note = task.completion_note
+            parentTask.completion_confirmed = False
+                
+            # Работа с файлами
+            try:        
+                exev_file_path = ''
+                task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(task.parent_task_id), 'executor')
+                uploadFolder = os.getcwd() + '/' + app.config['UPLOAD_FOLDER'] + '/'
+                if not os.path.exists(uploadFolder):
+                    os.makedirs(uploadFolder)
+                os.makedirs(task_uploads_folder, exist_ok=True)
+
+                file_path_arr = task.attached_file.split(';')
+                # Сохраняем файл только один раз
+                for filePath in file_path_arr:
+                    if filePath != '':
+                        shutil.copy2(uploadFolder + filePath, task_uploads_folder)
+                        tmp_file_path = ''
+                        filename = os.path.basename(filePath)
+                        tmp_file_path = os.path.join(str(task.parent_task_id), 'executor', filename)
+                        tmp_file_path = tmp_file_path.replace('\\', '/')
+                        exev_file_path += tmp_file_path # когда сделаем многофайловую загрузку - дописать + ';'
+            except Exception as e:
+                s = str(e)
+                flash("Произошла ошибка: " + s, 'danger')
+                return '', 500   
+                
+            parentTask.attached_file = exev_file_path
+                
     db.session.commit()
     flash('Выполнение задачи подтверждено.', 'success')
     return '', 200
@@ -901,6 +950,8 @@ def filter_data(dataset, page, **params):
             dataset = dataset.filter(Task.status_id == 6)
         case 'invalid':
             dataset = dataset.filter(Task.status_id == 7)
+        case 'pending':
+            dataset = dataset.filter(Task.status_id == 8)
         case _:
             pass      
                 

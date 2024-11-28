@@ -157,6 +157,8 @@
                     <span class="badge badge-danger">Просрочено</span>
                     {% elif task.status_id == status.in_work.value %}
                     <span class="badge badge-warning">В работе</span>
+                    {% elif task.status_id == status.pending.value %}
+                    <span class="badge badge-primary">Ожидается выполнение</span>
                     {% endif %}
                 </div>
             
