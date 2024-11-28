@@ -15,6 +15,9 @@ const base_url = window.location.origin;
 
 let files = [];
 
+document.addEventListener('DOMContentLoaded', () => {
+    handleDepartmentAppearing(executorSelect);
+});
 
 document.getElementById('executor').addEventListener('change', (event) => {
     let validationResultArray = [checkSimpleExecutorSelect(executorSelect)];
@@ -105,6 +108,7 @@ extendDeadlineCheckbox.addEventListener('change', function () {
     }
 });
 
+//функция фетчит сотрудников отдела, когда выбирается отдел из первого дропдауна
 function handleDepartmentAppearing(executorSelect){
     let divSelectEmployee = document.getElementById('selectpicker2');
 
