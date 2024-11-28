@@ -248,7 +248,7 @@ $(document).on('show.bs.modal','#resendModal', function () {
 });
 
 // Для модалки пересылки
-function updateEmployee() {
+async function updateEmployee() {
     let executorResendSelect = document.getElementById('executorResend'); //множественный select дял выбора исполнителя
 
     let executorSelectedOptions = executorResendSelect.selectedOptions;
@@ -272,7 +272,7 @@ function updateEmployee() {
         const base_url = window.location.origin;
 
         // Получение из бэка сотрудников отдела
-        fetch(base_url + "/getEmployees/" + employeeId, {
+        await fetch(base_url + "/api/users/" + employeeId + "/employees", {
             method: "GET"
         }).then((response) => {
             console.log(response);
@@ -299,7 +299,7 @@ function updateEmployee() {
 } 
 
 // Пересылка задачи
-function resendTask(){
+async function resendTask(){
 
     if (validate([checkSimpleExecutorSelect(document.getElementById("executorResend"))], resendForm)) {
         var base_url = window.location.origin;
@@ -312,7 +312,7 @@ function resendTask(){
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
 
-        fetch(base_url + "/resend/" + globalTaskId, {
+        await fetch(base_url + "/resend/" + globalTaskId, {
             method: "POST",
             body: JSON.stringify({ executorResend: executorResend, employee: employee }),
             headers: myHeaders,

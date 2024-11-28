@@ -50,7 +50,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-
+@dataclass
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     department = db.Column(db.String(255), nullable=False, default='Общая служба')
@@ -65,15 +65,12 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def __repr__(self):
-        return f'<User {self.login}>'
-
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
+@dataclass
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     executor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -320,13 +317,12 @@ def add_memo():
                 tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
                 creator_file_path += tmp_file_path + ';'
                 
-        for executor in selected_executor_id:
-            if str(executor.id) in app.config['CanGetResendedTasksArr']:
+        for executor_id in selected_executor_id:
+            if str(executor_id) in app.config['CanGetResendedTasksArr']:
                 employeeId = request.form.get('employee') or None
             else:
-                employeeId = None        
-
-        for executor_id in selected_executor_id:
+                employeeId = None
+            
             new_memo = Task(
                 executor_id=int(executor_id),
                 creator_id=current_user.id,
@@ -340,7 +336,7 @@ def add_memo():
             )
             db.session.add(new_memo)
             db.session.commit()
-
+            
         flash('Служебная записка успешно отправлена!', 'success')
         return '', 200
 
@@ -436,8 +432,10 @@ def edit(task_id):
         files = request.files.getlist('files') #массив файлов
         
         if str(task.executor_id) in app.config['CanGetResendedTasksArr']:
-                task.employeeId = request.form.get('employee') or None
-      
+            task.employeeId = request.form.get('employee') or None
+        else:
+            task.employeeId = None
+
         
         if (current_user.is_admin):
             task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not task.is_бессрочно else None
@@ -778,11 +776,22 @@ def review(task_id):
         return '', 200  #  Перенаправление на главную страницу
     return render_template('review.html', task=task)
 
-@app.route('/getEmployees/<int:user_id>', methods=['GET'])
+#API-метод, возвращающий список сотрудников по id отдела 
+@app.route('/api/users/<int:user_id>/employees', methods=['GET'])
 @login_required
 def getEmployees(user_id):
     employees = Executive.query.filter(Executive.user_id == user_id).all()
-    return jsonify(employees).json
+    return jsonify(employees)
+
+#API-метод, возвращающий задачу по ее id
+@app.route('/api/tasks/<int:task_id>', methods=['GET'])
+@login_required
+def getTaskById(task_id):
+    task = Task.query.filter_by(id = task_id).first()
+    if (not task):
+        return '', 404
+    return jsonify(task)
+
 
 reports_bp = Blueprint('reports', __name__) # Создаем Blueprint
 
@@ -944,4 +953,4 @@ app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Bl
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug = True)
