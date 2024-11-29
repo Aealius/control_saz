@@ -4,7 +4,13 @@ let resendForm = document.getElementById("resendForm");
 let resendModal = document.getElementById("resendModal");
 let clearFilterHref = document.getElementById("clearFilterHref"); //строка "очистить фильтр" на форме фильтрации
 let submitFilterFormButton = document.getElementById("submitFilterformButton"); //кнопка "применить фильтр" на форме фильтрации
+let resendSelect = document.getElementById("executorResend"); //дропдаун с выбором исполнителей по отделам
 let urlParams  = new URLSearchParams(window.location.search);
+let globalTaskId = '';
+
+function setTaskId(taskId){
+    globalTaskId = taskId;
+}
 
 function taskConfirmation(id, path, role) {
     var base_url = window.location.origin;
@@ -329,10 +335,94 @@ function resendTask(){
     }
 }
 
-let globalTaskId = '';
+function updateSelectedExecutors() {
+    let resendSelectedOptions = resendSelect.selectedOptions;
+    let selectedValuesArray = [...resendSelectedOptions].map(o => o.value);
+    let selectedTextArray = [...resendSelectedOptions].map(o => o.innerHTML);
 
-function setTaskId(taskId){
-    globalTaskId = taskId;
+    addExecutorToSelected(selectedValuesArray, selectedTextArray);
+
+    updateEmployee();
+}
+
+function addExecutorToSelected(valueArray, textArray) {
+    let selectedExecutorsDiv = document.getElementById("selectedExecutors");
+    selectedExecutorsDiv.innerHTML = "";
+
+    let hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'executor[]';
+
+    if (resendSelect.options.length == resendSelect.selectedOptions.length) {
+        let allSpan = document.createElement('span');
+        allSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+        allSpan.textContent = 'Всем';
+        allSpan.setAttribute('data-value', 'all');
+
+        let closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.classList.add('close', 'small-close');
+        closeButton.innerHTML = '×';
+        allSpan.appendChild(closeButton);
+        selectedExecutorsDiv.appendChild(allSpan);
+        closeButton.addEventListener('click', function () {
+            this.parentNode.remove();
+            $('.selectpicker').selectpicker('deselectAll');
+        });
+        allSpan.appendChild(hiddenInput);
+        hiddenInput.value = 'all';
+    }
+    else {
+        for (let i = 0; i < valueArray.length; i++) {
+
+            let executorSpan = document.createElement('span');
+            executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+            executorSpan.textContent = textArray[i];
+            executorSpan.setAttribute('data-value', valueArray[i]);
+
+            let closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.classList.add('close', 'small-close');
+            closeButton.innerHTML = '×';
+            closeButton.addEventListener('click', function () {
+                let currentValue = this.parentNode.dataset.value;  // get the value
+                if (currentValue == 'all') { // Удаление  allSelected  
+                    allSelected = false // ставим false allSelected
+
+                }
+                this.parentNode.remove();
+
+
+                let elements = resendSelect.selectedOptions;
+                let selectedText = document.querySelector(".filter-option-inner-inner");
+
+                for (let i = 0; i < elements.length; i++) {
+                    if ((elements[i].value) == currentValue) {
+                        let removeText = elements[i].innerHTML;
+                        elements[i].selected = false;
+                        if (i == selectedExecutorsDiv.childElementCount) {
+                            if (elements.length == 0) { //когда никого не остается в выбранных
+                                $('.selectpicker').selectpicker('deselectAll'); //убираем всех отовсюду, чтобы показало дефолтное состояние дропдауна 
+                            }
+                            else {
+                                selectedText.innerHTML = (selectedText.innerHTML.replace(', ' + removeText, ''));
+                            }
+                        }
+                        else {
+                            selectedText.innerHTML = (selectedText.innerHTML.replace(removeText + ', ', ''));
+                        }
+                    }
+                }
+
+                updateSelectedExecutors()
+
+            });
+            executorSpan.appendChild(closeButton);
+            selectedExecutorsDiv.appendChild(executorSpan);
+            executorSpan.appendChild(hiddenInput);
+        }
+        hiddenInput.value = valueArray;
+    }
 }
 
 
