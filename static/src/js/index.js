@@ -248,7 +248,7 @@ $(document).on('show.bs.modal','#resendModal', function () {
 });
 
 // Для модалки пересылки
-async function updateEmployee() {
+async function updateEmployee(userLogin) {
     let executorResendSelect = document.getElementById('executorResend'); //множественный select дял выбора исполнителя
 
     let executorSelectedOptions = executorResendSelect.selectedOptions;
@@ -262,7 +262,7 @@ async function updateEmployee() {
 
     // Для теста пока добавляем только глав буху, поэтому тут проверка на id бухгалтерии
     // В дальнейшем это можно/нужно улучшить
-    if(executorSelectedOptions[0].value.includes('27')){
+    if(executorSelectedOptions[0].value.includes('27') && userLogin == '8'){
         divSelectEmployee.style.display = 'block';
 
         // Опять же пока заглушка чисто для бухгалтерии
