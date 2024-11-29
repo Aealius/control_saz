@@ -97,8 +97,7 @@
             <div class="modal-body" id="resendForm">
                 <div class="form-group">
                     <label for="executorResend">Исполнитель:</label>
-                    <select onchange="updateEmployee()" class="form-control" id="executorResend" name="executorResend">
-                        <option value="">Все</option>
+                    <select onchange="updateEmployee()" class="selectpicker show-tick form-control" id="executorResend" name="executorResend" data-live-search="true" data-actions-box="true" multiple>
                         {% for executor in executors %}
                         <option value="{{ executor.id }}">{{ executor.department }}</option>
                         {% endfor %}

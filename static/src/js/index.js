@@ -248,12 +248,11 @@ $(document).on('show.bs.modal','#resendModal', function () {
 });
 
 // Для модалки пересылки
-async function updateEmployee() {
+function updateEmployee() {
     let executorResendSelect = document.getElementById('executorResend'); //множественный select дял выбора исполнителя
+    let selectEmployeeDiv = document.getElementById('selectpicker2'); //div с выбором ответственного лица
 
-    let executorSelectedOptions = executorResendSelect.selectedOptions;
-
-    let divSelectEmployee = document.getElementById('selectpicker2');
+    let executorResendSelectedOptions = executorResendSelect.selectedOptions;
 
     // Пока что удаляем все значения и получаем их с бэка заново.
     // В дальнейшем подумать о том, как это улучшить,
@@ -262,44 +261,50 @@ async function updateEmployee() {
 
     // Для теста пока добавляем только глав буху, поэтому тут проверка на id бухгалтерии
     // В дальнейшем это можно/нужно улучшить
-    if(executorSelectedOptions[0].value.includes('27')){
-        divSelectEmployee.style.display = 'block';
+    if (executorResendSelectedOptions.length !== 0) {
+        eResendValueArray = [...executorResendSelectedOptions].map(o => o.value);
 
-        // Опять же пока заглушка чисто для бухгалтерии
-        let employeeId = '27';
-        $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
+        if (eResendValueArray.includes('27')) {
+            selectEmployeeDiv.disabled = false;
+            selectEmployeeDiv.style.display = 'block';
 
-        const base_url = window.location.origin;
+            // Опять же пока заглушка чисто для бухгалтерии
+            let employeeId = '27';
+            $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
 
-        // Получение из бэка сотрудников отдела
-        await fetch(base_url + "/api/users/" + employeeId + "/employees", {
-            method: "GET"
-        }).then((response) => {
-            console.log(response);
-            return response.text();
-        }).then((text) => {
-            let obj = JSON.parse(text);
-            let selectEmployee = document.getElementById('employee');
+            const base_url = window.location.origin;
 
-            for (var i = 0; i < obj.length; i++) {
-                var opt = document.createElement('option');
-                opt.value = obj[i].id;
-                opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
-                selectEmployee.appendChild(opt);
-            }
+            // Получение из бэка сотрудников отдела
+            fetch(base_url + "/api/users/" + employeeId + "/employees", {
+                method: "GET"
+            }).then((response) => {
+                console.log(response);
+                return response.text();
+            }).then((text) => {
+                let obj = JSON.parse(text);
+                let selectEmployee = document.getElementById('employee');
 
-            // Оставляем здесь, ибо если вынести из then - сработает слишком рано
-            $('.selectpicker').selectpicker('refresh');
-        })          
+                for (var i = 0; i < obj.length; i++) {
+                    var opt = document.createElement('option');
+                    opt.value = obj[i].id;
+                    opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+                    selectEmployee.appendChild(opt);
+                }
+
+                // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+                $('.selectpicker').selectpicker('refresh');
+            })
+        }
     }
     else {
-        divSelectEmployee.style.display = 'none';
+        selectEmployeeDiv.style.display = 'none';
+        selectEmployeeDiv.disabled = true;
         $('.selectpicker').selectpicker('refresh');
     }
 } 
 
 // Пересылка задачи
-async function resendTask(){
+function resendTask(){
 
     if (validate([checkSimpleExecutorSelect(document.getElementById("executorResend"))], resendForm)) {
         var base_url = window.location.origin;
@@ -312,7 +317,7 @@ async function resendTask(){
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
 
-        await fetch(base_url + "/resend/" + globalTaskId, {
+        fetch(base_url + "/resend/" + globalTaskId, {
             method: "POST",
             body: JSON.stringify({ executorResend: executorResend, employee: employee }),
             headers: myHeaders,

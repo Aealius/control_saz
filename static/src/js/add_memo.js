@@ -60,7 +60,7 @@ addMemoForm.addEventListener('submit', async (event) => {
     }    
 });
 
-async function updateSelectedExecutors() {
+function updateSelectedExecutors() {
     let executorSelectedOptions = executorSelect.selectedOptions;
     let selectedValuesArray = [];
     let selectedTextArray = [];
@@ -91,7 +91,7 @@ async function updateSelectedExecutors() {
         $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
     
         // Получение из бэка сотрудников отдела
-        await fetch(base_url + "/api/users/" + employeeId + "/employees", {
+        fetch(base_url + "/api/users/" + employeeId + "/employees", {
             method: "GET"
         }).then((response) => {
             return response.text();
