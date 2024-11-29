@@ -244,7 +244,7 @@ function buildQueryString(senderValue){ //построение строки па
 
 
 $(document).on('show.bs.modal','#resendModal', function () {
-    $('#resendSelect').selectpicker('deselectAll');
+    $('.selectpicker').selectpicker('deselectAll');
 });
 
 // Для модалки пересылки
