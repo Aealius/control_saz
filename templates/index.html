@@ -97,7 +97,8 @@
             <div class="modal-body" id="resendForm">
                 <div class="form-group">
                     <label for="executorResend">Исполнитель:</label>
-                    <select onchange="updateSelectedExecutors()" class="selectpicker show-tick form-control" id="executorResend" name="executorResend" data-size="15" data-live-search="true" data-actions-box="true" multiple>
+                    <select onchange="updateSelectedExecutors('{{current_user.login}}')" class="selectpicker show-tick form-control" id="executorResend" name="executorResend" data-size="15" data-live-search="true" data-actions-box="true" multiple>
+                        <option value="">Все</option>
                         {% for executor in executors %}
                         <option value="{{ executor.id }}">{{ executor.department }}</option>
                         {% endfor %}
@@ -240,7 +241,7 @@
                     </form>
                 </div>
                 {% endif %}
-                {% if current_user.is_deputy and task.executor_id == current_user.id and (task.status_id == status.delayed.value or task.status_id == status.in_work.value)%}
+                {% if current_user.is_deputy and not task.for_review and task.executor_id == current_user.id and (task.status_id == status.delayed.value or task.status_id == status.in_work.value)%}
                 <div class="d-inline-block"> 
                     <button onclick="setTaskId('{{task.id}}')" data-toggle="modal" data-target="#resendModal" class="btn btn-secondary btn-sm" title="Переслать">
                         <i class="fa-solid fa-share"></i>

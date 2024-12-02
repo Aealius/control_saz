@@ -254,7 +254,7 @@ $(document).on('show.bs.modal', '#resendModal', function () {
 });
 
 // Для модалки пересылки
-function updateEmployee() {
+function updateEmployee(userLogin) {
     let executorResendSelect = document.getElementById('executorResend'); //множественный select дял выбора исполнителя
     let selectEmployeeDiv = document.getElementById('selectpicker2'); //div с выбором ответственного лица
     let employeeSelectpicker = document.getElementById('employee');
@@ -271,7 +271,7 @@ function updateEmployee() {
     if (executorResendSelectedOptions.length !== 0) {
         eResendValueArray = [...executorResendSelectedOptions].map(o => o.value);
 
-        if (eResendValueArray.includes('27')) {
+        if (eResendValueArray.includes('27') && userLogin == '8') {
             employeeSelectpicker.disabled = false;
             selectEmployeeDiv.style.display = 'block';
 
@@ -336,14 +336,14 @@ function resendTask() {
     }
 }
 
-function updateSelectedExecutors() {
+function updateSelectedExecutors(userLogin) {
     let resendSelectedOptions = resendSelect.selectedOptions;
     let selectedValuesArray = [...resendSelectedOptions].map(o => o.value);
     let selectedTextArray = [...resendSelectedOptions].map(o => o.innerHTML);
 
     addExecutorToSelected(selectedValuesArray, selectedTextArray);
 
-    updateEmployee();
+    updateEmployee(userLogin);
 }
 
 function addExecutorToSelected(valueArray, textArray) {

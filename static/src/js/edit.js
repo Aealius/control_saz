@@ -133,22 +133,40 @@ function handleDepartmentAppearing(executorSelect){
             return response.text();
         }).then((text) => {
             let obj = JSON.parse(text);
-            let selectEmployee = document.getElementById('employee');
+            
+            // Получаем задачу, чтобы узнать id прикрепленного исполнителя
+            let taskId = window.location.pathname.split('/')[2];
+            fetch(base_url + "/api/tasks/" + taskId, {
+                method: "GET"
+            }).then((TaskResponse) => {
+                return TaskResponse.text();
+            }).then((TaskResponse) => {
+                let TaskObj = JSON.parse(TaskResponse);
 
-            for (var i = 0; i < obj.length; i++) {
-                var opt = document.createElement('option');
-                opt.value = obj[i].id;
-                opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
-                selectEmployee.appendChild(opt);
-            }
+                let selectEmployee = document.getElementById('employee');
 
-            // Оставляем здесь, ибо если вынести из then - сработает слишком рано
-            $('.selectpicker').selectpicker('refresh');
+                for (var i = 0; i < obj.length; i++) {
+                    var opt = document.createElement('option');
+                    opt.value = obj[i].id;
+                    opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+
+                    if(TaskObj.employeeId == obj[i].id){
+                        opt.selected = true;
+                    }
+
+                    selectEmployee.appendChild(opt);
+                }
+    
+                // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+                $('.selectpicker').selectpicker('refresh');
+                $('.selectpicker').selectpicker('render');
+            })
         })          
     }
     else {
         divSelectEmployee.style.display = 'none';
         $('.selectpicker').selectpicker('refresh');
+        $('.selectpicker').selectpicker('render');
     }
 }
 

@@ -73,6 +73,28 @@ def load_user(user_id):
 
 @dataclass
 class Task(db.Model):
+    id: int
+    executor_id: int
+    creator_id: int
+    date_created: datetime
+    deadline: datetime
+    extended_deadline: datetime
+    edit_datetime: datetime
+    description: str
+    is_valid: bool
+    completion_note: str
+    completion_confirmed: bool
+    completion_confirmed_at: datetime
+    admin_note: str
+    attached_file: str
+    creator_file: str
+    is_бессрочно: bool
+    for_review: bool
+    employeeId: int
+    is_archived: bool
+    status_id: int
+    parent_task_id: int
+    
     id = db.Column(db.Integer, primary_key=True)
     executor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     executor = db.relationship('User', backref=db.backref('tasks', lazy=True), foreign_keys=[executor_id])
