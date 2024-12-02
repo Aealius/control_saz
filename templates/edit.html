@@ -14,7 +14,7 @@
                 {% endfor %}
             </select>
         </div>
-        {% if current_user.is_deputy%}
+        {% if current_user.is_deputy and current_user.login == '8'%}
         <div id="selectpicker2" class="form-group">
             <label id="employeeLabel" for="employee">Сотрудник:</label>
             <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true"
