@@ -56,13 +56,8 @@ addMemoForm.addEventListener('submit', async (event) => {
 
 function updateSelectedExecutors() {
     let executorSelectedOptions = executorSelect.selectedOptions;
-    let selectedValuesArray = [];
-    let selectedTextArray = [];
-
-    for (let i = 0; i < executorSelectedOptions.length; i++) {
-        selectedValuesArray.push(executorSelectedOptions[i].value);
-        selectedTextArray.push(executorSelectedOptions[i].innerHTML);
-    }
+    let selectedValuesArray = [...executorSelectedOptions].map(o => o.value);
+    let selectedTextArray = [...executorSelectedOptions].map(o => o.innerHTML);
 
     addExecutorToSelected(selectedValuesArray, selectedTextArray);
 
