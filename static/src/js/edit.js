@@ -57,19 +57,13 @@ editTaskForm.addEventListener('submit', async (event) => {
             formData.append('files', file);
         });
 
-        let pInput = document.getElementById("p");
-        let snInput = document.getElementById("sn");
-
-        pInput.value = sessionStorage.getItem('p');
-        snInput.value = sessionStorage.getItem('sn');
-
         let base_url = window.location.origin;
         await fetch(base_url + window.location.pathname, {
             method: 'POST',
             body: formData,
-        });
-
-        document.location.replace(document.referrer);
+        }).then(() => {
+            document.location.replace(document.referrer);
+        }); 
     }
 });
 
