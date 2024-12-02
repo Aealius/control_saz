@@ -466,7 +466,7 @@ def edit(task_id):
             task.employeeId = None
 
         
-        if (current_user.is_admin):
+        if (current_user.is_admin or current_user.is_deputy):
             task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not task.is_бессрочно else None
             extend_deadline = request.form.get('extend_deadline')
             if extend_deadline:
@@ -668,7 +668,11 @@ def confirm_task_deputy(task_id):
                     os.makedirs(uploadFolder)
                 os.makedirs(task_uploads_folder, exist_ok=True)
 
-                file_path_arr = task.attached_file.split(';')
+                if task.attached_file:
+                    file_path_arr = task.attached_file.split(';')
+                else:
+                    file_path_arr = ''
+                    
                 # Сохраняем файл только один раз
                 for filePath in file_path_arr:
                     if filePath != '':
