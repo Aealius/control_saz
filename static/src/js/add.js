@@ -70,12 +70,6 @@ addTaskForm.addEventListener('submit', async (event) => {
             formData.append('files', file);
         });
 
-        let pInput = document.getElementById("p");
-        let snInput = document.getElementById("sn");
-
-        pInput.value = sessionStorage.getItem('p');
-        snInput.value = sessionStorage.getItem('sn');
-
         await fetch(base_url + '/add', {
             method: 'POST',
             body: formData,

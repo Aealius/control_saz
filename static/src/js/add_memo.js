@@ -45,12 +45,6 @@ addMemoForm.addEventListener('submit', async (event) => {
             formData.append('files', file);
         });
 
-        let pInput = document.getElementById("p");
-        let snInput = document.getElementById("sn");
-
-        pInput.value = sessionStorage.getItem('p');
-        snInput.value = sessionStorage.getItem('sn');
-
         await fetch(base_url + '/add_memo', {
             method: 'POST',
             body: formData,
@@ -120,9 +114,7 @@ function updateSelectedExecutors() {
 function addExecutorToSelected(value, text) {
     selectedExecutorsDiv.innerHTML = "";
 
-    let hiddenInput = document.createElement('input');
-    hiddenInput.type = 'hidden';
-    hiddenInput.name = 'executor[]';
+    let hiddenInput = createHiddenInput();
 
     if (executorSelect.options.length == executorSelect.selectedOptions.length) {
         let allSpan = document.createElement('span');
@@ -162,7 +154,7 @@ function addExecutorToSelected(value, text) {
 
                 }
                 this.parentNode.remove();
-                
+
                 let elements = executorSelect.selectedOptions;
                 for (let i = 0; i < elements.length; i++) {
                     if ((elements[i].value) == currentValue) {
@@ -180,4 +172,11 @@ function addExecutorToSelected(value, text) {
         }
         hiddenInput.value = value;
     }
+}
+
+function createHiddenInput(){
+    let hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'executor[]';
+    return hiddenInput;
 }
