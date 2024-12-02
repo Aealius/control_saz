@@ -1016,7 +1016,7 @@ def filter_data(dataset, page, **params):
     return (dataset, dataset_count,)
 
 def calculate_penalty(task):  
-    if task.status_id == Status.completed and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
+    if (task.status_id == Status.completed.value or task.status_id == Status.complete_delayed.value) and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
         overdue_days = (task.completion_confirmed_at.date() - task.deadline_for_check).days
         if overdue_days > 0:
             max_penalty = 20
