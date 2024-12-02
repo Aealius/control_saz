@@ -13,7 +13,7 @@ function setTaskId(taskId) {
 }
 
 function taskConfirmation(id, path, role) {
-    var base_url = window.location.origin;
+    let base_url = window.location.origin;
     let addNote = '';
 
     addNote = document.getElementById(role + "_note_" + id).value;
@@ -34,7 +34,7 @@ function taskConfirmation(id, path, role) {
 }
 
 function taskReview(id) {
-    var base_url = window.location.origin;
+    let base_url = window.location.origin;
 
     fetch(base_url + "/review/" + id, {
         method: "POST",
@@ -51,7 +51,7 @@ function taskReview(id) {
 // TODO: По хорошему найти другой способ обновить отдельную строку или хотя бы целую страницу и убрать
 // это костыльное решение
 function updateIndex() {
-    var base_url = window.location.origin;
+    let base_url = window.location.origin;
     const queryString = window.location.search;
 
     fetch(base_url + "/" + queryString,
@@ -291,8 +291,8 @@ function updateEmployee(userLogin) {
                 let obj = JSON.parse(text);
                 let selectEmployee = document.getElementById('employee');
 
-                for (var i = 0; i < obj.length; i++) {
-                    var opt = document.createElement('option');
+                for (let i = 0; i < obj.length; i++) {
+                    let opt = document.createElement('option');
                     opt.value = obj[i].id;
                     opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
                     selectEmployee.appendChild(opt);
@@ -314,7 +314,7 @@ function updateEmployee(userLogin) {
 function resendTask() {
 
     if (validate([checkSimpleExecutorSelect(document.getElementById("executorResend"))], resendForm)) {
-        var base_url = window.location.origin;
+        let base_url = window.location.origin;
         let employee = '';
         let executors = '';
 

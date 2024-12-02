@@ -70,12 +70,6 @@ addTaskForm.addEventListener('submit', async (event) => {
             formData.append('files', file);
         });
 
-        let pInput = document.getElementById("p");
-        let snInput = document.getElementById("sn");
-
-        pInput.value = sessionStorage.getItem('p');
-        snInput.value = sessionStorage.getItem('sn');
-
         await fetch(base_url + '/add', {
             method: 'POST',
             body: formData,
@@ -85,13 +79,8 @@ addTaskForm.addEventListener('submit', async (event) => {
 
 function updateSelectedExecutors() {
     let executorSelectedOptions = executorSelect.selectedOptions;
-    let selectedValuesArray = [];
-    let selectedTextArray = [];
-
-    for (let i = 0; i < executorSelectedOptions.length; i++) {
-        selectedValuesArray.push(executorSelectedOptions[i].value);
-        selectedTextArray.push(executorSelectedOptions[i].innerHTML);
-    }
+    let selectedValuesArray = [...executorSelectedOptions].map(o => o.value);
+    let selectedTextArray = [...executorSelectedOptions].map(o => o.innerHTML);
 
     addExecutorToSelected(selectedValuesArray, selectedTextArray);
 
@@ -121,8 +110,8 @@ function updateSelectedExecutors() {
         }).then((text) => {
             let obj = JSON.parse(text);
 
-            for (var i = 0; i < obj.length; i++) {
-                var opt = document.createElement('option');
+            for (let i = 0; i < obj.length; i++) {
+                let opt = document.createElement('option');
                 opt.value = obj[i].id;
                 opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
                 selectEmployee.appendChild(opt);
@@ -182,29 +171,14 @@ function addExecutorToSelected(value, text) {
                 let currentValue = this.parentNode.dataset.value;  // get the value
                 if (currentValue == 'all') { // Удаление  allSelected  
                     allSelected = false // ставим false allSelected
-
                 }
                 this.parentNode.remove();
 
-
                 let elements = executorSelect.selectedOptions;
-                let selectedText = document.querySelector(".filter-option-inner-inner");
-
                 for (let i = 0; i < elements.length; i++) {
                     if ((elements[i].value) == currentValue) {
-                        let removeText = elements[i].innerHTML;
                         elements[i].selected = false;
-                        if (i == selectedExecutorsDiv.childElementCount) {
-                            if (elements.length == 0) { //когда никого не остается в выбранных
-                                $('.selectpicker').selectpicker('deselectAll'); //убираем всех отовсюду, чтобы показало дефолтное состояние дропдауна 
-                            }
-                            else {
-                                selectedText.innerHTML = (selectedText.innerHTML.replace(', ' + removeText, ''));
-                            }
-                        }
-                        else {
-                            selectedText.innerHTML = (selectedText.innerHTML.replace(removeText + ', ', ''));
-                        }
+                        $('.selectpicker').selectpicker('refresh');
                     }
                 }
                 updateSelectedExecutors();
@@ -218,8 +192,8 @@ function addExecutorToSelected(value, text) {
 }
 
 function toggleDeadline() {
-    var deadlineField = document.getElementById('deadline-field');
-    var deadlineInput = document.getElementById('deadline');
+    let deadlineField = document.getElementById('deadline-field');
+    let deadlineInput = document.getElementById('deadline');
 
     if (бессрочноCheckbox.checked) {
         deadlineField.style.display = 'none';
