@@ -293,7 +293,7 @@
                 {% endif %}
                 {% endif %}
 
-                {% if current_user.is_admin and task.completion_note and not task.completion_confirmed %} 
+                {% if current_user.is_admin and task.creator_id == current_user.id and task.completion_note and not task.completion_confirmed %} 
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
                     Контроль выполнения
