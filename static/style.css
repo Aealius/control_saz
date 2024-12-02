@@ -130,3 +130,6 @@ button.archive:hover{
     display: none;
 }
 
+.fs-1{
+    font-size: 1rem !important;
+}
