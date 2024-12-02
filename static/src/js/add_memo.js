@@ -162,26 +162,12 @@ function addExecutorToSelected(value, text) {
 
                 }
                 this.parentNode.remove();
-
-
+                
                 let elements = executorSelect.selectedOptions;
-                let selectedText = document.querySelector(".filter-option-inner-inner");
-
                 for (let i = 0; i < elements.length; i++) {
                     if ((elements[i].value) == currentValue) {
-                        let removeText = elements[i].innerHTML;
                         elements[i].selected = false;
-                        if (i == selectedExecutorsDiv.childElementCount) {
-                            if (elements.length == 0) { //когда никого не остается в выбранных
-                                $('.selectpicker').selectpicker('deselectAll'); //убираем всех отовсюду, чтобы показало дефолтное состояние дропдауна 
-                            }
-                            else {
-                                selectedText.innerHTML = (selectedText.innerHTML.replace(', ' + removeText, ''));
-                            }
-                        }
-                        else {
-                            selectedText.innerHTML = (selectedText.innerHTML.replace(removeText + ', ', ''));
-                        }
+                        $('.selectpicker').selectpicker('refresh');
                     }
                 }
 
