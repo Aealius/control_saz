@@ -63,7 +63,7 @@ editTaskForm.addEventListener('submit', async (event) => {
         pInput.value = sessionStorage.getItem('p');
         snInput.value = sessionStorage.getItem('sn');
 
-        var base_url = window.location.origin;
+        let base_url = window.location.origin;
         await fetch(base_url + window.location.pathname, {
             method: 'POST',
             body: formData,
@@ -145,8 +145,8 @@ function handleDepartmentAppearing(executorSelect){
 
                 let selectEmployee = document.getElementById('employee');
 
-                for (var i = 0; i < obj.length; i++) {
-                    var opt = document.createElement('option');
+                for (let i = 0; i < obj.length; i++) {
+                    let opt = document.createElement('option');
                     opt.value = obj[i].id;
                     opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
 

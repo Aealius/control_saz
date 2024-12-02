@@ -88,8 +88,8 @@ function updateSelectedExecutors() {
             let obj = JSON.parse(text);
             
 
-            for (var i = 0; i < obj.length; i++) {
-                var opt = document.createElement('option');
+            for (let i = 0; i < obj.length; i++) {
+                let opt = document.createElement('option');
                 opt.value = obj[i].id;
                 opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
                 selectEmployee.appendChild(opt);

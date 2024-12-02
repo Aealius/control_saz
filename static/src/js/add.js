@@ -110,8 +110,8 @@ function updateSelectedExecutors() {
         }).then((text) => {
             let obj = JSON.parse(text);
 
-            for (var i = 0; i < obj.length; i++) {
-                var opt = document.createElement('option');
+            for (let i = 0; i < obj.length; i++) {
+                let opt = document.createElement('option');
                 opt.value = obj[i].id;
                 opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
                 selectEmployee.appendChild(opt);
@@ -192,8 +192,8 @@ function addExecutorToSelected(value, text) {
 }
 
 function toggleDeadline() {
-    var deadlineField = document.getElementById('deadline-field');
-    var deadlineInput = document.getElementById('deadline');
+    let deadlineField = document.getElementById('deadline-field');
+    let deadlineInput = document.getElementById('deadline');
 
     if (бессрочноCheckbox.checked) {
         deadlineField.style.display = 'none';
