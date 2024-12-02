@@ -97,16 +97,18 @@
             <div class="modal-body" id="resendForm">
                 <div class="form-group">
                     <label for="executorResend">Исполнитель:</label>
-                    <select onchange="updateEmployee('{{current_user.login}}')" class="form-control" id="executorResend" name="executorResend">
+                    <select onchange="updateSelectedExecutors('{{current_user.login}}')" class="selectpicker show-tick form-control" id="executorResend" name="executorResend" data-size="15" data-live-search="true" data-actions-box="true" multiple>
                         <option value="">Все</option>
                         {% for executor in executors %}
                         <option value="{{ executor.id }}">{{ executor.department }}</option>
                         {% endfor %}
                     </select>
+                    <div id="selectedExecutors"></div>
                 </div>
                 <div style="display: none;" id="selectpicker2" class="form-group">
                     <label id="employeeLabel" for="employee">Сотрудник:</label>
                     <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true"></select>
+                    
                 </div>
                 <button onclick="resendTask()" id="submitFilterFormButton" class="btn btn-primary">Переслать</button>
             </div>
@@ -362,10 +364,10 @@
                                 {% endif %}
                                 <div>
                                     <label for="deputy_note">Заметка администратора:</label>
-                                    <textarea type="text" id="deputy_note_{{ task.id }}" name="deputy_note_{{ task.id }}"></textarea>
+                                    <textarea type="text" class ="form-control mb-3" id="deputy_note_{{ task.id }}" name="deputy_note_{{ task.id }}"></textarea>
                                 </div>
-                                <input type="hidden" value=""> <!--TODO: после подтверждения выполнения выкидывает на первую страницу непонятно кого отправленных со всеми приколами-->
-                                <input type="hidden" value=""> <!--необходимо сделать так, чтобы кидало обратно на ту страницу и на того отправителя, который был до потверждения-->
+                                <input type="hidden" value=""> 
+                                <input type="hidden" value=""> 
                                 <div class="w-50 mx-auto d-flex justify-content-between">
                                     <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'deputy')" class="btn btn-success">Подтвердить</button>
                                     <button onclick="taskConfirmation('{{task.id}}', 'reject', 'deputy')" class="btn btn-danger">Отклонить</button>

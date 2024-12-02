@@ -4,27 +4,33 @@ let resendForm = document.getElementById("resendForm");
 let resendModal = document.getElementById("resendModal");
 let clearFilterHref = document.getElementById("clearFilterHref"); //строка "очистить фильтр" на форме фильтрации
 let submitFilterFormButton = document.getElementById("submitFilterformButton"); //кнопка "применить фильтр" на форме фильтрации
-let urlParams  = new URLSearchParams(window.location.search);
+let resendSelect = document.getElementById("executorResend"); //дропдаун с выбором исполнителей по отделам
+let urlParams = new URLSearchParams(window.location.search);
+let globalTaskId = '';
+
+function setTaskId(taskId) {
+    globalTaskId = taskId;
+}
 
 function taskConfirmation(id, path, role) {
     var base_url = window.location.origin;
     let addNote = '';
 
-    addNote = document.getElementById(role + "_note_"+ id).value;
+    addNote = document.getElementById(role + "_note_" + id).value;
 
     console.log(addNote);
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
-    fetch(base_url + "/"+ role +"/tasks/" + id + "/" + path, {
+    fetch(base_url + "/" + role + "/tasks/" + id + "/" + path, {
         method: "POST",
         body: JSON.stringify({ note: addNote }),
         headers: myHeaders,
-      }).then((response) => {
+    }).then((response) => {
         console.log(response);
-      }).then(() =>{
+    }).then(() => {
         updateIndex();
-      })
+    })
 }
 
 function taskReview(id) {
@@ -32,11 +38,11 @@ function taskReview(id) {
 
     fetch(base_url + "/review/" + id, {
         method: "POST",
-      }).then((response) => {
+    }).then((response) => {
         console.log(response);
-      }).then(() =>{
+    }).then(() => {
         updateIndex();
-      })
+    })
 }
 
 // Здесь document.documentElement.innerHTML меняется напрямую, вследствие чего слетает js код и 
@@ -48,8 +54,8 @@ function updateIndex() {
     var base_url = window.location.origin;
     const queryString = window.location.search;
 
-    fetch(base_url + "/" + queryString, 
-        {method: "GET"})
+    fetch(base_url + "/" + queryString,
+        { method: "GET" })
         .then(response => {
             return response.text();
         })
@@ -61,20 +67,20 @@ function updateIndex() {
             filterForm = document.getElementById("filterForm");
             clearFilterHref = document.getElementById("clearFilterHref");
             submitFilterFormButton = document.getElementById("submitFilterformButton");
-            
+
             $('.selectpicker').selectpicker();
-            $('#select-task-sender').val(oldValue); 
+            $('#select-task-sender').val(oldValue);
             $('#select-task-sender').change();
             document.getElementById("select-task-sender").addEventListener('change', Event => {
                 let options = Event.target.options;
                 let senderValue = "in";
 
-                for(let i = 0; i < options.length; i++){
-                    if(options[i].selected){
+                for (let i = 0; i < options.length; i++) {
+                    if (options[i].selected) {
                         senderValue = options[i].value;
                     }
                 }
-            
+
                 window.location.href = buildQueryString(senderValue);
             });
 
@@ -90,23 +96,23 @@ function updateIndex() {
                     'sn',
                     'p'
                 ];
-            
+
                 keys.forEach(key => {
-                    if (urlParams.has(key)){
+                    if (urlParams.has(key)) {
                         sessionStorage.setItem(key, urlParams.get(key));
                     }
                 });
-            
+
                 let senderValue = sessionStorage.getItem('sn') ? sessionStorage.getItem('sn') : "in";
-            
+
                 //если есть фильтрация по исполнителю, то значения дропдауна станет "Исходящие"
                 if (sessionStorage.getItem('executor')) {
                     senderSelect.querySelector("option[value='out']").selected = true;
-                    
+
                 }
                 else if (sessionStorage.getItem('creator')) { // если есть фильтрация по создателю, то значение дропдауна станет "Входящие"
                     senderSelect.querySelector("option[value='in']").selected = true;
-                    
+
                 }
                 //когда нет фильтра по отправителю,
                 document.getElementById("select-task-sender").querySelector("option[value='" + senderValue + "']").selected = true;
@@ -115,39 +121,39 @@ function updateIndex() {
 
             //дизейблит поля формы фильтрации, чтобы они не попадали в searchString
             filterForm.addEventListener('submit', () => {
-                filterForm.querySelectorAll('select').forEach( input => {
-                    if (input.value == '') input.disabled=true;
+                filterForm.querySelectorAll('select').forEach(input => {
+                    if (input.value == '') input.disabled = true;
                 });
-            
-                filterForm.querySelectorAll('input[type=month]').forEach( input => {
-                    if (input.value == '') input.disabled=true;
+
+                filterForm.querySelectorAll('input[type=month]').forEach(input => {
+                    if (input.value == '') input.disabled = true;
                 });
-            
-                filterForm.querySelectorAll('input[type=date]').forEach( input => {
-                    if (input.value == '') input.disabled=true;
+
+                filterForm.querySelectorAll('input[type=date]').forEach(input => {
+                    if (input.value == '') input.disabled = true;
                 });
-            
-                filterForm.querySelectorAll('input[type=checkbox]').forEach( input => {
-                    if (input.value == '') input.disabled=true;
+
+                filterForm.querySelectorAll('input[type=checkbox]').forEach(input => {
+                    if (input.value == '') input.disabled = true;
                 });
-            
+
                 //добавляет спрятанное поле для того, чтобы отпралять параметр "sn" на бэк
-                let senderHiddenInput =  document.getElementById("hiddenSender");
+                let senderHiddenInput = document.getElementById("hiddenSender");
                 senderHiddenInput.value = senderSelect.value;
-            
+
             });
 
 
             clearFilterHref.addEventListener('click', () => {
-                let newUrl =  new URL(window.location.origin + window.location.pathname);
+                let newUrl = new URL(window.location.origin + window.location.pathname);
                 sessionStorage.setItem('sn', urlParams.get('sn') ? urlParams.get('sn') : 'in');
-            
+
                 newUrl.searchParams.set('sn', urlParams.get('sn') ? urlParams.get('sn') : 'in');
                 newUrl.searchParams.set('p', 1);
-            
+
                 window.location.replace(newUrl);
             });
-        })  
+        })
 }
 
 //получение параметров сохраненных в localStorage или отображенных в searchParams
@@ -164,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => { //задает значе�
     ];
 
     keys.forEach(key => {
-        if (urlParams.has(key)){
+        if (urlParams.has(key)) {
             sessionStorage.setItem(key, urlParams.get(key));
         }
     });
@@ -174,11 +180,11 @@ document.addEventListener('DOMContentLoaded', () => { //задает значе�
     //если есть фильтрация по исполнителю, то значения дропдауна станет "Исходящие"
     if (sessionStorage.getItem('executor')) {
         senderSelect.querySelector("option[value='out']").selected = true;
-        
+
     }
     else if (sessionStorage.getItem('creator')) { // если есть фильтрация по создателю, то значение дропдауна станет "Входящие"
         senderSelect.querySelector("option[value='in']").selected = true;
-        
+
     }
     //когда нет фильтра по отправителю,
     document.getElementById("select-task-sender").querySelector("option[value='" + senderValue + "']").selected = true;
@@ -193,30 +199,30 @@ senderSelect.addEventListener('change', () => {
 
 //дизейблит поля формы фильтрации, чтобы они не попадали в searchString
 filterForm.addEventListener('submit', () => {
-    filterForm.querySelectorAll('select').forEach( input => {
-        if (input.value == '') input.disabled=true;
+    filterForm.querySelectorAll('select').forEach(input => {
+        if (input.value == '') input.disabled = true;
     });
 
-    filterForm.querySelectorAll('input[type=month]').forEach( input => {
-        if (input.value == '') input.disabled=true;
+    filterForm.querySelectorAll('input[type=month]').forEach(input => {
+        if (input.value == '') input.disabled = true;
     });
 
-    filterForm.querySelectorAll('input[type=date]').forEach( input => {
-        if (input.value == '') input.disabled=true;
+    filterForm.querySelectorAll('input[type=date]').forEach(input => {
+        if (input.value == '') input.disabled = true;
     });
 
-    filterForm.querySelectorAll('input[type=checkbox]').forEach( input => {
-        if (input.value == '') input.disabled=true;
+    filterForm.querySelectorAll('input[type=checkbox]').forEach(input => {
+        if (input.value == '') input.disabled = true;
     });
 
     //добавляет спрятанное поле для того, чтобы отпралять параметр "sn" на бэк
-    let senderHiddenInput =  document.getElementById("hiddenSender");
+    let senderHiddenInput = document.getElementById("hiddenSender");
     senderHiddenInput.value = senderSelect.value;
 
 });
 
 clearFilterHref.addEventListener('click', () => {
-    let newUrl =  new URL(window.location.origin + window.location.pathname);
+    let newUrl = new URL(window.location.origin + window.location.pathname);
     sessionStorage.setItem('sn', urlParams.get('sn') ? urlParams.get('sn') : 'in');
 
     newUrl.searchParams.set('sn', urlParams.get('sn') ? urlParams.get('sn') : 'in');
@@ -225,9 +231,9 @@ clearFilterHref.addEventListener('click', () => {
     window.location.replace(newUrl);
 });
 
-function buildQueryString(senderValue){ //построение строки параметров для последующей фильтрации по отправителю
+function buildQueryString(senderValue) { //построение строки параметров для последующей фильтрации по отправителю
 
-    let newUrl =  new URL(window.location.origin + window.location.pathname);
+    let newUrl = new URL(window.location.origin + window.location.pathname);
 
     newUrl.searchParams.delete('sn');
     newUrl.searchParams.delete('p');
@@ -243,17 +249,17 @@ function buildQueryString(senderValue){ //построение строки па
 }
 
 
-$(document).on('show.bs.modal','#resendModal', function () {
-    document.getElementById('executorResend').value = "";
+$(document).on('show.bs.modal', '#resendModal', function () {
+    $('.selectpicker').selectpicker('deselectAll');
 });
 
 // Для модалки пересылки
-async function updateEmployee(userLogin) {
+function updateEmployee(userLogin) {
     let executorResendSelect = document.getElementById('executorResend'); //множественный select дял выбора исполнителя
+    let selectEmployeeDiv = document.getElementById('selectpicker2'); //div с выбором ответственного лица
+    let employeeSelectpicker = document.getElementById('employee');
 
-    let executorSelectedOptions = executorResendSelect.selectedOptions;
-
-    let divSelectEmployee = document.getElementById('selectpicker2');
+    let executorResendSelectedOptions = executorResendSelect.selectedOptions;
 
     // Пока что удаляем все значения и получаем их с бэка заново.
     // В дальнейшем подумать о том, как это улучшить,
@@ -262,59 +268,65 @@ async function updateEmployee(userLogin) {
 
     // Для теста пока добавляем только глав буху, поэтому тут проверка на id бухгалтерии
     // В дальнейшем это можно/нужно улучшить
-    if(executorSelectedOptions[0].value.includes('27') && userLogin == '8'){
-        divSelectEmployee.style.display = 'block';
+    if (executorResendSelectedOptions.length !== 0) {
+        eResendValueArray = [...executorResendSelectedOptions].map(o => o.value);
 
-        // Опять же пока заглушка чисто для бухгалтерии
-        let employeeId = '27';
-        $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
+        if (eResendValueArray.includes('27') && userLogin == '8') {
+            employeeSelectpicker.disabled = false;
+            selectEmployeeDiv.style.display = 'block';
 
-        const base_url = window.location.origin;
+            // Опять же пока заглушка чисто для бухгалтерии
+            let employeeId = '27';
+            $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
 
-        // Получение из бэка сотрудников отдела
-        await fetch(base_url + "/api/users/" + employeeId + "/employees", {
-            method: "GET"
-        }).then((response) => {
-            console.log(response);
-            return response.text();
-        }).then((text) => {
-            let obj = JSON.parse(text);
-            let selectEmployee = document.getElementById('employee');
+            const base_url = window.location.origin;
 
-            for (var i = 0; i < obj.length; i++) {
-                var opt = document.createElement('option');
-                opt.value = obj[i].id;
-                opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
-                selectEmployee.appendChild(opt);
-            }
+            // Получение из бэка сотрудников отдела
+            fetch(base_url + "/api/users/" + employeeId + "/employees", {
+                method: "GET"
+            }).then((response) => {
+                console.log(response);
+                return response.text();
+            }).then((text) => {
+                let obj = JSON.parse(text);
+                let selectEmployee = document.getElementById('employee');
 
-            // Оставляем здесь, ибо если вынести из then - сработает слишком рано
-            $('.selectpicker').selectpicker('refresh');
-        })          
+                for (var i = 0; i < obj.length; i++) {
+                    var opt = document.createElement('option');
+                    opt.value = obj[i].id;
+                    opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+                    selectEmployee.appendChild(opt);
+                }
+
+                // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+                $('.selectpicker').selectpicker('refresh');
+            })
+        }
     }
     else {
-        divSelectEmployee.style.display = 'none';
+        selectEmployeeDiv.style.display = 'none';
+        selectEmployeeDiv.disabled = true;
         $('.selectpicker').selectpicker('refresh');
     }
-} 
+}
 
 // Пересылка задачи
-async function resendTask(){
+function resendTask() {
 
     if (validate([checkSimpleExecutorSelect(document.getElementById("executorResend"))], resendForm)) {
         var base_url = window.location.origin;
-        let executorResend = '';
         let employee = '';
+        let executors = '';
 
-        executorResend = document.getElementById('executorResend').value;
         employee = document.getElementById('employee').value;
+        executors = document.getElementById('executors').value;
 
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
 
-        await fetch(base_url + "/resend/" + globalTaskId, {
+        fetch(base_url + "/resend/" + globalTaskId, {
             method: "POST",
-            body: JSON.stringify({ executorResend: executorResend, employee: employee }),
+            body: JSON.stringify({ employee: employee, executors: executors }),
             headers: myHeaders,
         }).then((response) => {
             console.log(response);
@@ -324,10 +336,88 @@ async function resendTask(){
     }
 }
 
-let globalTaskId = '';
+function updateSelectedExecutors(userLogin) {
+    let resendSelectedOptions = resendSelect.selectedOptions;
+    let selectedValuesArray = [...resendSelectedOptions].map(o => o.value);
+    let selectedTextArray = [...resendSelectedOptions].map(o => o.innerHTML);
 
-function setTaskId(taskId){
-    globalTaskId = taskId;
+    addExecutorToSelected(selectedValuesArray, selectedTextArray);
+
+    updateEmployee(userLogin);
+}
+
+function addExecutorToSelected(valueArray, textArray) {
+    let selectedExecutorsDiv = document.getElementById("selectedExecutors");
+    selectedExecutorsDiv.innerHTML = "";
+
+    let hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.id = 'executors';
+
+    if (resendSelect.options.length == resendSelect.selectedOptions.length) {
+        let allSpan = document.createElement('span');
+        allSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+        allSpan.textContent = 'Всем';
+        allSpan.setAttribute('data-value', 'all');
+
+        let closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.classList.add('close', 'small-close');
+        closeButton.innerHTML = '×';
+        closeButton.style.fontSize = '1rem';
+
+        allSpan.appendChild(closeButton);
+        selectedExecutorsDiv.appendChild(allSpan);
+        closeButton.addEventListener('click', function () {
+            this.parentNode.remove();
+            $('.selectpicker').selectpicker('deselectAll');
+        });
+        allSpan.appendChild(hiddenInput);
+        hiddenInput.value = 'all';
+    }
+    else {
+        for (let i = 0; i < valueArray.length; i++) {
+
+            let executorSpan = document.createElement('span');
+            executorSpan.classList.add('badge', 'badge-primary', 'mr-2', 'mb-2', 'executor-item');
+            executorSpan.textContent = textArray[i];
+            executorSpan.setAttribute('data-value', valueArray[i]);
+
+            let closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.classList.add('close', 'small-close', 'fs-1');
+            closeButton.innerHTML = '×';
+            closeButton.addEventListener('click', function () {
+                let currentValue = this.parentNode.dataset.value;  // get the value
+                if (currentValue == 'all') { // Удаление  allSelected  
+                    allSelected = false // ставим false allSelected
+                }
+
+                this.parentNode.remove();
+
+                let elements = resendSelect.selectedOptions;
+
+                for (let i = 0; i < elements.length; i++) {
+                    if ((elements[i].value) == currentValue) {
+                        if (elements[i].value == '27') {
+                            let employeeDiv = document.getElementById('selectpicker2');
+                            let employeeSelectpicker = document.getElementById('employee');
+                            employeeDiv.style.display = 'none';
+                            employeeSelectpicker.disabled = true;
+                        }
+                        elements[i].selected = false;
+                        $('#executorResend').selectpicker('render');
+                    }
+                }
+                updateSelectedExecutors()
+
+            });
+            executorSpan.appendChild(closeButton);
+            selectedExecutorsDiv.appendChild(executorSpan);
+            executorSpan.appendChild(hiddenInput);
+        }
+        hiddenInput.value = valueArray;
+    }
 }
 
 

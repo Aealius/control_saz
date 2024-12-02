@@ -14,7 +14,7 @@ import shutil
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:Temp543_H@localhost/control_saz'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345@localhost/control_saz'
 app.config['JSON_AS_ASCII'] = False # Важно!
 db = SQLAlchemy(app)
 Bootstrap(app)
@@ -380,7 +380,7 @@ def resend(task_id):
     if not task.for_review:
         task.status_id = Status.pending.value
 
-    executor_for_task_id = request.json.get('executorResend')
+    executor_for_task_id = request.json.get('executors').split(',')
     task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], new_task_id, 'creator')
     os.makedirs(task_uploads_folder, exist_ok=True)
 
@@ -410,26 +410,27 @@ def resend(task_id):
         flash("Произошла ошибка: " + s, 'danger')
         return '', 500
     
-    if executor_for_task_id in app.config['CanGetResendedTasksArr']:
-        employeeId = request.json.get('employee') or None
-    else:
-        employeeId = None
+    for executor_id in executor_for_task_id:
+        if executor_id in app.config['CanGetResendedTasksArr']:
+            employeeId = request.json.get('employee') or None
+        else:
+            employeeId = None
 
-    new_task = Task(
-        executor_id=executor_for_task_id,
-        date_created=date_created,
-        deadline=deadline,
-        description=description,
-        is_valid=is_valid,
-        is_бессрочно=is_бессрочно,
-        creator_id=current_user.id,
-        employeeId = employeeId,
-        for_review=for_review,
-        creator_file=creator_file_path,
-        parent_task_id = task_id
-    )
-    db.session.add(new_task)
-    db.session.commit()
+        new_task = Task(
+            executor_id=executor_id,
+            date_created=date_created,
+            deadline=deadline,
+            description=description,
+            is_valid=is_valid,
+            is_бессрочно=is_бессрочно,
+            creator_id=current_user.id,
+            employeeId = employeeId,
+            for_review=for_review,
+            creator_file=creator_file_path,
+            parent_task_id = task_id
+        )
+        db.session.add(new_task)
+        db.session.commit()
 
     flash('Задача успешно добавлена!', 'success')
     return '', 200

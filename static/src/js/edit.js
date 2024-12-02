@@ -109,7 +109,7 @@ extendDeadlineCheckbox.addEventListener('change', function () {
 });
 
 //функция фетчит сотрудников отдела, когда выбирается отдел из первого дропдауна
-async function handleDepartmentAppearing(executorSelect){
+function handleDepartmentAppearing(executorSelect){
     let divSelectEmployee = document.getElementById('selectpicker2');
 
     // Пока что удаляем все значения и получаем их с бэка заново.
@@ -127,7 +127,7 @@ async function handleDepartmentAppearing(executorSelect){
         $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
     
         // Получение из бэка сотрудников отдела
-        await fetch(base_url + "/api/users/" + employeeId + "/employees", {
+        fetch(base_url + "/api/users/" + employeeId + "/employees", {
             method: "GET"
         }).then((response) => {
             return response.text();
