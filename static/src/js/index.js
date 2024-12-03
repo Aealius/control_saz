@@ -7,6 +7,7 @@ let submitFilterFormButton = document.getElementById("submitFilterformButton"); 
 let resendSelect = document.getElementById("executorResend"); //дропдаун с выбором исполнителей по отделам
 let urlParams = new URLSearchParams(window.location.search);
 let globalTaskId = '';
+let currentUserLogin = '';
 const base_url_api = window.location.origin + '/api';
 
 function setTaskId(taskId) {
@@ -189,6 +190,13 @@ document.addEventListener('DOMContentLoaded', () => { //задает значе�
     }
     //когда нет фильтра по отправителю,
     document.getElementById("select-task-sender").querySelector("option[value='" + senderValue + "']").selected = true;
+
+    fetch(base_url_api + '/users/current_user')
+        .then(response => response.json())
+        .then(user => {
+            currentUserLogin = user.login;
+        })
+        .catch(console.error);
 });
 
 //на изменение выбранного значения в дропдайне изменяется текущий URL 
@@ -271,7 +279,7 @@ $(document).on('loaded.bs.select', '#employee', function () {
 
         let optDef = document.createElement('option');
         optDef.value = '';
-        optDef.innerHTML = '';
+        optDef.innerHTML = 'Для отдела';
         selectEmployee.appendChild(optDef);
         
         for (let i = 0; i < obj.length; i++) {
@@ -297,16 +305,11 @@ function updateEmployee() {
     if (executorResendSelectedOptions.length !== 0) {
         eResendValueArray = [...executorResendSelectedOptions].map(o => o.value);
 
-        fetch(base_url_api + '/users/current_user')
-        .then(response => response.json())
-        .then(user => {
-            if (eResendValueArray.includes("27") && user.login === "8") {
-                $("#employee").prop("disabled", false);
-                $("#employee").next("button").removeClass("disabled");
-                selectEmployeeDiv.style.display = 'block';
-            }
-        })
-        .catch(console.error);
+        if (eResendValueArray.includes("27") && currentUserLogin === "8") {
+            $("#employee").prop("disabled", false);
+            $("#employee").next("button").removeClass("disabled");
+            selectEmployeeDiv.style.display = 'block';
+        }
     }
     else {
         selectEmployeeDiv.style.display = 'none';
