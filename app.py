@@ -53,7 +53,6 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 @dataclass(unsafe_hash=True)
 class User(UserMixin, db.Model):
-    
     id:int
     department:str
     login:str
@@ -473,7 +472,7 @@ def edit(task_id):
             task.employeeId = None
 
         
-        if (current_user.is_admin):
+        if (current_user.is_admin or current_user.is_deputy):
             task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not task.is_бессрочно else None
             extend_deadline = request.form.get('extend_deadline')
             if extend_deadline:
@@ -675,7 +674,11 @@ def confirm_task_deputy(task_id):
                     os.makedirs(uploadFolder)
                 os.makedirs(task_uploads_folder, exist_ok=True)
 
-                file_path_arr = task.attached_file.split(';')
+                if task.attached_file:
+                    file_path_arr = task.attached_file.split(';')
+                else:
+                    file_path_arr = ''
+                    
                 # Сохраняем файл только один раз
                 for filePath in file_path_arr:
                     if filePath != '':
@@ -898,7 +901,8 @@ def reports():
         for month in range(1, 13): #  Перебираем все месяцы
             tasks_in_month = Task.query.filter(
                 Task.executor_id == user.id,
-                db.extract('month', Task.date_created) == month
+                db.extract('month', Task.date_created) == month,
+                Task.date_created >= date(2024,12,1) # Попросили начать отсчет с 1 декабря 2024, поэтому старые пока не учитываем
             ).all()
 
             total_penalty = 0
@@ -1027,7 +1031,7 @@ def filter_data(dataset, page, **params):
     return (dataset, dataset_count,)
 
 def calculate_penalty(task):  
-    if task.status_id == Status.completed and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
+    if (task.status_id == Status.completed.value or task.status_id == Status.complete_delayed.value) and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
         overdue_days = (task.completion_confirmed_at.date() - task.deadline_for_check).days
         if overdue_days > 0:
             max_penalty = 20
