@@ -51,8 +51,15 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-@dataclass
+@dataclass (unsafe_hash=True)
 class User(UserMixin, db.Model):
+    id : int
+    department : str
+    login : str
+    password_hash : str
+    is_admin: bool
+    is_deputy:bool
+    
     id = db.Column(db.Integer, primary_key=True)
     department = db.Column(db.String(255), nullable=False, default='Общая служба')
     login = db.Column(db.String(100), unique=True, nullable=False)
@@ -887,7 +894,8 @@ def reports():
         for month in range(1, 13): #  Перебираем все месяцы
             tasks_in_month = Task.query.filter(
                 Task.executor_id == user.id,
-                db.extract('month', Task.date_created) == month
+                db.extract('month', Task.date_created) == month,
+                Task.date_created >= date(2024,12,1) # Попросили начать отсчет с 1 декабря 2024, поэтому старые пока не учитываем
             ).all()
 
             total_penalty = 0
