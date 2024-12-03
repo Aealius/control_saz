@@ -60,8 +60,7 @@ function updateIndex() {
         .then(response => {
             return response.text();
         })
-        .then
-        html => {
+        .then(html => {
             let oldValue = document.getElementById("select-task-sender").value;
             document.documentElement.innerHTML = html;
 
@@ -155,7 +154,7 @@ function updateIndex() {
 
                 window.location.replace(newUrl);
             });
-        }
+        })
 }
 
 //получение параметров сохраненных в localStorage или отображенных в searchParams
