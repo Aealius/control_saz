@@ -419,7 +419,7 @@ def resend(task_id):
         return '', 500
     
     for executor_id in executor_for_task_id:
-        if executor_id in app.config['CanGetResendedTasksArr']:
+        if str(executor_id) in app.config['CanGetResendedTasksArr']:
             employeeId = request.json.get('employee') or None
         else:
             employeeId = None
