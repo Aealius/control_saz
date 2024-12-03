@@ -97,7 +97,7 @@
             <div class="modal-body" id="resendForm">
                 <div class="form-group">
                     <label for="executorResend">Исполнитель:</label>
-                    <select onchange="updateSelectedExecutors('{{current_user.login}}')" class="selectpicker show-tick form-control" id="executorResend" name="executorResend" data-size="15" data-live-search="true" data-actions-box="true" multiple>
+                    <select onchange="updateSelectedExecutors()" class="selectpicker show-tick form-control" id="executorResend" name="executorResend" data-size="15" data-live-search="true" data-actions-box="true" multiple>
                         <option value="">Все</option>
                         {% for executor in executors %}
                         <option value="{{ executor.id }}">{{ executor.department }}</option>
@@ -108,7 +108,6 @@
                 <div style="display: none;" id="selectpicker2" class="form-group">
                     <label id="employeeLabel" for="employee">Сотрудник:</label>
                     <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true"></select>
-                    
                 </div>
                 <button onclick="resendTask()" id="submitFilterFormButton" class="btn btn-primary">Переслать</button>
             </div>

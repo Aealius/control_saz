@@ -7,6 +7,8 @@ let submitFilterFormButton = document.getElementById("submitFilterformButton"); 
 let resendSelect = document.getElementById("executorResend"); //дропдаун с выбором исполнителей по отделам
 let urlParams = new URLSearchParams(window.location.search);
 let globalTaskId = '';
+let currentUserLogin = '';
+const base_url_api = window.location.origin + '/api';
 
 function setTaskId(taskId) {
     globalTaskId = taskId;
@@ -188,6 +190,13 @@ document.addEventListener('DOMContentLoaded', () => { //задает значе�
     }
     //когда нет фильтра по отправителю,
     document.getElementById("select-task-sender").querySelector("option[value='" + senderValue + "']").selected = true;
+
+    fetch(base_url_api + '/users/current_user')
+        .then(response => response.json())
+        .then(user => {
+            currentUserLogin = user.login;
+        })
+        .catch(console.error);
 });
 
 //на изменение выбранного значения в дропдайне изменяется текущий URL 
@@ -253,54 +262,53 @@ $(document).on('show.bs.modal', '#resendModal', function () {
     $('.selectpicker').selectpicker('deselectAll');
 });
 
+$(document).on('loaded.bs.select', '#employee', function () {
+
+    let employeeId = '27';
+    $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
+
+    // Получение из бэка сотрудников отдела
+    fetch(base_url_api + "/users/" + employeeId + "/employees", {
+        method: "GET"
+    }).then((response) => {
+        console.log(response);
+        return response.text();
+    }).then((text) => {
+        let obj = JSON.parse(text);
+        let selectEmployee = document.getElementById('employee');
+
+        let optDef = document.createElement('option');
+        optDef.value = '';
+        optDef.innerHTML = 'Для отдела';
+        selectEmployee.appendChild(optDef);
+        
+        for (let i = 0; i < obj.length; i++) {
+            let opt = document.createElement('option');
+            opt.value = obj[i].id;
+            opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+            selectEmployee.appendChild(opt);
+        }
+
+        // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+        $('.selectpicker').selectpicker('refresh');
+    });
+});
+
 // Для модалки пересылки
-function updateEmployee(userLogin) {
+function updateEmployee() {
+    currentUser = '';
     let executorResendSelect = document.getElementById('executorResend'); //множественный select дял выбора исполнителя
     let selectEmployeeDiv = document.getElementById('selectpicker2'); //div с выбором ответственного лица
-    let employeeSelectpicker = document.getElementById('employee');
 
     let executorResendSelectedOptions = executorResendSelect.selectedOptions;
 
-    // Пока что удаляем все значения и получаем их с бэка заново.
-    // В дальнейшем подумать о том, как это улучшить,
-    // тк слишком много запросов получится, особенно если будет много отделов
-    $('#employee').find('[value!=\'\']').remove();
-
-    // Для теста пока добавляем только глав буху, поэтому тут проверка на id бухгалтерии
-    // В дальнейшем это можно/нужно улучшить
     if (executorResendSelectedOptions.length !== 0) {
         eResendValueArray = [...executorResendSelectedOptions].map(o => o.value);
 
-        if (eResendValueArray.includes('27') && userLogin == '8') {
-            employeeSelectpicker.disabled = false;
+        if (eResendValueArray.includes("27") && currentUserLogin === "8") {
+            $("#employee").prop("disabled", false);
+            $("#employee").next("button").removeClass("disabled");
             selectEmployeeDiv.style.display = 'block';
-
-            // Опять же пока заглушка чисто для бухгалтерии
-            let employeeId = '27';
-            $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
-
-            const base_url = window.location.origin;
-
-            // Получение из бэка сотрудников отдела
-            fetch(base_url + "/api/users/" + employeeId + "/employees", {
-                method: "GET"
-            }).then((response) => {
-                console.log(response);
-                return response.text();
-            }).then((text) => {
-                let obj = JSON.parse(text);
-                let selectEmployee = document.getElementById('employee');
-
-                for (let i = 0; i < obj.length; i++) {
-                    let opt = document.createElement('option');
-                    opt.value = obj[i].id;
-                    opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
-                    selectEmployee.appendChild(opt);
-                }
-
-                // Оставляем здесь, ибо если вынести из then - сработает слишком рано
-                $('.selectpicker').selectpicker('refresh');
-            })
         }
     }
     else {
@@ -336,14 +344,14 @@ function resendTask() {
     }
 }
 
-function updateSelectedExecutors(userLogin) {
+function updateSelectedExecutors() {
     let resendSelectedOptions = resendSelect.selectedOptions;
     let selectedValuesArray = [...resendSelectedOptions].map(o => o.value);
     let selectedTextArray = [...resendSelectedOptions].map(o => o.innerHTML);
 
     addExecutorToSelected(selectedValuesArray, selectedTextArray);
 
-    updateEmployee(userLogin);
+    updateEmployee();
 }
 
 function addExecutorToSelected(valueArray, textArray) {
@@ -409,7 +417,7 @@ function addExecutorToSelected(valueArray, textArray) {
                         $('#executorResend').selectpicker('render');
                     }
                 }
-                updateSelectedExecutors()
+                updateSelectedExecutors();
 
             });
             executorSpan.appendChild(closeButton);

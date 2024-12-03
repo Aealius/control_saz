@@ -1,6 +1,5 @@
 let allSelected = false; //флаг, указывающий выбрано ли всем
 let executorSelect = document.getElementById('executor'); //множественный select дял выбора исполнителя
-let selectedExecutorsDiv = document.getElementById('selected-executors'); //контейнер для полосочек с выбранными исполнителями
 let addTaskForm = document.getElementById('addTaskForm'); //форма добавления задачи
 let бессрочноCheckbox = document.getElementById('is_бессрочно');
 let dateCreatedInput = document.getElementById('date_created');
@@ -129,7 +128,7 @@ function updateSelectedExecutors() {
 } 
 
 function addExecutorToSelected(value, text) {
-
+    let selectedExecutorsDiv = document.getElementById('selected-executors'); //контейнер для полосочек с выбранными исполнителями
     selectedExecutorsDiv.innerHTML = "";
 
     let hiddenInput = document.createElement('input');

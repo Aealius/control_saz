@@ -51,14 +51,13 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-@dataclass (unsafe_hash=True)
+@dataclass(unsafe_hash=True)
 class User(UserMixin, db.Model):
-    id : int
-    department : str
-    login : str
-    password_hash : str
-    is_admin: bool
-    is_deputy:bool
+    id:int
+    department:str
+    login:str
+    is_admin :bool
+    is_deputy: bool
     
     id = db.Column(db.Integer, primary_key=True)
     department = db.Column(db.String(255), nullable=False, default='Общая служба')
@@ -874,6 +873,14 @@ def getTaskById(task_id):
     if (not task):
         return '', 404
     return jsonify(task)
+
+@app.route('/api/users/current_user', methods=['GET'])
+@login_required
+def getCurrentUser():
+    user = User.query.filter_by(id = current_user.id).first()
+    if (not user):
+        return '', 404
+    return jsonify(user)
 
 
 reports_bp = Blueprint('reports', __name__) # Создаем Blueprint
