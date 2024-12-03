@@ -287,7 +287,6 @@ function updateEmployee() {
     currentUser = '';
     let executorResendSelect = document.getElementById('executorResend'); //множественный select дял выбора исполнителя
     let selectEmployeeDiv = document.getElementById('selectpicker2'); //div с выбором ответственного лица
-    let employeeSelectpicker = document.getElementById('employee');
 
     let executorResendSelectedOptions = executorResendSelect.selectedOptions;
 
@@ -297,8 +296,9 @@ function updateEmployee() {
         fetch(base_url_api + '/users/current_user')
         .then(response => response.json())
         .then(user => {
-            if (eResendValueArray.includes('27') && user.login === '8') {
-                employeeSelectpicker.disabled = false;
+            if (eResendValueArray.includes("27") && user.login === "8") {
+                $("#employee").prop("disabled", false);
+                $("#employee").next("button").removeClass("disabled");
                 selectEmployeeDiv.style.display = 'block';
             }
         })
