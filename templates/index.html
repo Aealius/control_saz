@@ -100,7 +100,9 @@
                     <select onchange="updateSelectedExecutors()" class="selectpicker show-tick form-control" id="executorResend" name="executorResend" data-size="15" data-live-search="true" data-actions-box="true" multiple>
                         <option value="">Все</option>
                         {% for executor in executors %}
+                        {% if executor.id != current_user.id %}
                         <option value="{{ executor.id }}">{{ executor.department }}</option>
+                        {%endif%}
                         {% endfor %}
                     </select>
                     <div id="selectedExecutors"></div>
