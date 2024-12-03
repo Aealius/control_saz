@@ -56,8 +56,8 @@ class User(UserMixin, db.Model):
     id:int
     department:str
     login:str
-    is_admin :bool
-    is_deputy: bool
+    is_admin:bool
+    is_deputy:bool
     
     id = db.Column(db.Integer, primary_key=True)
     department = db.Column(db.String(255), nullable=False, default='Общая служба')
