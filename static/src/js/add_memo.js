@@ -45,40 +45,71 @@ addMemoForm.addEventListener('submit', async (event) => {
             formData.append('files', file);
         });
 
-        let pInput = document.getElementById("p");
-        let snInput = document.getElementById("sn");
-
-        pInput.value = sessionStorage.getItem('p');
-        snInput.value = sessionStorage.getItem('sn');
-
         await fetch(base_url + '/add_memo', {
             method: 'POST',
             body: formData,
-        });
-
-        window.location.replace(document.referrer);
+        }).then(() =>
+            window.location.replace(document.referrer)
+        );  
     }    
 });
 
 function updateSelectedExecutors() {
     let executorSelectedOptions = executorSelect.selectedOptions;
-    let selectedValuesArray = [];
-    let selectedTextArray = [];
-
-    for (let i = 0; i < executorSelectedOptions.length; i++) {
-        selectedValuesArray.push(executorSelectedOptions[i].value);
-        selectedTextArray.push(executorSelectedOptions[i].innerHTML);
-    }
+    let selectedValuesArray = [...executorSelectedOptions].map(o => o.value);
+    let selectedTextArray = [...executorSelectedOptions].map(o => o.innerHTML);
 
     addExecutorToSelected(selectedValuesArray, selectedTextArray);
+
+    let divSelectEmployee = document.getElementById('selectpicker2');
+    let selectEmployee = document.getElementById('employee');
+
+    // Пока что удаляем все значения и получаем их с бэка заново.
+    // В дальнейшем подумать о том, как это улучшить,
+    // тк слишком много запросов получится, особенно если будет много отделов
+    $('#employee').find('[value!=\'\']').remove();
+
+    // Для теста пока добавляем только глав буху, поэтому тут проверка на id бухгалтерии
+    // В дальнейшем это можно/нужно улучшить
+    if(selectedValuesArray.includes('27')){
+        divSelectEmployee.style.display = 'block';
+        selectEmployee.disabled = false;
+
+        // Опять же пока заглушка чисто для бухгалтерии
+        let employeeId = '27';
+        $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
+    
+        // Получение из бэка сотрудников отдела
+        fetch(base_url + "/api/users/" + employeeId + "/employees", {
+            method: "GET"
+        }).then((response) => {
+            return response.text();
+        }).then((text) => {
+            let obj = JSON.parse(text);
+            
+
+            for (let i = 0; i < obj.length; i++) {
+                let opt = document.createElement('option');
+                opt.value = obj[i].id;
+                opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+                selectEmployee.appendChild(opt);
+            }
+
+            // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+            $('.selectpicker').selectpicker('refresh');
+        })          
+    }
+    else {
+        divSelectEmployee.style.display = 'none';
+        selectEmployee.disabled = true;
+        $('.selectpicker').selectpicker('refresh');
+    }
 }
 
 function addExecutorToSelected(value, text) {
     selectedExecutorsDiv.innerHTML = "";
 
-    let hiddenInput = document.createElement('input');
-    hiddenInput.type = 'hidden';
-    hiddenInput.name = 'executor[]';
+    let hiddenInput = createHiddenInput();
 
     if (executorSelect.options.length == executorSelect.selectedOptions.length) {
         let allSpan = document.createElement('span');
@@ -119,25 +150,11 @@ function addExecutorToSelected(value, text) {
                 }
                 this.parentNode.remove();
 
-
                 let elements = executorSelect.selectedOptions;
-                let selectedText = document.querySelector(".filter-option-inner-inner");
-
                 for (let i = 0; i < elements.length; i++) {
                     if ((elements[i].value) == currentValue) {
-                        let removeText = elements[i].innerHTML;
                         elements[i].selected = false;
-                        if (i == selectedExecutorsDiv.childElementCount) {
-                            if (elements.length == 0) { //когда никого не остается в выбранных
-                                $('.selectpicker').selectpicker('deselectAll'); //убираем всех отовсюду, чтобы показало дефолтное состояние дропдауна 
-                            }
-                            else {
-                                selectedText.innerHTML = (selectedText.innerHTML.replace(', ' + removeText, ''));
-                            }
-                        }
-                        else {
-                            selectedText.innerHTML = (selectedText.innerHTML.replace(removeText + ', ', ''));
-                        }
+                        $('.selectpicker').selectpicker('refresh');
                     }
                 }
 
@@ -150,4 +167,11 @@ function addExecutorToSelected(value, text) {
         }
         hiddenInput.value = value;
     }
+}
+
+function createHiddenInput(){
+    let hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'executor[]';
+    return hiddenInput;
 }

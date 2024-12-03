@@ -22,16 +22,25 @@
 
 <script>
     const completeForm = document.getElementById('completeForm');
-    let hiddenInputSn = document.getElementById('sn');
-    let hiddenInputP = document.getElementById('p');
 
-
-    completeForm.addEventListener('submit', () => {
-        hiddenInputSn.value = sessionStorage.getItem('sn') ? sessionStorage.getItem('sn') : 'in';
-        hiddenInputP.value = sessionStorage.getItem('p') ? sessionStorage.getItem('p') : 1;
+    completeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitForm();
     });
 
 
+    function submitForm(){
+        let url = document.location.href;
+        let formData = new FormData(completeForm);
+
+        fetch(url, {
+            method: "POST",
+            body: formData,
+        })
+        .then(() => {
+                document.location.replace(document.referrer);
+        });
+    }
 </script>
 
 {% endblock %}

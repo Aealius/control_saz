@@ -95,7 +95,7 @@ function checkDescriptionValidity(descriptionInput){
 
 // Функция валидации для простого селекта в форме редактирования
 function checkSimpleExecutorSelect(executorSelect){
-    if(!executorSelect.value){
+    if(!executorSelect.value || executorSelect.value == ""){
         return {valid: false, target: executorSelect, error: "Не выбран исполнитель"};
     }
     return {valid: true, target: executorSelect};
