@@ -269,6 +269,11 @@ $(document).on('loaded.bs.select', '#employee', function () {
         let obj = JSON.parse(text);
         let selectEmployee = document.getElementById('employee');
 
+        let optDef = document.createElement('option');
+        optDef.value = '';
+        optDef.innerHTML = '';
+        selectEmployee.appendChild(optDef);
+        
         for (let i = 0; i < obj.length; i++) {
             let opt = document.createElement('option');
             opt.value = obj[i].id;
