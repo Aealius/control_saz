@@ -69,6 +69,9 @@ function updateIndex() {
             filterForm = document.getElementById("filterForm");
             clearFilterHref = document.getElementById("clearFilterHref");
             submitFilterFormButton = document.getElementById("submitFilterformButton");
+            resendForm = document.getElementById("resendForm");
+            resendModal = document.getElementById("resendModal");
+            resendSelect = document.getElementById("executorResend");
 
             $('.selectpicker').selectpicker();
             $('#select-task-sender').val(oldValue);
@@ -154,6 +157,17 @@ function updateIndex() {
                 newUrl.searchParams.set('p', 1);
 
                 window.location.replace(newUrl);
+            });
+
+            $(document).on('show.bs.modal', '#resendModal', function () {
+                $('.selectpicker').selectpicker('deselectAll');
+            });
+
+            //на изменение выбранного значения в дропдайне изменяется текущий URL 
+            senderSelect.addEventListener('change', () => {
+                let senderValue = senderSelect.value;
+
+                window.location.href = buildQueryString(senderValue);
             });
         })
 }
