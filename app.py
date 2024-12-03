@@ -387,6 +387,8 @@ def resend(task_id):
         task.status_id = Status.pending.value
 
     executor_for_task_id = request.json.get('executors').split(',')
+    if 'all' in executor_for_task_id:
+        executor_for_task_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
     task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], new_task_id, 'creator')
     os.makedirs(task_uploads_folder, exist_ok=True)
 
