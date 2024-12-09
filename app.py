@@ -963,7 +963,26 @@ def archived():
                                             unquote = unquote,
                                             status = Status,
                                             status_dict = STATUS_DICT)
+    
 
+@app.route('/create_memo', methods=['GET'])
+@login_required
+def create_memo():
+    if not current_user.is_deputy:
+        flash('У вас нет прав для просмотра этой страницы.', 'danger')
+        return redirect(request.referrer)
+    
+    executors = [executor for executor in User.query.all() if executor.id != current_user.id]
+    
+    current_user_department = ''
+    
+    if not current_user.department.split(' ', maxsplit=1)[0].isdigit():
+        current_user_department = current_user.department
+    else:
+        current_user_department = current_user.department.split(' ', maxsplit=1)[1]
+    
+    return render_template('create_memo.html', executors = executors,
+                                               current_user_department = current_user_department)
 
 def filter_data(dataset, page, **params):
 
