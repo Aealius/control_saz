@@ -65,6 +65,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     is_deputy = db.Column(db.Boolean, default=False)  # Новый атрибут для заместителя
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    when_deleted = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -126,6 +128,8 @@ class Task(db.Model):
     status_id = db.Column(db.SmallInteger, default=1, nullable=False)
     parent_task_id = db.Column(db.Integer, db.ForeignKey('task.id', ondelete = 'SET NULL'), nullable=True)
     parent_task =db.relationship('Task', remote_side = id, foreign_keys=parent_task_id)
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    when_deleted = db.Column(db.DateTime, nullable=True)
 
     def is_overdue(self):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
@@ -163,7 +167,6 @@ def index():
         in - входящие таски
         out - исходящие таски    
     '''
-    sender_filter = request.args.get('sn', 'in', type=str) #параметр для отправителей и получателей
     page = request.args.get('p', 1, type=int) #параметр для страницы 
 
     session['p'] = page
@@ -171,11 +174,11 @@ def index():
     
     # Начальный фильтр, если user - admin
     if current_user.is_admin:
-        tasks = Task.query.filter(Task.is_archived == False)
+        tasks = Task.query.filter(Task.is_archived == False, Task.is_deleted == False)
     else:
         # Если user - обычный пользователь, то видим только задачи где он - executor, а также те, которые он отправил
        tasks = Task.query.filter(
-            db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id), Task.is_archived == False)
+            db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id), Task.is_archived == False, Task.is_deleted == False)
        
     tasks, task_count = filter_data(tasks, page, **filter_params_dict)
 
@@ -226,7 +229,7 @@ def add():
         flash('У вас нет прав для создания задач.', 'danger')
         return redirect(url_for('index'))
 
-    executors = [executor for executor in User.query.all() if executor.id != current_user.id]
+    executors = [executor for executor in User.query.all() if (executor.id != current_user.id and executor.is_deleted == False)]
     
     if request.method == 'POST':
 
@@ -310,12 +313,12 @@ import shutil
 @app.route('/add_memo', methods=['GET', 'POST']) #  Маршрут для создания служебных записок
 @login_required
 def add_memo():
-    executors = User.query.all()
+    executors = User.query.filter(User.is_deleted == False).all()
 
     if request.method == 'POST':
         selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя
         if 'all' in selected_executor_id:
-            selected_executor_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
+            selected_executor_id = [executor.id for executor in executors if executor.id != current_user.id]
         else:
             selected_executor_id = [int(executor) for executor in selected_executor_id.split(',')]
         description = request.form['description']
@@ -388,7 +391,7 @@ def resend(task_id):
 
     executor_for_task_id = request.json.get('executors').split(',')
     if 'all' in executor_for_task_id:
-        executor_for_task_id = [executor.id for executor in User.query.all() if executor.id != current_user.id]
+        executor_for_task_id = [executor.id for executor in User.query.filter(User.is_deleted == False).all() if executor.id != current_user.id]
     task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], new_task_id, 'creator')
     os.makedirs(task_uploads_folder, exist_ok=True)
 
@@ -533,7 +536,9 @@ def delete(task_id):
         flash('У вас нет прав для удаления этой задачи.', 'danger')
         return redirect(url_for('index'))
 
-    db.session.delete(task)
+    task.is_deleted = True
+    task.when_dleted = datetime.now()
+    
     db.session.commit()
     flash('Задача успешно удалена!', 'success')
     return redirect(request.referrer or url_for('index'))
@@ -731,7 +736,7 @@ def users():
     if not current_user.is_admin:
         flash('У вас нет прав для просмотра этой страницы.', 'danger')
         return redirect(url_for('index'))
-    users = User.query.all()
+    users = User.query.filter(User.is_deleted == False).all()
     return render_template('users.html', users=users)
 
 
@@ -771,7 +776,10 @@ def delete_user(user_id):
         return redirect(url_for('index'))
 
     user = User.query.get_or_404(user_id)
-    db.session.delete(user)
+    
+    user.is_deleted = True
+    user.when_deleted = datetime.now()
+    
     db.session.commit()
     flash('Пользователь успешно удален!', 'success')
     return redirect(url_for('users'))
@@ -895,7 +903,7 @@ def reports():
         flash('У вас нет прав для просмотра этой страницы.', 'danger')
         return redirect(url_for('index'))
 
-    all_users = User.query.all()
+    all_users = User.query.filter(User.is_deleted == False).all()
     report_data = {}
 
     for user in all_users:
@@ -923,13 +931,13 @@ def archived():
     filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
     page = request.args.get('p', 1, type=int)
     if current_user.is_admin:
-        archived_data = Task.query.filter(Task.is_archived ==True)
+        archived_data = Task.query.filter(Task.is_archived ==True, Task.is_deleted == False)
     else:
         archived_data = Task.query.filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id),
-                                          Task.is_archived == True)
+                                          Task.is_archived == True, Task.is_deleted == False)
 
     archived_data, task_count = filter_data(archived_data, page, **filter_params_dict)
-    executors = User.query.all()
+    executors = User.query.filter(User.is_deleted == False).all()
 
     for task in archived_data:
         if task.extended_deadline:
@@ -980,6 +988,25 @@ def create_memo():
         current_user_department = current_user.department
     else:
         current_user_department = current_user.department.split(' ', maxsplit=1)[1]
+    
+    return render_template('create_memo.html', executors = executors,
+                                               current_user_department = current_user_department)
+
+@app.route('/create_memo', methods=['GET'])
+@login_required
+def create_memo():
+    if not current_user.is_deputy:
+        flash('У вас нет прав для просмотра этой страницы.', 'danger')
+        return redirect(request.referrer)
+    
+    executors = [executor for executor in User.query.all() if executor.id != current_user.id]
+    
+    current_user_department = current_user.department.split(' ', maxsplit=1)
+    
+    if not current_user_department[0].isdigit():
+        current_user_department = current_user.department
+    else:
+        current_user_department = current_user_department[1]
     
     return render_template('create_memo.html', executors = executors,
                                                current_user_department = current_user_department)
