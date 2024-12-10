@@ -1,11 +1,8 @@
 from app import app, db, login_manager
-from flask import (Flask, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
-from flask_sqlalchemy import SQLAlchemy
+from flask import (render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
 from datetime import datetime, date, time
-from flask_bootstrap import Bootstrap
-from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename, safe_join
 from urllib.parse import quote, unquote
 from enums.status_enum import Status
@@ -15,6 +12,7 @@ import os
 
 
 UPLOAD_FOLDER = 'uploads'
+CanGetResendedTasksArr = ['27'] # Бухгалтерия
 PER_PAGE = 20
 FILTER_PARAM_KEYS = ['executor',
                     'creator',
