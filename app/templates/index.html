@@ -145,7 +145,7 @@
                 </div>     
                 {%endif%}
             </td>
-            <td>{{ creator_department.get(task.creator_id) }}</td>
+            <td>{{ task.creator.department }}</td>
             <td>
                 {% if task.date_created %}
                 {% if task.date_created.time() == time.fromisoformat('00:00:00') %}
