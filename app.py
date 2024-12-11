@@ -25,10 +25,12 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-logger = logging.getLogger('werkzeug') 
+logger = logging.getLogger('werkzeug')
+if not os.path.exists('logs'):
+    os.mkdir('logs')
 file_handler = RotatingFileHandler('logs/app.log',maxBytes=1024 * 1024 ,backupCount=10, encoding='utf-8')
-console_handler = logging.StreamHandler()
 logger.addHandler(file_handler)
+console_handler = logging.StreamHandler()
 logger.addHandler(console_handler)
 
 
@@ -545,7 +547,7 @@ def delete(task_id):
         return redirect(url_for('index'))
 
     task.is_deleted = True
-    task.when_dleted = datetime.now()
+    task.when_deleted = datetime.now()
     
     db.session.commit()
     flash('Задача успешно удалена!', 'success')
