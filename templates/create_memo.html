@@ -4,51 +4,36 @@
 
 <h3>Создание служебной записки</h3>
 <div> Пожалуйста, заполните нижеприведенные поля для того, чтобы можно было сформировать необходимый документ</div>
-
+<br/>
 <form method="post" id="createMemoForm">
-
     <div class="form-group">
-        <label for="for-whom">Кому</label>
-        <select id="for-whom" name="for-whom" class="selectpicker form-control">
-            {% for executor in executors %}
-            <option value="{{ executor.id }}">{{ executor.department }}</option>    
-            {% endfor %}
-        </select>
+        <label for="to">Кому</label>
+        <textarea name="to" id="to" class="form-control"></textarea>
     </div>
 
     <div class="form-group">
-        <label for="from-whom">Кому (Фамилия И.О.)</label>
-        <input type="text" id="from-whom" name="from-whom" class="form-control">
+        <label for="docNumber">Номер</label>
+        <input type="text" id="docNumber" name="docNumber" class="form-control">
     </div>
 
     <div class="form-group">
-        <label for="from-whom">От кого (отдел)</label>
-        <input type="text" id="from-whom" name="from-whom" class="form-control" value="{{current_user_department}}">
-    </div>
-    
-    <div class="form-group">
-        <label for="from-whom">От кого (Фамилия И.О.)</label>
-        <input type="text" id="from-whom" name="from-whom" class="form-control" >
+        <label for="theme">Тема</label>
+        <input type="text" id="theme" name="theme" class="form-control">
     </div>
 
     <div class="form-group">
-        <label for="number">Номер</label>
-        <input type="text" id="number" name="number" class="form-control">
-    </div>
-
-    <div class="form-group">
-        <label for="subject">Тема</label>
-        <input type="text" id="subject" name="subject" class="form-control">
-    </div>
-
-    <div class="form-group">
-        <label for="description">Текст</label>
-        <textarea name="description" id="description" class="form-control"></textarea>
+        <label for="mainText">Текст</label>
+        <textarea name="mainText" id="mainText" class="form-control"></textarea>
     </div>
 
     <button type="submit" class="btn btn-success">Сформировать</button>
     <button class="btn btn-light">Отмена</button>
 
 </form>
+
+<a title="служебная" class="long-href" href="/uploads/Test/1.pdf" target="_blank"
+                        download>служебная</a>
+
+<script src="{{url_for('static', filename = 'src/js/create_memo.js') }}"></script>
 
 {%endblock%}
