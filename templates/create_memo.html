@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<h3>Создание служебной записки</h3>
+<div> Пожалуйста, заполните нижеприведенные поля для того, чтобы можно было сформировать необходимый документ</div>
+<br/>
+<form method="post" id="createMemoForm">
+    <div class="form-group">
+        <label for="to">Кому</label>
+        <textarea name="to" id="to" class="form-control"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="docNumber">Номер</label>
+        <input type="text" id="docNumber" name="docNumber" class="form-control">
+    </div>
+
+    <div class="form-group">
+        <label for="theme">Тема</label>
+        <input type="text" id="theme" name="theme" class="form-control">
+    </div>
+
+    <div class="form-group">
+        <label for="mainText">Текст</label>
+        <textarea name="mainText" id="mainText" class="form-control"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-success">Сформировать</button>
+    <button class="btn btn-light">Отмена</button>
+
+</form>
+
+<a title="служебная" class="long-href" href="/uploads/Test/1.pdf" target="_blank"
+                        download>служебная</a>
+
+<script src="{{url_for('static', filename = 'src/js/create_memo.js') }}"></script>
+
+{%endblock%}
