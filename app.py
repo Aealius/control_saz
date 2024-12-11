@@ -212,7 +212,7 @@ def index():
         elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
             creator_department[task.executor.id] = task.executor.department        
     
-    executors = User.query.all()
+    executors = User.query.filter(User.is_deleted == False).all()
     employees = Executive.query.all()
     return render_template('index.html',tasks=tasks,
                                         task_count = task_count,
@@ -466,7 +466,7 @@ def edit(task_id):
         flash('У вас нет прав для редактирования этой задачи.', 'danger')
         return redirect(url_for('index'))
 
-    executors = User.query.all()
+    executors = User.query.filter(User.is_deleted == False).all()
     if request.method == 'POST':
         task.executor_id = request.form['executor']
         task.description = request.form['description']
@@ -802,7 +802,7 @@ def login():
     if request.method == 'POST':
         login = request.form['login']
         password = request.form['password']
-        user = User.query.filter_by(login=login).first()
+        user = User.query.filter(User.login == login, User.is_deleted == False).first()
         if user and user.check_password(password):
             login_user(user)
             flash('Вы успешно авторизовались!', 'success')
@@ -921,6 +921,7 @@ def reports():
         for month in range(1, 13): #  Перебираем все месяцы
             tasks_in_month = Task.query.filter(
                 Task.executor_id == user.id,
+                Task.is_deleted == False,
                 db.extract('month', Task.date_created) == month,
                 Task.date_created >= date(2024,12,1) # Попросили начать отсчет с 1 декабря 2024, поэтому старые пока не учитываем
             ).all()
