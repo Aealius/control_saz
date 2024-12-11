@@ -64,13 +64,17 @@ if not os.path.exists(UPLOAD_FOLDER):
 @dataclass(unsafe_hash=True)
 class User(UserMixin, db.Model):
     id:int
+    head_id : int
     department:str
+    full_department: str
     login:str
     is_admin:bool
     is_deputy:bool
     
     id = db.Column(db.Integer, primary_key=True)
+    head_id = db.Column(db.Integer, db.ForeignKey('head.id'), nullable=True)
     department = db.Column(db.String(255), nullable=False, default='Общая служба')
+    full_department = db.Column(db.String(1000), nullable=True) # полное название отдела
     login = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
@@ -161,8 +165,23 @@ class Executive(db.Model):
     patronymic = db.Column(db.String(255), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship("User", backref=db.backref("executive", lazy=True), foreign_keys=[user_id])
-    
 
+@dataclass
+class Head(db.Model):
+    id : int
+    name: str
+    surname: str
+    patronymic : str
+    position : str
+    signature_path : str
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    surname = db.Column(db.String(255), nullable=False)
+    patronymic = db.Column(db.String(255), nullable=True)
+    position = db.Column(db.String(1000), nullable=False)
+    signature_path = db.Column(db.String(1000), nullable=True)
+    
 
 @app.route('/', methods = ['GET'])
 @login_required
