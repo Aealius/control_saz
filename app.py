@@ -1,3 +1,5 @@
+import logging
+from logging.handlers import RotatingFileHandler
 import os
 from flask import (Flask, session, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
 from flask_sqlalchemy import SQLAlchemy
@@ -22,6 +24,12 @@ migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+logger = logging.getLogger('werkzeug') 
+file_handler = RotatingFileHandler('logs/app.log',maxBytes=1024 * 1024 ,backupCount=10, encoding='utf-8')
+console_handler = logging.StreamHandler()
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 
 UPLOAD_FOLDER = 'uploads'
@@ -992,24 +1000,7 @@ def create_memo():
     return render_template('create_memo.html', executors = executors,
                                                current_user_department = current_user_department)
 
-@app.route('/create_memo', methods=['GET'])
-@login_required
-def create_memo():
-    if not current_user.is_deputy:
-        flash('У вас нет прав для просмотра этой страницы.', 'danger')
-        return redirect(request.referrer)
-    
-    executors = [executor for executor in User.query.all() if executor.id != current_user.id]
-    
-    current_user_department = current_user.department.split(' ', maxsplit=1)
-    
-    if not current_user_department[0].isdigit():
-        current_user_department = current_user.department
-    else:
-        current_user_department = current_user_department[1]
-    
-    return render_template('create_memo.html', executors = executors,
-                                               current_user_department = current_user_department)
+
 
 def filter_data(dataset, page, **params):
 
