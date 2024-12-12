@@ -101,9 +101,7 @@ class Task(db.Model):
     extended_deadline: datetime
     edit_datetime: datetime
     description: str
-    is_valid: bool
     completion_note: str
-    completion_confirmed: bool
     completion_confirmed_at: datetime
     admin_note: str
     attached_file: str
@@ -125,9 +123,7 @@ class Task(db.Model):
     extended_deadline = db.Column(db.Date, nullable=True)
     edit_datetime = db.Column(db.DateTime, nullable=True) #поле, запоминающее дату последнего редактирования
     description = db.Column(db.Text, nullable=False)
-    is_valid = db.Column(db.Boolean, default=True)
     completion_note = db.Column(db.Text)
-    completion_confirmed = db.Column(db.Boolean, default=False)
     completion_confirmed_at = db.Column(db.DateTime)
     admin_note = db.Column(db.Text)
     attached_file = db.Column(db.String(255))  
