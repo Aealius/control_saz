@@ -232,7 +232,7 @@
                 </div>
                 {% endif %}
 
-                {% if not task.status_id == Status.completed %}
+                {% if not task.status_id == status.completed.value %}
                 {% if current_user.id == task.executor_id and task.is_valid and not task.completion_note and not task.for_review %}
                 <a href="{{ url_for('complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
                 {% endif %}
@@ -276,7 +276,7 @@
                 {% endif %}
                 {% endif %}
 
-                {% if current_user.is_admin and task.creator_id == current_user.id and task.completion_note and not task.status_id == Status.completed %} 
+                {% if current_user.is_admin and task.creator_id == current_user.id and task.completion_note and not task.status_id == status.completed.value %} 
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
                     Контроль выполнения
@@ -318,7 +318,7 @@
                 </div>
                 {% endif %}
 
-                {% if current_user.is_deputy and task.creator_id == current_user.id and task.completion_note and not task.status_id == Status.completed %} 
+                {% if current_user.is_deputy and task.creator_id == current_user.id and task.completion_note and not task.status_id == status.completed.value %} 
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
                     Контроль выполнения
