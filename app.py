@@ -274,10 +274,8 @@ def add():
         description = request.form['description']
         
         if(request.form.get('is_valid') == 'on'):
-            is_valid = True
             status_id = Status.in_work.value
         else:
-            is_valid =False
             status_id = Status.invalid.value
         
         
@@ -306,7 +304,6 @@ def add():
                 date_created=date_created,
                 deadline=deadline,
                 description=description,
-                is_valid=is_valid,
                 is_бессрочно=is_бессрочно,
                 creator_id=current_user.id,
                 employeeId = employeeId,
@@ -415,7 +412,6 @@ def resend(task_id):
     is_бессрочно = task.is_бессрочно
     deadline = task.deadline
     description = task.description
-    is_valid = task.is_valid
     for_review = task.for_review
 
     try:        
@@ -448,7 +444,6 @@ def resend(task_id):
             date_created=date_created,
             deadline=deadline,
             description=description,
-            is_valid=is_valid,
             is_бессрочно=is_бессрочно,
             creator_id=current_user.id,
             employeeId = employeeId,
@@ -477,10 +472,7 @@ def edit(task_id):
         task.executor_id = request.form['executor']
         task.description = request.form['description']
         
-        if (request.form.get('is_valid') == 'on'):
-            task.is_valid = True
-        else:
-            task.is_valid = False
+        if (request.form.get('is_valid') != 'on'):
             task.status_id = Status.invalid.value
             
         task.edit_datetime = datetime.now()
@@ -587,7 +579,6 @@ def complete(task_id):
 
 
         task.completion_note = request.form.get('completion_note')
-        task.completion_confirmed = False
         task.status_id = Status.at_check.value
         db.session.commit()
         flash('Отметка о выполнении отправлена администратору.', 'success')
@@ -615,7 +606,6 @@ def confirm_task(task_id):
         return redirect(url_for('index'))
     
     task = Task.query.get_or_404(task_id)
-    task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
     
@@ -646,7 +636,6 @@ def reject_task(task_id):
         os.remove(task.attached_file)
     task.attached_file = None
     task.completion_note = None
-    task.completion_confirmed = False
     task.admin_note = request.json.get('note')
     task.status_id = Status.in_work.value
     db.session.commit()
@@ -665,7 +654,6 @@ def confirm_task_deputy(task_id):
         flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
         return redirect(url_for('index'))
 
-    task.completion_confirmed = True
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
     
@@ -686,7 +674,6 @@ def confirm_task_deputy(task_id):
         if parentTask != None and (not parentTask.for_review) and (parentTask.status_id == Status.in_work.value or parentTask.status_id == Status.delayed.value or parentTask.status_id == Status.pending.value): 
             parentTask.status_id = Status.at_check.value
             parentTask.completion_note = task.completion_note
-            parentTask.completion_confirmed = False
                 
             # Работа с файлами
             try:        
@@ -738,7 +725,6 @@ def reject_task_deputy(task_id):
         os.remove(task.attached_file)
     task.attached_file = None
     task.completion_note = None
-    task.completion_confirmed = False
     task.admin_note = request.json.get('note')
     task.status_id = Status.in_work.value
     
@@ -874,8 +860,6 @@ def logout():
 def review(task_id):
     task = Task.query.get_or_404(task_id)
     if request.method == 'POST':  #  Обработка POST-запроса от кнопки "Ознакомлен"
-        
-        task.completion_confirmed = True
         task.completion_confirmed_at = datetime.now()
         task.status_id = Status.reviewed.value
         
