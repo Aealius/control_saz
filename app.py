@@ -64,7 +64,6 @@ if not os.path.exists(UPLOAD_FOLDER):
 @dataclass(unsafe_hash=True)
 class User(UserMixin, db.Model):
     id:int
-    head_id : int
     department:str
     full_department: str
     login:str
@@ -72,7 +71,6 @@ class User(UserMixin, db.Model):
     is_deputy:bool
     
     id = db.Column(db.Integer, primary_key=True)
-    head_id = db.Column(db.Integer, db.ForeignKey('head.id'), nullable=True)
     department = db.Column(db.String(255), nullable=False, default='Общая служба')
     full_department = db.Column(db.String(1000), nullable=True) # полное название отдела
     login = db.Column(db.String(100), unique=True, nullable=False)
@@ -169,6 +167,7 @@ class Executive(db.Model):
 @dataclass
 class Head(db.Model):
     id : int
+    user_id : int
     name: str
     surname: str
     patronymic : str
@@ -176,6 +175,8 @@ class Head(db.Model):
     signature_path : str
     
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship("User", backref=db.backref("head_of_department", lazy=True), foreign_keys=[user_id])
     name = db.Column(db.String(255), nullable=False)
     surname = db.Column(db.String(255), nullable=False)
     patronymic = db.Column(db.String(255), nullable=True)
