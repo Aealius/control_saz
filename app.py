@@ -1,11 +1,12 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-from flask import (Flask, session, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
+from flask import (Flask, abort, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, time
 from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
+import werkzeug
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename, safe_join
@@ -185,18 +186,7 @@ class Head(db.Model):
 def index():
     
     filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
-
-    #status_filter = request.args.get('st') #параметр для табов (табов пока нет)
-    
-    '''
-    варианты значения параметра sn:
-        in - входящие таски
-        out - исходящие таски    
-    '''
     page = request.args.get('p', 1, type=int) #параметр для страницы 
-
-    session['p'] = page
-    session['sn'] = filter_params_dict.get('sn') 
     
     # Начальный фильтр, если user - admin
     if current_user.is_admin:
@@ -1020,7 +1010,14 @@ def create_memo():
                                                current_user_department = current_user_department)
 
 
+@app.errorhandler(werkzeug.exceptions.NotFound)
+def page_not_found(error):
+    return render_template('404.html'), 404
 
+@app.errorhandler(werkzeug.exceptions.InternalServerError)
+def internal_server_error(error):
+    db.session.rollback()
+    return render_template('500.html', error = error), 500
 
 
 def filter_data(dataset, page, **params):
@@ -1084,7 +1081,7 @@ def filter_data(dataset, page, **params):
     
 
     dataset = dataset.options(db.joinedload(Task.executor)).order_by(
-        Task.is_valid.desc(),
+        #Task.status_id.desc(),
         Task.date_created.desc(),
         Task.deadline.desc() if not Task.is_бессрочно else Task.id).paginate(page=page, per_page=PER_PAGE)
     
