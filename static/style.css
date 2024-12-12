@@ -137,3 +137,17 @@ button.archive:hover{
 .vh-85{
     height:85vh;
 }
+
+#create_memo{
+    border:1px solid rgb(194, 194, 194);
+    border-radius: 20px;
+    font-size: small;
+    text-align: center;
+    line-height: 1.6rem;
+    color: #808080;
+    padding:0.4rem;
+}
+
+#create_memo:hover{
+    background-color: #e7e5e5;
+}
