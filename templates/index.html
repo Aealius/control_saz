@@ -177,7 +177,7 @@
                 {% if task.creator_file %}
                 {%for file in task.creator_files%}
                 <div><a title="{{ unquote(file.split('/')[-1]) }}" class="long-href" href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
-                        download="{{ unquote(file.split('/')[-1]) }}">{{ unquote(file.split('/')[-1]) }}</a></div>
+                        >{{ unquote(file.split('/')[-1]) }}</a></div>
                 {% endfor %}
                 {% endif %}
             </td>

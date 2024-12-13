@@ -87,6 +87,16 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+@dataclass
+class CreateMemoDTO():
+    department:str
+    full_department: str
+    headName:str
+    headSurname:str
+    headPatronymic:str
+    headPosition:str
+    headSignaturePath:str
+    savePath:str
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -593,7 +603,7 @@ def uploaded_file(filename):
     uploads_folder = app.config['UPLOAD_FOLDER']
     safe_path = safe_join(uploads_folder, filename) # Используем safe_join
     if safe_path and os.path.exists(safe_path):
-       return send_from_directory(uploads_folder, filename, as_attachment=True)
+       return send_from_directory(uploads_folder, filename, as_attachment=False)
     else:
         flash(f"File not found: {filename}")
         return redirect(url_for('index'))
@@ -892,6 +902,24 @@ def getCurrentUser():
         return '', 404
     return jsonify(user)
 
+@app.route('/api/users/current_user_with_head', methods=['GET'])
+@login_required
+def getCurrentUserWithHead():
+    user = User.query.filter_by(id = current_user.id).first()
+    if (not user):
+        return 'Пользователь с данным id не найден', 404
+
+    depHead = Head.query.filter_by(user_id = current_user.id).first()
+    if (not depHead):
+        return 'Данные начальника отдела не найдены', 404
+    
+    data = CreateMemoDTO(user.department, user.full_department, depHead.name, depHead.surname, depHead.patronymic, depHead.position, depHead.signature_path, "")
+    
+    data.savePath = "D:\\MB\\1\\control_saz\\uploads\\Test\\1.pdf" # поменять
+    data.headSignaturePath = "C:\\Users\\asup-maxim\\Downloads\\11.jpg" # убрать
+    
+    return jsonify(data)
+
 
 reports_bp = Blueprint('reports', __name__) # Создаем Blueprint
 
@@ -977,10 +1005,6 @@ def archived():
 @app.route('/create_memo', methods=['GET'])
 @login_required
 def create_memo():
-    if not current_user.is_deputy:
-        flash('У вас нет прав для просмотра этой страницы.', 'danger')
-        return redirect(request.referrer)
-    
     executors = [executor for executor in User.query.all() if executor.id != current_user.id]
     
     current_user_department = ''
