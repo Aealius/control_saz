@@ -151,3 +151,43 @@ button.archive:hover{
 #create_memo:hover{
     background-color: #e7e5e5;
 }
+
+.container{
+    background-color: white;
+    
+    padding: 20px 20px;
+    border-radius: 10px;
+    border: 1px solid black;
+    
+}
+
+.options{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px;
+}
+
+.option-button{
+    height: 28px;
+    width: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 3px;
+    border: none;
+    background-color: white;
+    outline: none;
+    color: #020929;
+}
+
+#text-input{
+    padding: 20px;
+    margin-top: 10px;
+    border: 1px solid #dddddd;
+    height: 20vh;
+    overflow-x:hidden;
+}
+
+.active{
+    background-color: #8fd4f0;
+}

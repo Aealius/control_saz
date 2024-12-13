@@ -41,3 +41,56 @@ createMemoForm.addEventListener('submit', async (event) => {
         
     // }    
 });
+
+let optionsButtons = document.querySelectorAll(".option-button");
+// Для выделения кнопок
+let spacingButtons = document.querySelectorAll(".spacing");
+let formatButtons = document.querySelectorAll(".format");
+let scriptButtons = document.querySelectorAll(".script");
+
+// Инициализирует выделение кнопок
+const initializer = () => {
+    highlighter(spacingButtons, true);
+    highlighter(formatButtons, false);
+    highlighter(scriptButtons, true);
+};
+
+// Выделение кнопок
+// needsRemoval = true - значит, что только одна кнопка из группы должна выделятся
+// false - могут быть выделены сразу несколько кнопок из группы
+const highlighter = (className, needsRemoval) => {
+    className.forEach((button) => {
+        button.addEventListener("click", () => {
+            if(needsRemoval){
+                let alreadyActive = false;
+                
+                if(button.classList.contains("active")){
+                    alreadyActive = true;
+                }
+
+                highlighterRemover(className);
+                if(!alreadyActive){
+                    button.classList.add("active");
+                }
+            }
+            else{
+                button.classList.toggle("active");
+            }
+        });
+    });
+};
+
+
+// Основные 2 функции для работы текст. редактора
+// execCommand не рекомендуется использовать из-за устаревания
+// + она ведет себя по разному в разных браузерах
+// Но на данный момент достаточно гибкой и лучшей альтернативы не нашлось
+const modifyText = (command, defaultUi, value) => {
+    document.execCommand(command, defaultUi, value);
+};
+
+optionsButtons.forEach(button => {
+    button.addEventListener("click", () => {
+        modifyText(button.id, false, null);
+    });
+});
