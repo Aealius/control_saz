@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-from flask import (Flask, abort, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
+from flask import (Flask, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, time
 from flask_bootstrap import Bootstrap
@@ -56,6 +56,7 @@ STATUS_DICT =  {'in_work' : 'В работе',
 
 # Id отделов, у которых можно выбрать конкретного исполнителя
 app.config['CanGetResendedTasksArr'] = ['27'] # Бухгалтерия
+app.config['BUH_LOGIN'] = '234' #чтобы фильтровать по бухгалтерии
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
@@ -217,35 +218,29 @@ def index():
             task.deadline_for_check = date(9999,12,31)
             
         task.creator_files = task.creator_file.split(';')
-
-
-    creator_department = {}
-    for task in tasks:
-        if task.creator_id not in creator_department:  # Проверяем creator_id, а не executor_id
-            creator_department[task.creator_id] = task.creator.department
-        if current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor_id] = task.executor.department
-        elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor.id] = task.executor.department        
     
-    executors = User.query.filter(User.is_deleted == False).all()
+    executors = hide_buh(current_user.login)
+        
     employees = Executive.query.all()
+    
+    buh = User.query.filter(User.login == app.config.get('BUH_LOGIN')).first()
     return render_template('index.html',tasks=tasks,
                                         task_count = task_count,
                                         executors=executors, 
-                                        creator_department=creator_department,
+                                        page = page,
+                                        employees = employees,
+                                        filter_params_dict = filter_params_dict,
+                                        buh = buh,
+                                        calculate_penalty=calculate_penalty,
+                                        unquote=unquote,
                                         date=date,
                                         datetime = datetime,
                                         time = time,
-                                        calculate_penalty=calculate_penalty,
-                                        unquote=unquote,
-                                        page = page,
-                                        employees = employees,
                                         executive = Executive,
-                                        filter_params_dict = filter_params_dict,
+                                        status = Status,
+                                        status_dict = STATUS_DICT,
                                         per_page = PER_PAGE,
-                                        status = Status, 
-                                        status_dict = STATUS_DICT) 
+                                        BUH_LOGIN = app.config.get('BUH_LOGIN')) 
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -255,7 +250,7 @@ def add():
         flash('У вас нет прав для создания задач.', 'danger')
         return redirect(url_for('index'))
 
-    executors = [executor for executor in User.query.all() if (executor.id != current_user.id and executor.is_deleted == False)]
+    executors = hide_buh(current_user.login)
     
     if request.method == 'POST':
 
@@ -327,7 +322,9 @@ def add():
         flash('Задача успешно добавлена!', 'success')
         return '', 200
 
-    return render_template('add.html', executors=executors, datetime=datetime, current_user=current_user)
+    return render_template('add.html',  executors=executors,
+                                        current_user=current_user,
+                                        datetime=datetime)
 
 import shutil
 
@@ -336,7 +333,8 @@ import shutil
 @app.route('/add_memo', methods=['GET', 'POST']) #  Маршрут для создания служебных записок
 @login_required
 def add_memo():
-    executors = User.query.filter(User.is_deleted == False).all()
+    
+    executors = hide_buh(current_user.login)
 
     if request.method == 'POST':
         selected_executor_id = request.form.get('executor[]')  #  Получаем ID выбранного исполнителя
@@ -477,7 +475,13 @@ def edit(task_id):
         flash('У вас нет прав для редактирования этой задачи.', 'danger')
         return redirect(url_for('index'))
 
-    executors = User.query.filter(User.is_deleted == False).all()
+    executors = hide_buh(current_user.login)
+
+    if current_user.login == '8':
+        executors =  User.query.filter(User.id != current_user.id, User.is_deleted == False).all()
+    else:
+        executors =  User.query.filter(User.id != current_user.id, User.id != 27, User.is_deleted == False).all()
+        
     if request.method == 'POST':
         task.executor_id = request.form['executor']
         task.description = request.form['description']
@@ -1028,7 +1032,7 @@ def internal_server_error(error):
     return render_template('500.html', error = error), 500
 
 
-def filter_data(dataset, page, **params):
+def filter_data(dataset, page : int, **params):
 
     match params.get('sn'):
         case 'in':
@@ -1095,7 +1099,15 @@ def filter_data(dataset, page, **params):
     
     return (dataset, dataset_count,)
 
-def calculate_penalty(task):  
+def hide_buh(current_user_login : str):
+    if current_user_login == '8':
+        return User.query.filter(User.id != current_user.id, User.is_deleted == False).all()
+    else:
+        #бухгалтерия скрыта по запросу главбуха
+        return User.query.filter(User.id != current_user.id, User.id != 27, User.is_deleted == False).all()
+         
+
+def calculate_penalty(task : Task):  
     if (task.status_id == Status.completed.value or task.status_id == Status.complete_delayed.value) and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
         overdue_days = (task.completion_confirmed_at.date() - task.deadline_for_check).days
         if overdue_days > 0:

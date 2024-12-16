@@ -6,13 +6,12 @@
 <form id="addTaskForm" method="POST" enctype="multipart/form-data">
     <div id="selectpicker" class="form-group">
         <label for="executor">Исполнитель:</label>
-        <select class="selectpicker show-tick form-control" id="executor" name="executor" data-live-search="true" data-actions-box="true" multiple onchange="updateSelectedExecutors()">
-            <!--<option value="" selected>Не выбрано</option> {##}-->
-            <!--<option value="all">Всем</option>-->
+        <select class="selectpicker show-tick form-control" id="executor" name="executor" data-live-search="true"
+            data-actions-box="true" multiple onchange="updateSelectedExecutors()">
             {% for executor in executors %}
-                {% if executor.id != current_user.id %}
-                    <option value="{{ executor.id }}">{{ executor.department }}</option>
-                {% endif %}
+            {% if executor.id != current_user.id %} <!--сокрытие бухгалтерии ото всех, кроме главного бухгалтера-->
+            <option value="{{ executor.id }}">{{ executor.department }}</option>
+            {% endif %}
             {% endfor %}
         </select>
         <div id="selected-executors" class="mt-2"></div>
@@ -20,19 +19,22 @@
     {% if current_user.is_deputy and current_user.login == '8'%}
     <div id="selectpicker2" class="form-group">
         <label id="employeeLabel" for="employee">Сотрудник:</label>
-        <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true" data-actions-box="true">
+        <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true"
+            data-actions-box="true">
             <option value=""></option>
         </select>
     </div>
     {% endif %}
-    
+
     <div class="form-group">
         <label for="date_created">Дата создания:</label>
-        <input type="date" class="form-control" id="date_created" name="date_created" value="{{ datetime.now().strftime('%Y-%m-%d') }}">
+        <input type="date" class="form-control" id="date_created" name="date_created"
+            value="{{ datetime.now().strftime('%Y-%m-%d') }}">
     </div>
 
     <div class="form-group form-check">
-        <input class="form-check-input" type="checkbox" id="is_бессрочно" name="is_бессрочно" onchange="toggleDeadline()">
+        <input class="form-check-input" type="checkbox" id="is_бессрочно" name="is_бессрочно"
+            onchange="toggleDeadline()">
         <label class="form-check-label" for="is_бессрочно">Бессрочно</label>
     </div>
     <div class="form-group" id="deadline-field">
@@ -49,20 +51,16 @@
         <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid" checked>
         <label class="form-check-label" for="is_valid">Действителен</label>
     </div>
-     <div class="form-group form-check">
+    <div class="form-group form-check">
         <input type="checkbox" class="form-check-input" id="for_review" name="for_review">
         <label class="form-check-label" for="for_review">Для ознакомления</label>
     </div>
     <div id="dropZone" class="drop-zone">
         <p class="text-muted m-0">Нажмите, чтобы загрузить файл, либо перетащите их</p>
         <p class="text-muted m-0">Подсказка: удерживая клавишу Ctrl, можно выбрать несколько файлов</p>
-        <input  type="file" id="fileInput" multiple class="hidden">
+        <input type="file" id="fileInput" multiple class="hidden">
     </div>
-   <ul id="fileList"></ul>
-
-    <input type="hidden" id="sn" name="sn" value="">
-    <input type="hidden" id="p" name="p" value="">
-
+    <ul id="fileList"></ul>
     <button id="submit" class="btn btn-primary mt-3">Добавить</button>
 </form>
 
