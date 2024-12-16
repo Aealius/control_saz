@@ -44,13 +44,11 @@ createMemoForm.addEventListener('submit', async (event) => {
 
 let optionsButtons = document.querySelectorAll(".option-button");
 // Для выделения кнопок
-let spacingButtons = document.querySelectorAll(".spacing");
 let formatButtons = document.querySelectorAll(".format");
 let scriptButtons = document.querySelectorAll(".script");
 
 // Инициализирует выделение кнопок
 const initializer = () => {
-    highlighter(spacingButtons, true);
     highlighter(formatButtons, false);
     highlighter(scriptButtons, true);
 };
@@ -78,6 +76,12 @@ const highlighter = (className, needsRemoval) => {
             }
             document.getElementById('text-input').focus();
         });
+    });
+};
+
+const highlighterRemover = (className) => {
+    className.forEach((button) => {
+        button.classList.remove("active");
     });
 };
 
