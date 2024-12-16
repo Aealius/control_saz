@@ -45,9 +45,6 @@
                             <option value="{{ executor.department }}" {% if executor.department==request.args.get('executor') %}selected{% endif%}>
                                 {{ executor.department }}</option>
                             {% endfor %}
-                            {%if current_user.login != BUH_LOGIN%}
-                            <option value="{{ buh.id }}" {% if buh.department==request.args.get('executor') %}selected{% endif%}>{{buh.department}}</option>
-                            {%endif%}
                         </select>
                     </div>
                     <div class="form-group">
@@ -58,9 +55,6 @@
                             <option value="{{ executor.department }}" {% if executor.department==request.args.get('creator') %}selected{% endif %}>
                                 {{executor.department}}</option>
                             {% endfor %}
-                            {%if current_user.login != BUH_LOGIN%}
-                            <option value="{{ buh.id }}" {% if buh.department==request.args.get('creator') %}selected{% endif%}>{{buh.department}}</option>
-                            {%endif%}
                         </select>
                     </div>
                     <div class="form-group">
@@ -114,7 +108,7 @@
                     <select onchange="updateSelectedExecutors()" class="selectpicker show-tick form-control"
                         id="executorResend" name="executorResend" data-size="10" data-live-search="true"
                         data-actions-box="true" multiple>
-                        {% for executor in executors %}
+                        {% for executor in executors_for_resend %}
                         {% if executor.id != current_user.id %}
                         <option value="{{ executor.id }}">{{ executor.department }}</option>
                         {%endif%}

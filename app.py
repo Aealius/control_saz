@@ -219,14 +219,18 @@ def index():
             
         task.creator_files = task.creator_file.split(';')
     
-    executors = hide_buh(current_user.login)
+
+    executors =  User.query.filter(User.is_deleted == False).all()
+        
+    executors_for_resend = hide_buh(current_user.login)
         
     employees = Executive.query.all()
     
     buh = User.query.filter(User.login == app.config.get('BUH_LOGIN')).first()
     return render_template('index.html',tasks=tasks,
                                         task_count = task_count,
-                                        executors=executors, 
+                                        executors=executors,
+                                        executors_for_resend = executors_for_resend,
                                         page = page,
                                         employees = employees,
                                         filter_params_dict = filter_params_dict,
@@ -476,11 +480,6 @@ def edit(task_id):
         return redirect(url_for('index'))
 
     executors = hide_buh(current_user.login)
-
-    if current_user.login == '8':
-        executors =  User.query.filter(User.id != current_user.id, User.is_deleted == False).all()
-    else:
-        executors =  User.query.filter(User.id != current_user.id, User.id != 27, User.is_deleted == False).all()
         
     if request.method == 'POST':
         task.executor_id = request.form['executor']
@@ -1104,7 +1103,7 @@ def hide_buh(current_user_login : str):
         return User.query.filter(User.id != current_user.id, User.is_deleted == False).all()
     else:
         #бухгалтерия скрыта по запросу главбуха
-        return User.query.filter(User.id != current_user.id, User.id != 27, User.is_deleted == False).all()
+        return User.query.filter(User.id != current_user.id, User.login != app.config.get('BUH_LOGIN'), User.is_deleted == False).all()
          
 
 def calculate_penalty(task : Task):  
