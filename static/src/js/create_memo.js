@@ -76,10 +76,12 @@ const highlighter = (className, needsRemoval) => {
             else{
                 button.classList.toggle("active");
             }
+            document.getElementById('text-input').focus();
         });
     });
 };
 
+window.onload = initializer();
 
 // Основные 2 функции для работы текст. редактора
 // execCommand не рекомендуется использовать из-за устаревания
@@ -92,5 +94,6 @@ const modifyText = (command, defaultUi, value) => {
 optionsButtons.forEach(button => {
     button.addEventListener("click", () => {
         modifyText(button.id, false, null);
+        document.getElementById('text-input').focus();
     });
 });
