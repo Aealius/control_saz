@@ -7,7 +7,7 @@ createMemoForm.addEventListener('submit', async (event) => {
 
     fetch(base_url_api + '/users/current_user_with_head')
         .then(responseUser => responseUser.json())
-        .then(user => {
+        .then(async user => {
             if(user.full_department){
                 formData.append("from", user.full_department);
             }
@@ -19,15 +19,17 @@ createMemoForm.addEventListener('submit', async (event) => {
             formData.append("signerPosition", user.headPosition);
             formData.append("filePathForSave",user.savePath);
             formData.append("signaturePath",user.headSignaturePath);
+            
+            let mainText = await getHtmlFromTextEditor();
+            formData.append("mainText", mainText.join('')); //Поскольку получаем массив <p> тегов, нужен join
 
-            fetch('https://localhost:44365' + '/Report/createMemoReport', {
+            fetch('https://192.168.15.2:44365' + '/Report/createMemoReport', {
                 method: 'POST',
                 body: formData,
             }).then((response) =>{
                 console.log(response)
             }); 
 
-            currentUserLogin = user.login;
         })
         .catch(console.error);
 
@@ -40,64 +42,4 @@ createMemoForm.addEventListener('submit', async (event) => {
 
         
     // }    
-});
-
-let optionsButtons = document.querySelectorAll(".option-button");
-// Для выделения кнопок
-let formatButtons = document.querySelectorAll(".format");
-let scriptButtons = document.querySelectorAll(".script");
-
-// Инициализирует выделение кнопок
-const initializer = () => {
-    highlighter(formatButtons, false);
-    highlighter(scriptButtons, true);
-};
-
-// Выделение кнопок
-// needsRemoval = true - значит, что только одна кнопка из группы должна выделятся
-// false - могут быть выделены сразу несколько кнопок из группы
-const highlighter = (className, needsRemoval) => {
-    className.forEach((button) => {
-        button.addEventListener("click", () => {
-            if(needsRemoval){
-                let alreadyActive = false;
-                
-                if(button.classList.contains("active")){
-                    alreadyActive = true;
-                }
-
-                highlighterRemover(className);
-                if(!alreadyActive){
-                    button.classList.add("active");
-                }
-            }
-            else{
-                button.classList.toggle("active");
-            }
-            document.getElementById('text-input').focus();
-        });
-    });
-};
-
-const highlighterRemover = (className) => {
-    className.forEach((button) => {
-        button.classList.remove("active");
-    });
-};
-
-window.onload = initializer();
-
-// Основные 2 функции для работы текст. редактора
-// execCommand не рекомендуется использовать из-за устаревания
-// + она ведет себя по разному в разных браузерах
-// Но на данный момент достаточно гибкой и лучшей альтернативы не нашлось
-const modifyText = (command, defaultUi, value) => {
-    document.execCommand(command, defaultUi, value);
-};
-
-optionsButtons.forEach(button => {
-    button.addEventListener("click", () => {
-        modifyText(button.id, false, null);
-        document.getElementById('text-input').focus();
-    });
 });
