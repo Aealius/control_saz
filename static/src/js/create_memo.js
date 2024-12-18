@@ -23,7 +23,7 @@ createMemoForm.addEventListener('submit', async (event) => {
             let mainText = await getHtmlFromTextEditor();
             formData.append("mainText", mainText.join('')); //Поскольку получаем массив <p> тегов, нужен join
 
-            fetch('https://192.168.15.2:44365' + '/Report/createMemoReport', {
+            fetch('http://192.168.15.2:44364' + '/Report/createMemoReport', {
                 method: 'POST',
                 body: formData,
             }).then((response) =>{
