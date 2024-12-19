@@ -13,7 +13,11 @@
 
     <div class="form-group">
         <label for="docNumber">Номер</label>
-        <input type="text" id="docNumber" name="docNumber" class="form-control">
+        <div class="input-group flex-nowrap">
+            <span style="margin-left:-2px;" class="input-group-text" id="numberText">№</span>
+            <input type="text" id="docNumber" name="docNumber" class="form-control" aria-describedby="numberText">
+        </div>
+        
     </div>
 
     <div class="form-group">
@@ -22,9 +26,7 @@
     </div>
 
     <label for="editorjs">Текст</label>
-    <div class="container">
-        <div id="editorjs"></div>
-    </div>
+    <div id="editorjs"></div>
 
     <br/>
     <button type="submit" class="btn btn-success">Сформировать</button>
@@ -32,7 +34,7 @@
 
 </form>
 <button onclick="setTaskId()" class="btn btn-light">Отмена</button>
-<a title="служебная" class="long-href" href="/uploads/Test/1.pdf" target="_blank">служебная</a>
+<a title="служебная" class="long-href" href="/uploads/Test/best-test.pdf" target="_blank">служебная</a>
     
 <script src="{{url_for('static', filename = 'src/js/create_memo.js') }}"></script>
 

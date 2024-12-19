@@ -9,8 +9,18 @@ const fileList = document.getElementById('fileList');
 let files = [];
 const base_url = window.location.origin;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     updateSelectedExecutors();
+    if(localStorage.getItem('filename') != null) {
+        let file = await fetch('https://localhost:44365' + `/Report?filename=${localStorage.getItem('name')}`, 
+        {
+            method: 'GET',
+        }).then((response) =>{
+            console.log(response);
+            addFiles(file);
+            localStorage.removeItem('filename');
+        });
+    }
 });
 
 document.getElementById('executor').addEventListener('change', (event) => {

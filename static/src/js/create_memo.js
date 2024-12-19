@@ -23,13 +23,15 @@ createMemoForm.addEventListener('submit', async (event) => {
             let mainText = await getHtmlFromTextEditor();
             formData.append("mainText", mainText.join('')); //Поскольку получаем массив <p> тегов, нужен join
 
-            fetch('http://192.168.15.2:44364' + '/Report/createMemoReport', {
+            fetch('http://192.168.10.42:44364' + '/Report', {
                 method: 'POST',
                 body: formData,
             }).then((response) =>{
                 console.log(response)
-            }); 
-
+            }).then(() => {
+                localStorage.setItem('filename', 'Reports\\Служебная записка №1-112290 от 19-12-2024.pdf');
+                window.location.replace(document.referrer);
+            });
         })
         .catch(console.error);
 
