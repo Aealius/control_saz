@@ -10,17 +10,18 @@ let files = [];
 const base_url = window.location.origin;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    updateSelectedExecutors();
     if(localStorage.getItem('filename') != null) {
-        let file = await fetch('https://localhost:44365' + `/Report?filename=${localStorage.getItem('name')}`, 
+        await fetch('https://localhost:44365' + `/Report?filename=${localStorage.getItem('filename')}`, 
         {
             method: 'GET',
         }).then((response) =>{
-            console.log(response);
-            addFiles(file);
-            localStorage.removeItem('filename');
+            return response.blob();
+        }).then(blob => {
+            let files =  [new File([blob], localStorage.getItem('filename').split('\\')[1], {type:"application/pdf", lastModified:new Date().getTime()}),];
+            addFiles(files);
         });
     }
+    updateSelectedExecutors();
 });
 
 document.getElementById('executor').addEventListener('change', (event) => {
@@ -74,45 +75,48 @@ function updateSelectedExecutors() {
     let divSelectEmployee = document.getElementById('selectpicker2');
     let selectEmployee = document.getElementById('employee');
 
-    // Пока что удаляем все значения и получаем их с бэка заново.
-    // В дальнейшем подумать о том, как это улучшить,
-    // тк слишком много запросов получится, особенно если будет много отделов
-    $('#employee').find('[value!=\'\']').remove();
+    if (divSelectEmployee != null) {
 
-    // Для теста пока добавляем только глав буху, поэтому тут проверка на id бухгалтерии
-    // В дальнейшем это можно/нужно улучшить
-    if(selectedValuesArray.includes('27')){
-        divSelectEmployee.style.display = 'block';
-        selectEmployee.disabled = false;
+        // Пока что удаляем все значения и получаем их с бэка заново.
+        // В дальнейшем подумать о том, как это улучшить,
+        // тк слишком много запросов получится, особенно если будет много отделов
+        $('#employee').find('[value!=\'\']').remove();
 
-        // Опять же пока заглушка чисто для бухгалтерии
-        let employeeId = '27';
-        $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
-    
-        // Получение из бэка сотрудников отдела
-        fetch(base_url + "/api/users/" + employeeId + "/employees", {
-            method: "GET"
-        }).then((response) => {
-            return response.text();
-        }).then((text) => {
-            let obj = JSON.parse(text);
-            
+        // Для теста пока добавляем только глав буху, поэтому тут проверка на id бухгалтерии
+        // В дальнейшем это можно/нужно улучшить
+        if (selectedValuesArray.includes('27')) {
+            divSelectEmployee.style.display = 'block';
+            selectEmployee.disabled = false;
 
-            for (let i = 0; i < obj.length; i++) {
-                let opt = document.createElement('option');
-                opt.value = obj[i].id;
-                opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
-                selectEmployee.appendChild(opt);
-            }
+            // Опять же пока заглушка чисто для бухгалтерии
+            let employeeId = '27';
+            $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
 
-            // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+            // Получение из бэка сотрудников отдела
+            fetch(base_url + "/api/users/" + employeeId + "/employees", {
+                method: "GET"
+            }).then((response) => {
+                return response.text();
+            }).then((text) => {
+                let obj = JSON.parse(text);
+
+
+                for (let i = 0; i < obj.length; i++) {
+                    let opt = document.createElement('option');
+                    opt.value = obj[i].id;
+                    opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+                    selectEmployee.appendChild(opt);
+                }
+
+                // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+                $('.selectpicker').selectpicker('refresh');
+            })
+        }
+        else {
+            divSelectEmployee.style.display = 'none';
+            selectEmployee.disabled = true;
             $('.selectpicker').selectpicker('refresh');
-        })          
-    }
-    else {
-        divSelectEmployee.style.display = 'none';
-        selectEmployee.disabled = true;
-        $('.selectpicker').selectpicker('refresh');
+        }
     }
 }
 
