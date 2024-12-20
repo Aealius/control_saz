@@ -9,6 +9,12 @@ const fileList = document.getElementById('fileList');
 let files = [];
 const base_url = window.location.origin;
 
+
+document.getElementById("create_memo").addEventListener('click', () => {
+    let referrerQueryString = document.referrer.slice(document.referrer.indexOf("?"));
+    localStorage.setItem('refqstr', referrerQueryString);
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     let reportApiUrl = window.location.origin.replace(':5000', ':44364');
 
@@ -63,7 +69,7 @@ addMemoForm.addEventListener('submit', async (event) => {
             method: 'POST',
             body: formData,
         }).then(() =>
-            window.location.replace(window.location.origin + '/?sn=in&p=1')
+            window.location.replace(window.location.origin + localStorage.getItem('refqstr') ?? '/?sn=in&p=1')   
         );  
     }    
 });
