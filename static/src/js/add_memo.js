@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             let files =  [new File([blob], localStorage.getItem('filename').split('\\')[1], {type:"application/pdf", lastModified:new Date().getTime()}),];
             addFiles(files);
         });
+
+        localStorage.removeItem('filename');
     }
     updateSelectedExecutors();
 });
