@@ -63,7 +63,7 @@ addMemoForm.addEventListener('submit', async (event) => {
             method: 'POST',
             body: formData,
         }).then(() =>
-            window.location.replace(document.referrer)
+            window.location.replace(window.location.origin)
         );  
     }    
 });

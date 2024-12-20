@@ -33,7 +33,7 @@ createMemoForm.addEventListener('submit', async (event) => {
                 return response.text();
             }).then((text) => {
                 localStorage.setItem('filename', text);
-                window.location.replace(document.referrer);
+                window.location.replace(window.location.origin + '/add_memo');
             });
         })
         .catch(console.error);
