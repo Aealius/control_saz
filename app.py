@@ -97,7 +97,6 @@ class CreateMemoDTO():
     headPatronymic:str
     headPosition:str
     headSignaturePath:str
-    savePath:str
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -916,9 +915,8 @@ def getCurrentUserWithHead():
     if (not depHead):
         return 'Данные начальника отдела не найдены', 404
     
-    data = CreateMemoDTO(user.department, user.full_department, depHead.name, depHead.surname, depHead.patronymic, depHead.position, depHead.signature_path, "")
+    data = CreateMemoDTO(user.department, user.full_department, depHead.name, depHead.surname, depHead.patronymic, depHead.position, depHead.signature_path)
     
-    data.savePath = "D:\\MB\\1\\control_saz\\uploads\\Test\\1.pdf" # поменять
     data.headSignaturePath = "C:\\Users\\asup-maxim\\Downloads\\11.jpg" # убрать
     
     return jsonify(data)
