@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }).then((response) =>{
             return response.blob();
         }).then(blob => {
-            let files =  [new File([blob], localStorage.getItem('filename'), {type:"application/pdf", lastModified:new Date().getTime()}),];
+            let files =  [new File([blob], localStorage.getItem('filename').split('\\')[1], {type:"application/pdf", lastModified:new Date().getTime()}),];
             addFiles(files);
             localStorage.removeItem('filename');
         });
