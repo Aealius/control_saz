@@ -29,12 +29,13 @@
     <div id="editorjs"></div>
 
     <br/>
-    <button type="submit" class="btn btn-success">Сформировать</button>
-    
+    <div class="d-flex">
+        <button type="submit" class="btn btn-success">Сформировать</button>
+        <button onclick="window.location.replace(document.referrer)" class="btn btn-light">Отмена</button>
+    </div>
 
 </form>
-<button onclick="setTaskId()" class="btn btn-light">Отмена</button>
-<a title="служебная" class="long-href" href="/uploads/Test/best-test.pdf" target="_blank">служебная</a>
+
     
 <script src="{{url_for('static', filename = 'src/js/create_memo.js') }}"></script>
 
