@@ -200,12 +200,12 @@
             <td>
                 <div>
                     {% if task.status_id == status.reviewed.value %}
-                    <span class="badge badge-success">Ознакомлен</span>
+                    <span class="badge badge-success">Ознакомлен : {{task.completion_confirmed_at.strftime('%d.%m.%Y %H:%M')}}</span>
                     {% elif task.status_id == status.complete_delayed.value %}
                     <span class="badge badge-warning">Выполнено, просрочено на ({{ (task.completion_confirmed_at.date()
                         - task.deadline_for_check).days }} дн.)</span>
                     {% elif task.status_id == status.completed.value %}
-                    <span class="badge badge-success">Выполнено</span>
+                    <span class="badge badge-success">Выполнено : {{task.completion_confirmed_at.strftime('%d.%m.%Y %H:%M')}}</span>
                     {% elif task.status_id == status.invalid.value %}
                     <span class="badge badge-secondary">Недействительно</span>
                     {% elif task.status_id == status.at_check.value %}
