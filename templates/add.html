@@ -7,7 +7,7 @@
     <div id="selectpicker" class="form-group">
         <label for="executor">Исполнитель:</label>
         <select class="selectpicker show-tick form-control" id="executor" name="executor" data-live-search="true"
-            data-actions-box="true" multiple onchange="updateSelectedExecutors()">
+            data-actions-box="true" multiple>
             {% for executor in executors %}
             {% if executor.id != current_user.id %} <!--сокрытие бухгалтерии ото всех, кроме главного бухгалтера-->
             <option value="{{ executor.id }}">{{ executor.department }}</option>
@@ -67,6 +67,7 @@
 <script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
 <script src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
 <script src="{{url_for('static', filename = 'src/js/add.js') }}"></script>
+<script src="{{url_for('static', filename = 'src/js/multipleExecutorSelect.js') }}"></script>
 
 <style>
     .small-close {

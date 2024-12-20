@@ -11,7 +11,7 @@
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
         <select class="selectpicker show-tick form-control" id="executor" name="executor" data-live-search="true"
-            data-actions-box="true" multiple onchange="updateSelectedExecutors()">
+            data-actions-box="true" multiple>
             {% for executor in executors %}
             {% if executor.id != current_user.id %}
             <option value="{{ executor.id }}">{{ executor.department }}</option>
@@ -44,10 +44,10 @@
     <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
 
-
-<script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
-<script src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
-<script src="{{url_for('static', filename = 'src/js/add_memo.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename = 'src/js/add_memo.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename = 'src/js/multipleExecutorSelect.js')}}"></script>
 
 <style>
     .small-close {
