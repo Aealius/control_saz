@@ -10,8 +10,10 @@ let files = [];
 const base_url = window.location.origin;
 
 document.addEventListener('DOMContentLoaded', async () => {
+    let reportApiUrl = window.location.origin.replace(':5000', ':44364');
+
     if(localStorage.getItem('filename') != null) {
-        await fetch('https://localhost:44365' + `/Report?filename=${localStorage.getItem('filename')}`, 
+        await fetch(reportApiUrl + `/MemoReport?filename=${localStorage.getItem('filename')}`, 
         {
             method: 'GET',
         }).then((response) =>{
