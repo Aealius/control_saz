@@ -256,7 +256,7 @@
                 <a href="{{ url_for('complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
                 {% endif %}
 
-                {% if task.for_review and current_user.id == task.executor_id %}
+                {% if task.for_review and current_user.id == task.executor_id and task.status_id != status.reviewed.value%}
                 <a href="{{ url_for('review', task_id=task.id) }}" class="btn btn-secondary btn-sm" data-toggle="modal"
                     data-target="#reviewModal-{{ task.id }}">
                     Ознакомиться
