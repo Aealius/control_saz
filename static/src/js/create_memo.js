@@ -31,7 +31,7 @@ createMemoForm.addEventListener('submit', async (event) => {
             }).then((response) =>{
                 console.log(response)
             }).then(() => {
-                localStorage.setItem('filename', 'Reports\\Служебная записка №100-1 от 20-12-2024.pdf');
+                localStorage.setItem('filename', 'Служебная записка №100-1 от 20-12-2024.pdf');
                 window.location.replace(document.referrer);
             });
         })
