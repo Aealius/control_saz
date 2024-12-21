@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<h3>Создание служебной записки</h3>
+<div> Пожалуйста, заполните нижеприведенные поля для того, чтобы можно было сформировать необходимый документ</div>
+<br/>
+<form method="post" id="createMemoForm">
+    <div class="form-group">
+        <label for="to">Кому (должность, на новой строке ФИО)</label>
+        <textarea name="to" id="to" class="form-control"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="docNumber">Номер</label>
+        <div class="input-group flex-nowrap">
+            <span style="margin-left:-2px;" class="input-group-text" id="numberText">№</span>
+            <input type="text" id="docNumber" name="docNumber" class="form-control" aria-describedby="numberText">
+        </div>
+        
+    </div>
+
+    <div class="form-group">
+        <label for="theme">Тема</label>
+        <input type="text" id="theme" name="theme" class="form-control">
+    </div>
+
+    <label for="editorjs">Текст</label>
+    <div id="editorjs"></div>
+
+    <br/>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <button type="submit" class="btn btn-success">Сформировать</button>
+            <button onclick="window.location.replace(document.referrer)" class="btn btn-light">Отмена</button>
+        </div>
+        <!--<button id="exdocref">Пример служебной записки</button>-->
+    </div>
+    
+
+</form>
+
+    
+<script src="{{url_for('static', filename = 'src/js/create_memo.js') }}"></script>
+
+<!-- Импорт библиотеки для текстового редактора -->
+<!-- Библиотеки вставлены в файлы, чтобы они могли работать без интернета -->
+<script src="{{url_for('static', filename = 'src/myLibs/myUnderline.js') }}"></script> <!-- Underline -->
+<script src="{{url_for('static', filename = 'src/myLibs/edjsHTML.js') }}"></script> <!-- HTML convert -->
+
+<!-- Load Editor.js's Core -->
+<script src="{{url_for('static', filename = 'src/myLibs/myEditorjs.js') }}"></script>
+<!-- Инициализация происходит здесь, ибо в js файле не работает -->
+<script>
+    var editor = new EditorJS({
+    holder: 'editorjs',
+    inlineToolbar: ['bold', 'italic', 'underline'],
+    tools: {
+        underline: Underline,
+      },
+    });
+
+    const edjsParser = edjsHTML();
+    async function getHtmlFromTextEditor() {
+        var test = await editor.save().then((outputData) => {
+            let html = edjsParser.parse(outputData);
+            return html;
+          }).catch((error) => {
+            console.log('Saving failed: ', error)
+          });
+
+        return test;
+    }
+</script>
+
+{%endblock%}

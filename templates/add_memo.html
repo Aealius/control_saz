@@ -1,13 +1,19 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Служебная записка</h1>
+<div class="d-flex align-items-center">
+    <h1 class="mr-2">Служебная записка</h1>
+    {%if not current_user.is_admin%}
+    <a href="{{ url_for('create_memo') }}"><button id="create_memo" class="btn shadow-sm">Сформировать</button></a>
+    {%endif%}
+</div>
+
 
 <form id="addMemoForm" method="POST" enctype="multipart/form-data">
     <div class="form-group">
         <label for="executor">Исполнитель:</label>
         <select class="selectpicker show-tick form-control" id="executor" name="executor" data-live-search="true"
-            data-actions-box="true" multiple onchange="updateSelectedExecutors()">
+            data-actions-box="true" multiple>
             {% for executor in executors %}
             {% if executor.id != current_user.id %}
             <option value="{{ executor.id }}">{{ executor.department }}</option>
@@ -19,7 +25,8 @@
     {% if current_user.is_deputy and current_user.login == '8'%}
     <div id="selectpicker2" class="form-group">
         <label id="employeeLabel" for="employee">Сотрудник:</label>
-        <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true" data-actions-box="true">
+        <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true"
+            data-actions-box="true">
             <option value=""></option>
         </select>
     </div>
@@ -36,15 +43,13 @@
     </div>
     <ul id="fileList"></ul>
 
-    <input type="hidden" id="sn" name="sn" value="">
-    <input type="hidden" id="p" name="p" value="">
     <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
 
-
-<script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
-<script src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
-<script src="{{url_for('static', filename = 'src/js/add_memo.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename = 'src/js/add_memo.js')}}"></script>
+<script type="text/javascript" src="{{url_for('static', filename = 'src/js/multipleExecutorSelect.js')}}"></script>
 
 <style>
     .small-close {

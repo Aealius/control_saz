@@ -27,9 +27,9 @@ function updateFileList() {
         const li = document.createElement('li');
         li.className = 'file-item mb-1';
         li.innerHTML = `
-            <div class="card justify-content-between flex-row p-1" style="box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+            <div class="card justify-content-between flex-row p-1" style="box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);"> 
                 <div class="ml-3">
-                    <span class="file-name">${file.name}</span>
+                    <a href="${URL.createObjectURL(file)}" target="_blank" class="file-name">${file.name}</a>
                     <span class="file-size ml-2">${formatFileSize(file.size)}</span>
                 </div>
                 <button class="delete-btn" data-index="${index}">&times</button>

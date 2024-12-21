@@ -25,7 +25,8 @@
 </div>
 
 <!--модалка на фильтрацию-->
-<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true"> 
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -41,7 +42,8 @@
                         <select class="form-control" id="executorFilter" name="executor">
                             <option value="">Все</option>
                             {% for executor in executors %}
-                                <option value="{{ executor.department }}" {% if executor.department == request.args.get('executor') %}selected{% endif %}>{{ executor.department }}</option>
+                            <option value="{{ executor.department }}" {% if executor.department==request.args.get('executor') %}selected{% endif%}>
+                                {{ executor.department }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -50,17 +52,20 @@
                         <select class="form-control" id="creatorFilter" name="creator">
                             <option value="">Все</option>
                             {% for executor in executors %}
-                                <option value="{{ executor.department }}" {% if executor.department == request.args.get('creator') %}selected{% endif %}>{{ executor.department }}</option>
+                            <option value="{{ executor.department }}" {% if executor.department==request.args.get('creator') %}selected{% endif %}>
+                                {{executor.department}}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="monthFilter">Месяц <span class="text-muted">(формат - "год-месяц")</span>: </label>
-                        <input type="month" class="form-control" id="monthFilter" name="month" {% if request.args.get('month') %}value="{{ request.args.get('month') }}"{% endif %}>
+                        <input type="month" class="form-control" id="monthFilter" name="month" {% if
+                            request.args.get('month') %}value="{{ request.args.get('month') }}" {% endif %}>
                     </div>
                     <div class="form-group">
                         <label for="dateFilter">Дата создания:</label>
-                        <input type="date" class="form-control" id="dateFilter" name="date" value="{{ request.args.get('date') }}">
+                        <input type="date" class="form-control" id="dateFilter" name="date"
+                            value="{{ request.args.get('date') }}">
                     </div>
                     <div class="mb-4">
                         <div class="form-group">
@@ -68,16 +73,18 @@
                             <select id="statusFilter" name="status" class="form-control">
                                 <option value="">Все</option>
                                 {%for value, inner_text in status_dict.items()%}
-                                <option value="{{value}}" {% if value == request.args.get('status') %}selected{% endif %}>{{inner_text}}</option>
+                                <option value="{{value}}" {% if value==request.args.get('status') %}selected{% endif %}>
+                                    {{inner_text}}</option>
                                 {%endfor%}
                             </select>
                         </div>
                         <input type="hidden" id="hiddenSender" name="sn" value="">
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
-                        <button id="submitFilterFormButton" type="submit" class="btn btn-primary">Применить фильтр</button>
+                        <button id="submitFilterFormButton" type="submit" class="btn btn-primary">Применить
+                            фильтр</button>
                         <a id="clearFilterHref" class="text-muted">Очистить фильтр</a>
-                    </div>   
+                    </div>
                 </form>
             </div>
         </div>
@@ -85,7 +92,8 @@
 </div>
 
 <!--модалка на пересылку-->
-<div class="modal fade" id="resendModal" tabindex="-1" role="dialog" aria-labelledby="resendModalLabel" aria-hidden="true"> 
+<div class="modal fade" id="resendModal" tabindex="-1" role="dialog" aria-labelledby="resendModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -97,8 +105,10 @@
             <div class="modal-body" id="resendForm">
                 <div class="form-group">
                     <label for="executorResend">Исполнитель:</label>
-                    <select onchange="updateSelectedExecutors()" class="selectpicker show-tick form-control" id="executorResend" name="executorResend" data-size="10" data-live-search="true" data-actions-box="true" multiple>
-                        {% for executor in executors %}
+                    <select onchange="updateSelectedExecutors()" class="selectpicker show-tick form-control"
+                        id="executorResend" name="executorResend" data-size="10" data-live-search="true"
+                        data-actions-box="true" multiple>
+                        {% for executor in executors_for_resend %}
                         {% if executor.id != current_user.id %}
                         <option value="{{ executor.id }}">{{ executor.department }}</option>
                         {%endif%}
@@ -108,7 +118,8 @@
                 </div>
                 <div style="display: none;" id="selectpicker2" class="form-group">
                     <label id="employeeLabel" for="employee">Сотрудник:</label>
-                    <select class="selectpicker show-tick form-control" id="employee" name="employee" data-live-search="true"></select>
+                    <select class="selectpicker show-tick form-control" id="employee" name="employee"
+                        data-live-search="true"></select>
                 </div>
                 <button onclick="resendTask()" id="submitFilterFormButton" class="btn btn-primary">Переслать</button>
             </div>
@@ -141,11 +152,13 @@
             <td>{{ task.executor.department}}
                 {% if task.employeeId %}
                 <div class="text-muted font-italic" style="font-size:smaller">
-                    {{ "Отв. лицо: " + executive.query.filter_by(id = task.employeeId).first().surname + ' ' + executive.query.filter_by(id = task.employeeId).first().name[0] + "." + executive.query.filter_by(id = task.employeeId).first().patronymic[0] + "." }}
-                </div>     
+                    {{ "Отв. лицо: " + executive.query.filter_by(id = task.employeeId).first().surname + ' ' +
+                    executive.query.filter_by(id = task.employeeId).first().name[0] + "." + executive.query.filter_by(id
+                    = task.employeeId).first().patronymic[0] + "." }}
+                </div>
                 {%endif%}
             </td>
-            <td>{{ creator_department.get(task.creator_id) }}</td>
+            <td>{{ task.creator.department }}</td>
             <td>
                 {% if task.date_created %}
                 {% if task.date_created.time() == time.fromisoformat('00:00:00') %}
@@ -158,17 +171,19 @@
                 {% endif %}
 
                 {% if task.edit_datetime %}
-                    <div class="text-muted font-italic" style="font-size:smaller">Отредактировано: {{task.edit_datetime.strftime('%d.%m.%Y %H:%M')}}</div>
+                <div class="text-muted font-italic" style="font-size:smaller">Отредактировано:
+                    {{task.edit_datetime.strftime('%d.%m.%Y %H:%M')}}</div>
                 {%endif%}
             </td>
             <td>
                 {% if task.is_бессрочно %}
                 <div>Бессрочно</div>
-                {% elif task.deadline %} 
+                {% elif task.deadline %}
                 <div>{{ task.deadline.strftime('%d.%m.%Y') }}</div>
                 {% if task.extended_deadline %}
-                <div class="text-muted font-italic" style="font-size:smaller">Продлена до: {{ task.extended_deadline.strftime('%d.%m.%Y') }}</div>
-{% endif %}
+                <div class="text-muted font-italic" style="font-size:smaller">Продлена до: {{
+                    task.extended_deadline.strftime('%d.%m.%Y') }}</div>
+                {% endif %}
                 {% else %}
                 -
                 {% endif %}
@@ -176,36 +191,21 @@
             <td>{{ task.description }}
                 {% if task.creator_file %}
                 {%for file in task.creator_files%}
-                <div><a title="{{ unquote(file.split('/')[-1]) }}" class="long-href" href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
-                        download="{{ unquote(file.split('/')[-1]) }}">{{ unquote(file.split('/')[-1]) }}</a></div>
+                <div><a title="{{ unquote(file.split('/')[-1]) }}" class="long-href"
+                        href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">{{
+                        unquote(file.split('/')[-1]) }}</a></div>
                 {% endfor %}
                 {% endif %}
             </td>
             <td>
-                <!--<div> старые статусы
-                {% if task.completion_confirmed and task.for_review %}
-                <span class="badge badge-success">Ознакомлен</span>
-                {% elif task.completion_confirmed and task.deadline_for_check < date.today() %}
-                <span class="badge badge-warning">Выполнено, просрочено на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</span>
-                {% elif task.completion_confirmed %}
-                <span class="badge badge-success">Выполнено</span>
-                {% elif not task.is_valid %}
-                <span class="badge badge-secondary">Недействительно</span>
-                {% elif task.completion_note and not task.completion_confirmed %}
-                <span class="badge badge-info">На проверке</span>
-                {% elif task.is_overdue() %}
-                <span class="badge badge-danger">Просрочено</span>
-                {% else %}
-                <span class="badge badge-warning">В работе</span>
-                {% endif %}
-                </div>-->
                 <div>
                     {% if task.status_id == status.reviewed.value %}
-                    <span class="badge badge-success">Ознакомлен</span>
+                    <span class="badge badge-success">Ознакомлен : {{task.completion_confirmed_at.strftime('%d.%m.%Y %H:%M')}}</span>
                     {% elif task.status_id == status.complete_delayed.value %}
-                    <span class="badge badge-warning">Выполнено, просрочено на ({{ (task.completion_confirmed_at.date() - task.deadline_for_check).days }} дн.)</span>
+                    <span class="badge badge-warning">Выполнено, просрочено на ({{ (task.completion_confirmed_at.date()
+                        - task.deadline_for_check).days }} дн.)</span>
                     {% elif task.status_id == status.completed.value %}
-                    <span class="badge badge-success">Выполнено</span>
+                    <span class="badge badge-success">Выполнено : {{task.completion_confirmed_at.strftime('%d.%m.%Y %H:%M')}}</span>
                     {% elif task.status_id == status.invalid.value %}
                     <span class="badge badge-secondary">Недействительно</span>
                     {% elif task.status_id == status.at_check.value %}
@@ -228,35 +228,38 @@
                 <!--кнопки редактирования и удаления-->
                 {% if current_user.is_admin or task.creator_id == current_user.id %}
                 <div class="btn-group" role="group">
-                    <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm" data-toggle="tooltip"
-                        title="Редактировать">
+                    <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm"
+                        data-toggle="tooltip" title="Редактировать">
                         <i class="fas fa-pencil-alt"></i>
                     </a>
                     <form method="POST" action="{{ url_for('delete', task_id=task.id) }}"
-                        onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');"
-                        class="d-inline-block">
+                        onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');" class="d-inline-block">
                         <button type="submit" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Удалить">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </form>
                 </div>
                 {% endif %}
-                {% if current_user.is_deputy and not task.for_review and task.executor_id == current_user.id and (task.status_id == status.delayed.value or task.status_id == status.in_work.value)%}
-                <div class="d-inline-block"> 
-                    <button onclick="setTaskId('{{task.id}}')" data-toggle="modal" data-target="#resendModal" class="btn btn-secondary btn-sm" title="Переслать">
+                {% if current_user.is_deputy and not task.for_review and task.executor_id == current_user.id and
+                (task.status_id == status.delayed.value or task.status_id == status.in_work.value)%}
+                <div class="d-inline-block">
+                    <button onclick="setTaskId('{{task.id}}')" data-toggle="modal" data-target="#resendModal"
+                        class="btn btn-secondary btn-sm" title="Переслать">
                         <i class="fa-solid fa-share"></i>
                     </button>
                 </div>
                 {% endif %}
 
-                {% if not task.completion_confirmed %}
-                {% if current_user.id == task.executor_id and task.is_valid and not task.completion_note and not task.for_review %}
+                {% if task.status_id != status.completed.value and task.status_id != status.complete_delayed.value and
+                    task.status_id != status.reviewed.value%}
+                {% if current_user.id == task.executor_id and not task.completion_note and not
+                task.for_review %}
                 <a href="{{ url_for('complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
                 {% endif %}
 
-                {% if task.for_review and current_user.id == task.executor_id %}
-                <a href="{{ url_for('review', task_id=task.id) }}" class="btn btn-secondary btn-sm"
-                    data-toggle="modal" data-target="#reviewModal-{{ task.id }}">
+                {% if task.for_review and current_user.id == task.executor_id and task.status_id != status.reviewed.value%}
+                <a href="{{ url_for('review', task_id=task.id) }}" class="btn btn-secondary btn-sm" data-toggle="modal"
+                    data-target="#reviewModal-{{ task.id }}">
                     Ознакомиться
                 </a>
                 <div class="modal fade" id="reviewModal-{{ task.id }}" tabindex="-1" role="dialog"
@@ -293,7 +296,8 @@
                 {% endif %}
                 {% endif %}
 
-                {% if current_user.is_admin and task.creator_id == current_user.id and task.completion_note and not task.completion_confirmed %} 
+                {% if current_user.is_admin and task.creator_id == current_user.id and task.completion_note and not
+                task.status_id == status.completed.value %}
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
                     Контроль выполнения
@@ -317,17 +321,20 @@
                                 {% if task.attached_file %}
                                 <p>Прикрепленный файл: <a
                                         href="{{ url_for('uploaded_file', filename=task.attached_file) }}"
-                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{ unquote(task.attached_file.split('/')[-1]) }} </a>
+                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{
+                                        unquote(task.attached_file.split('/')[-1]) }} </a>
                                 </p>
                                 {% endif %}
                                 <div class="form-group">
                                     <label for="admin_note">Заметка администратора:</label>
-                                    <textarea class ="form-control" type="text" id="admin_note_{{ task.id }}" name="admin_note_{{ task.id }}"></textarea>
+                                    <textarea class="form-control" type="text" id="admin_note_{{ task.id }}"
+                                        name="admin_note_{{ task.id }}"></textarea>
                                 </div>
                                 <div class="w-50 mx-auto d-flex justify-content-between">
                                     <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'admin')" type="submit"
                                         class="btn btn-success">Подтвердить</button>
-                                    <button onclick="taskConfirmation('{{task.id}}', 'reject', 'admin')" class="btn btn-danger">Отклонить</button>
+                                    <button onclick="taskConfirmation('{{task.id}}', 'reject', 'admin')"
+                                        class="btn btn-danger">Отклонить</button>
                                 </div>
                             </div>
                         </div>
@@ -335,7 +342,8 @@
                 </div>
                 {% endif %}
 
-                {% if current_user.is_deputy and task.creator_id == current_user.id and task.completion_note and not task.completion_confirmed %} 
+                {% if current_user.is_deputy and task.creator_id == current_user.id and task.completion_note and not
+                task.status_id == status.completed.value %}
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
                     Контроль выполнения
@@ -359,19 +367,23 @@
                                 {% if task.attached_file %}
                                 <div>Прикрепленный файл: <a
                                         href="{{ url_for('uploaded_file', filename=task.attached_file) }}"
-                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{ unquote(task.attached_file.split('/')[-1]) }} </a>
+                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{
+                                        unquote(task.attached_file.split('/')[-1]) }} </a>
                                 </div>
                                 {% endif %}
                                 <div>
                                     <label for="deputy_note">Заметка администратора:</label>
-                                    <textarea type="text" class ="form-control mb-3" id="deputy_note_{{ task.id }}" name="deputy_note_{{ task.id }}"></textarea>
+                                    <textarea type="text" class="form-control mb-3" id="deputy_note_{{ task.id }}"
+                                        name="deputy_note_{{ task.id }}"></textarea>
                                 </div>
-                                <input type="hidden" value=""> 
-                                <input type="hidden" value=""> 
+                                <input type="hidden" value="">
+                                <input type="hidden" value="">
                                 <div class="w-50 mx-auto d-flex justify-content-between">
-                                    <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'deputy')" class="btn btn-success">Подтвердить</button>
-                                    <button onclick="taskConfirmation('{{task.id}}', 'reject', 'deputy')" class="btn btn-danger">Отклонить</button>
-                                </div>      
+                                    <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'deputy')"
+                                        class="btn btn-success">Подтвердить</button>
+                                    <button onclick="taskConfirmation('{{task.id}}', 'reject', 'deputy')"
+                                        class="btn btn-danger">Отклонить</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -403,22 +415,22 @@
     {% if task_count != 0 %}
     <nav aria-label="paging">
         <ul class="pagination justify-content-end">
-            
-          <li class="page-item {% if page == 1 %} disabled {% endif %}">
-            <a class="page-link" href="{{url_for('index', p=page-1, **filter_params_dict)}}">Предыдущая</a>
-          </li>
-          {% for page_number in tasks.iter_pages(right_current=2)%}
-          {% if page_number == None %}
-          <li class="page-item disabled"><a class="page-link">...</a></li>
-          {%elif page_number == page%}
-          <li class="page-item active"><a class="page-link">{{page_number}}</a></li>
-          {%else %}
-          <li class="page-item"><a class="page-link" href="{{url_for('index', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
-          {% endif %}
-          {% endfor %}
-          <li class="page-item {% if page == tasks.pages %}disabled{% endif %}">
-            <a class="page-link" href="{{url_for('index', p=page+1, **filter_params_dict)}}">Следующая</a>
-          </li>
+            <li class="page-item {% if page == 1 %} disabled {% endif %}">
+                <a class="page-link" href="{{url_for('index', p=page-1, **filter_params_dict)}}">Предыдущая</a>
+            </li>
+            {% for page_number in tasks.iter_pages(right_current=2)%}
+            {% if page_number == None %}
+            <li class="page-item disabled"><a class="page-link">...</a></li>
+            {%elif page_number == page%}
+            <li class="page-item active"><a class="page-link">{{page_number}}</a></li>
+            {%else %}
+            <li class="page-item"><a class="page-link"
+                    href="{{url_for('index', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
+            {% endif %}
+            {% endfor %}
+            <li class="page-item {% if page == tasks.pages %}disabled{% endif %}">
+                <a class="page-link" href="{{url_for('index', p=page+1, **filter_params_dict)}}">Следующая</a>
+            </li>
         </ul>
     </nav>
     {%endif%}

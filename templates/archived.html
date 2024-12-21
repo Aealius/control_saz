@@ -98,7 +98,14 @@
     <tbody>
         {% for task in data %}
         <tr>
-            <td>{{task.executor.department}}</td>
+            <td>
+                {{task.executor.department}}
+                {% if task.employeeId %}
+                <div class="text-muted font-italic" style="font-size:smaller">
+                    {{ "Отв. лицо: " + executive.query.filter_by(id = task.employeeId).first().surname + ' ' + executive.query.filter_by(id = task.employeeId).first().name[0] + "." + executive.query.filter_by(id = task.employeeId).first().patronymic[0] + "." }}
+                </div>     
+                {%endif%}
+            </td>
 
             <td>{{task.creator.department}}</td>
 
