@@ -54,7 +54,7 @@
        </div>
         <div class="form-group form-check">
             <input type="checkbox" class="form-check-input" id="is_valid" name="is_valid"
-                   {% if task.is_valid %}checked{% endif %}>
+                   {% if task.status_id != status.invalid.value %}checked{% endif %}>
             <label class="form-check-label" for="is_valid">Действителен</label>
         </div>
         <div class="form-group form-check {%if not current_user.is_admin and not current_user.is_deputy%}hidden{%endif%}">

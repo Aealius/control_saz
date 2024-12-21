@@ -250,8 +250,9 @@
                 </div>
                 {% endif %}
 
-                {% if not task.status_id == status.completed.value %}
-                {% if current_user.id == task.executor_id and task.is_valid and not task.completion_note and not
+                {% if task.status_id != status.completed.value and task.status_id != status.complete_delayed.value and
+                    task.status_id != status.reviewed.value%}
+                {% if current_user.id == task.executor_id and not task.completion_note and not
                 task.for_review %}
                 <a href="{{ url_for('complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
                 {% endif %}
@@ -285,8 +286,7 @@
                                 {%endfor%}
                                 {% endif %}
                                 <div class="mt-3">
-                                    <button onclick="taskReview('{{task.id}}')"
-                                        class="btn btn-primary">Ознакомлен</button>
+                                    <button onclick="taskReview('{{task.id}}')" class="btn btn-primary">Ознакомлен</button>
                                 </div>
                             </div>
 

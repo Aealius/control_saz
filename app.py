@@ -510,6 +510,7 @@ def edit(task_id):
                     return render_template('edit.html', task=task,
                                                         executors=executors,
                                                         current_user = current_user,
+                                                        status = Status,
                                                         datetime=datetime)
       
         if task.deadline:            
