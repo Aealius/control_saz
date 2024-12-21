@@ -81,6 +81,7 @@ class User(UserMixin, db.Model):
     is_deputy = db.Column(db.Boolean, default=False)  # Новый атрибут для заместителя
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
     when_deleted = db.Column(db.DateTime, nullable=True)
+    head = db.relationship('Head', primaryjoin="User.id == Head.user_id", backref=db.backref('department_head', lazy=True), uselist=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -396,7 +397,7 @@ def add_memo():
         flash('Служебная записка успешно отправлена!', 'success')
         return '', 200
 
-    return render_template('add_memo.html', executors=executors)  #  Передаем executors в шаблон
+    return render_template('add_memo.html', executors=executors, current_user = current_user)  #  Передаем executors в шаблон
 
 @app.route('/resend/<int:task_id>', methods=['POST'])
 @login_required
@@ -917,7 +918,7 @@ def getCurrentUserWithHead():
     
     data = CreateMemoDTO(user.department, user.full_department, depHead.name, depHead.surname, depHead.patronymic, depHead.position, depHead.signature_path)
     
-    data.headSignaturePath = "C:\\Users\\asup-maxim\\Downloads\\11.jpg" # убрать
+    data.headSignaturePath = current_user.head.signature_path
     
     return jsonify(data)
 

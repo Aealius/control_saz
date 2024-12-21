@@ -3,7 +3,9 @@
 {% block content %}
 <div class="d-flex align-items-center">
     <h1 class="mr-2">Служебная записка</h1>
+    {%if not current_user.is_admin%}
     <a href="{{ url_for('create_memo') }}"><button id="create_memo" class="btn shadow-sm">Сформировать</button></a>
+    {%endif%}
 </div>
 
 
