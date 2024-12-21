@@ -10,10 +10,12 @@ let files = [];
 const base_url = window.location.origin;
 
 
-document.getElementById("create_memo").addEventListener('click', () => {
-    let referrerQueryString = document.referrer.slice(document.referrer.indexOf("?"));
-    localStorage.setItem('refqstr', referrerQueryString);
-});
+if (document.getElementById('create_memo') != null) {
+    document.getElementById("create_memo").addEventListener('click', () => {
+        let referrerQueryString = document.referrer.slice(document.referrer.indexOf("?"));
+        localStorage.setItem('refqstr', referrerQueryString);
+    });
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     let reportApiUrl = window.location.origin.replace(':5000', ':44364');

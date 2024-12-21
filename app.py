@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-from flask import (Flask, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
+from flask import (Flask, make_response, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, time
 from flask_bootstrap import Bootstrap
@@ -81,7 +81,7 @@ class User(UserMixin, db.Model):
     is_deputy = db.Column(db.Boolean, default=False)  # Новый атрибут для заместителя
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
     when_deleted = db.Column(db.DateTime, nullable=True)
-    head = db.relationship('Head', primaryjoin="User.id == Head.user_id", backref=db.backref('department_head', lazy=True), uselist=False)
+    head = db.relationship('Head', primaryjoin="User.id == Head.user_id", backref=db.backref('department_head', lazy=True), uselist=False, viewonly=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -910,11 +910,11 @@ def getCurrentUser():
 def getCurrentUserWithHead():
     user = User.query.filter_by(id = current_user.id).first()
     if (not user):
-        return 'Пользователь с данным id не найден', 404
+        return make_response(jsonify('Пользователь с данным id не найден'), 404)
 
     depHead = Head.query.filter_by(user_id = current_user.id).first()
     if (not depHead):
-        return 'Данные начальника отдела не найдены', 404
+        return make_response(jsonify('Данные начальника отдела не найдены'), 404)
     
     data = CreateMemoDTO(user.department, user.full_department, depHead.name, depHead.surname, depHead.patronymic, depHead.position, depHead.signature_path)
     
