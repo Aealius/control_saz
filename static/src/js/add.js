@@ -59,7 +59,7 @@ document.getElementById('description').addEventListener('change', (event) => {
 });
 
 // Функция из файла fileUpload.js для добавления addEventListener к инпуту
-addUploadEventListeners(fileInput, dropZone)
+addUploadEventListeners(fileInput, dropZone);
 
 addTaskForm.addEventListener('submit', async (event) => {
     event.preventDefault();

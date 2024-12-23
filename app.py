@@ -217,7 +217,9 @@ def index():
         else:
             task.deadline_for_check = date(9999,12,31)
             
-        task.creator_files = task.creator_file.split(';')
+        task.creator_files = task.creator_file.rstrip(';').split(';')
+        if (task.attached_file):
+            task.attached_files = task.attached_file.rstrip(';').split(';')
     
 
     executors =  User.query.filter(User.is_deleted == False).all()
@@ -364,11 +366,10 @@ def add_memo():
         
         creator_file_path = ''
         # Сохраняем файл только один раз
-        for file in files:
-            if file and file.filename != '':
+        if files and len(files) > 0:
+            for file in files:
                 tmp_file_path = ''
                 filename = file.filename  
-                filename = file.filename
                 file.save(os.path.join(memo_uploads_folder, filename))
                 tmp_file_path = os.path.join(task_id, 'creator', filename)
                 tmp_file_path = tmp_file_path.replace('\\', '/') # Запись пути к файлу в базу
@@ -430,7 +431,7 @@ def resend(task_id):
         creator_file_path = ''
         uploadFolder = os.getcwd() + '/' + app.config['UPLOAD_FOLDER'] + '/'
 
-        file_path_arr = task.creator_file.split(';')
+        file_path_arr = task.creator_file.rstrip(';').split(';')
         # Сохраняем файл только один раз
         for filePath in file_path_arr:
             if filePath != '':
@@ -578,21 +579,23 @@ def complete(task_id):
 
     if request.method == 'POST':
 
-        file = request.files.get('file')  # Получаем файл, если он есть
-
-        if file and file.filename != '':
-            filename = file.filename  # Оригинальное имя
+        files = request.files.getlist('files')  # Получаем файл, если он есть
+        executor_file_path = ''
+        if files and len(files) > 0:
+            for file in files:
+                tmp_file_path = ''
+                filename = file.filename  # Оригинальное имя
             
-            task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(task_id), 'executor')
-            os.makedirs(task_uploads_folder, exist_ok=True)
+                task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(task_id), 'executor')
+                os.makedirs(task_uploads_folder, exist_ok=True)
 
-            file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем с оригинальным именем!
+                file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем с оригинальным именем!
 
-            task.attached_file = os.path.join(str(task_id), 'executor', filename) #  Оригинальное имя в базе
-            task.attached_file = task.attached_file.replace('\\', '/')
-
-
-
+                tmp_file_path = os.path.join(str(task_id), 'executor', filename) #  Оригинальное имя в базе
+                tmp_file_path = tmp_file_path.replace('\\', '/') 
+                executor_file_path += tmp_file_path + ';'
+                
+        task.attached_file = executor_file_path
         task.completion_note = request.form.get('completion_note')
         task.status_id = Status.at_check.value
         db.session.commit()
@@ -648,7 +651,8 @@ def reject_task(task_id):
     task = Task.query.get_or_404(task_id)
 
     if task.attached_file != None and task.attached_file != "":
-        os.remove(task.attached_file)
+        for file in task.attached_file.my_str.rstrip(';').split(';'):
+            os.remove(file)
     task.attached_file = None
     task.completion_note = None
     task.admin_note = request.json.get('note')
@@ -700,7 +704,7 @@ def confirm_task_deputy(task_id):
                 os.makedirs(task_uploads_folder, exist_ok=True)
 
                 if task.attached_file:
-                    file_path_arr = task.attached_file.split(';')
+                    file_path_arr = task.attached_file.rstrip(';').split(';')
                 else:
                     file_path_arr = ''
                     
@@ -980,7 +984,7 @@ def archived():
         else:
             task.deadline_for_check = date(9999,12,31)
 
-        task.creator_files = task.creator_file.split(';')
+        task.creator_files = task.creator_file.rstrip(';').split(';')
 
     creator_department = {}
     for task in archived_data:

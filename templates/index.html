@@ -319,11 +319,15 @@
                                 <p>Задача: {{ task.description }}</p>
                                 <p>Заметка исполнителя: {{ task.completion_note }}</p>
                                 {% if task.attached_file %}
-                                <p>Прикрепленный файл: <a
-                                        href="{{ url_for('uploaded_file', filename=task.attached_file) }}"
-                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{
-                                        unquote(task.attached_file.split('/')[-1]) }} </a>
-                                </p>
+                                <div>Файлы, прикрепленные исполнителем: </div>
+                                {% for file in task.attached_files%}
+                                <div class="text-break mb-1">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
+                                        download="{{ unquote(file.split('/')[-1]) }}">
+                                        {{ unquote(file.split('/')[-1]) }}
+                                    </a>
+                                </div>
+                                {% endfor %}
                                 {% endif %}
                                 <div class="form-group">
                                     <label for="admin_note">Заметка администратора:</label>
@@ -365,11 +369,15 @@
                                 <p>Задача: {{ task.description }}</p>
                                 <p>Заметка исполнителя: {{ task.completion_note }}</p>
                                 {% if task.attached_file %}
-                                <div>Прикрепленный файл: <a
-                                        href="{{ url_for('uploaded_file', filename=task.attached_file) }}"
-                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{
-                                        unquote(task.attached_file.split('/')[-1]) }} </a>
+                                <div> Файлы, прикрепленные исполнителем:</div>
+                                {% for file in task.attached_files %}
+                                <div class="text-break mb-1">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
+                                        download="{{ unquote(file.split('/')[-1]) }}">
+                                        {{ unquote(file.split('/')[-1]) }}
+                                    </a>
                                 </div>
+                                {%endfor%}
                                 {% endif %}
                                 <div>
                                     <label for="deputy_note">Заметка администратора:</label>
