@@ -1000,7 +1000,8 @@ def archived():
                                             filter_params_dict = filter_params_dict,
                                             time=time,
                                             date=date,
-                                            datetime=datetime, 
+                                            datetime=datetime,
+                                            executive = Executive,
                                             unquote = unquote,
                                             status = Status,
                                             status_dict = STATUS_DICT)
