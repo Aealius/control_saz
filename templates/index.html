@@ -278,8 +278,7 @@
                                 {% if task.creator_file %}
                                 {% for file in task.creator_files%}
                                 <div class="text-break mb-1">
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
-                                        download="{{ unquote(file.split('/')[-1]) }}">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
                                         {{ unquote(file.split('/')[-1]) }}
                                     </a>
                                 </div>
@@ -322,8 +321,7 @@
                                 <div>Файлы, прикрепленные исполнителем: </div>
                                 {% for file in task.attached_files%}
                                 <div class="text-break mb-1">
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
-                                        download="{{ unquote(file.split('/')[-1]) }}">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
                                         {{ unquote(file.split('/')[-1]) }}
                                     </a>
                                 </div>
@@ -372,8 +370,7 @@
                                 <div> Файлы, прикрепленные исполнителем:</div>
                                 {% for file in task.attached_files %}
                                 <div class="text-break mb-1">
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
-                                        download="{{ unquote(file.split('/')[-1]) }}">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
                                         {{ unquote(file.split('/')[-1]) }}
                                     </a>
                                 </div>
