@@ -1037,6 +1037,11 @@ def internal_server_error(error):
     return render_template('500.html', error = error), 500
 
 
+@app.route('/favicon.ico', methods=['GET'])
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 def filter_data(dataset, page : int, **params):
 
     match params.get('sn'):
