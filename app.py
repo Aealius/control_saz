@@ -545,6 +545,7 @@ def edit(task_id):
 
     return render_template('edit.html', task=task,
                                         executors=executors,
+                                        status = Status,
                                         current_user = current_user,
                                         datetime=datetime)
 
