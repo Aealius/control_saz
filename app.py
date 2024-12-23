@@ -651,7 +651,7 @@ def reject_task(task_id):
     task = Task.query.get_or_404(task_id)
 
     if task.attached_file != None and task.attached_file != "":
-        for file in task.attached_file.my_str.rstrip(';').split(';'):
+        for file in task.attached_file.rstrip(';').split(';'):
             os.remove(file)
     task.attached_file = None
     task.completion_note = None
