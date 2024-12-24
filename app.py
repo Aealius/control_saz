@@ -150,6 +150,8 @@ class Task(db.Model):
     parent_task =db.relationship('Task', remote_side = id, foreign_keys=parent_task_id)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
     when_deleted = db.Column(db.DateTime, nullable=True)
+    doctype_id = db.Column(db.Integer, db.ForeignKey('doctype.id', ondelete = 'SET NULL'), nullable=True)
+    
 
     def is_overdue(self):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
@@ -190,6 +192,26 @@ class Head(db.Model):
     patronymic = db.Column(db.String(255), nullable=True)
     position = db.Column(db.String(1000), nullable=False)
     signature_path = db.Column(db.String(1000), nullable=True)
+
+
+@dataclass
+class DocType(db.Model):
+    id : int
+    type_name : str
+    parent_id : str
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    subtype_id = db.Column(db.Integer, nullable=True)
+    subtype = db.relationship("SubType", backref=db.backref("sub-type", lazy=True), foreign_keys=[subtype_id])
+    
+@dataclass
+class SubType(db.Model):
+    id: int
+    name: str
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
     
 
 @app.route('/', methods = ['GET'])
