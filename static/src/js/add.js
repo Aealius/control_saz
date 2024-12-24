@@ -58,6 +58,14 @@ document.getElementById('description').addEventListener('change', (event) => {
     }
 });
 
+document.getElementById('nm-select').addEventListener('change', (e) =>{
+    changeValue(e.target.value);
+});
+
+function changeValue(el){
+    document.getElementById('nm-number').value = el;
+}
+
 // Функция из файла fileUpload.js для добавления addEventListener к инпуту
 addUploadEventListeners(fileInput, dropZone);
 

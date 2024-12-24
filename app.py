@@ -292,6 +292,7 @@ def add():
         return redirect(url_for('index'))
 
     executors = hide_buh(current_user.login)
+    nomenclature = DocTypeSubType.query.all()
     
     if request.method == 'POST':
 
@@ -364,6 +365,7 @@ def add():
         return '', 200
 
     return render_template('add.html',  executors=executors,
+                                        nomenclature = nomenclature,
                                         current_user=current_user,
                                         datetime=datetime)
 

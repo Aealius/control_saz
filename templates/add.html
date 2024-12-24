@@ -41,7 +41,26 @@
         <label for="deadline">Срок:</label>
         <input type="date" class="form-control" id="deadline" name="deadline" value="">
     </div>
-
+    <div class="form-group">
+        <label for="description">Номенклатура:</label>
+        <div class="d-flex align-items-center w-100">
+            <div class="w-75 mr-3">
+                <select id="nm-select" class="w-100 form-control">
+                    {%for nm in nomenclature %}
+                    {%if nm.subtype%}
+                    <option value="{{nm.counter}}">{{nm.doctype.name + ' (' + nm.subtype.name + ')'}}</option>
+                    {%else%}
+                    <option value="{{nm.counter}}">{{nm.doctype.name}}</option>
+                    {%endif%}
+                    {%endfor%}
+                </select>
+            </div>
+            <div class="input-group w-25">
+                <span class="input-group-text" id="number">№</span>
+                <input value="{{nomenclature[0].counter}}" id="nm-number" type="text" class="form-control" aria-describedby="number">
+            </div>
+        </div>
+    </div>
     <div class="form-group">
         <label for="description">Описание:</label>
         <textarea class="form-control" id="description" name="description"></textarea>
