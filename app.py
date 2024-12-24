@@ -3,9 +3,11 @@ from logging.handlers import RotatingFileHandler
 import os
 from flask import (Flask, make_response, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
 from datetime import datetime, date, time
 from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
+from sqlalchemy import Column, ForeignKey, Integer, Table
 import werkzeug
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -62,6 +64,9 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+    
+class Base(DeclarativeBase):
+  pass    
 
 @dataclass(unsafe_hash=True)
 class User(UserMixin, db.Model):
@@ -150,7 +155,7 @@ class Task(db.Model):
     parent_task =db.relationship('Task', remote_side = id, foreign_keys=parent_task_id)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
     when_deleted = db.Column(db.DateTime, nullable=True)
-    doctype_id = db.Column(db.Integer, db.ForeignKey('doctype.id', ondelete = 'SET NULL'), nullable=True)
+    doctype_subtype_counter_id = db.Column(db.Integer, db.ForeignKey('doctype_subtype_counter_table.id', ondelete = 'SET NULL'), nullable=True)
     
 
     def is_overdue(self):
@@ -197,13 +202,10 @@ class Head(db.Model):
 @dataclass
 class DocType(db.Model):
     id : int
-    type_name : str
-    parent_id : str
+    name : str
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
-    subtype_id = db.Column(db.Integer, nullable=True)
-    subtype = db.relationship("SubType", backref=db.backref("sub-type", lazy=True), foreign_keys=[subtype_id])
     
 @dataclass
 class SubType(db.Model):
@@ -212,7 +214,15 @@ class SubType(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
-    
+
+doctype_subtype_counter_table = Table(
+    "doctype_subtype_counter",
+    Base.metadata,
+    Column('id', Integer, primary_key=True),
+    Column('doctype', ForeignKey('doctype.id')),
+    Column('subtype', ForeignKey('subtype.id')),
+    Column('counter', Integer)
+)
 
 @app.route('/', methods = ['GET'])
 @login_required
