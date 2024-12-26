@@ -37,19 +37,20 @@ document.getElementById('nm-select') && document.getElementById('nm-select').add
 });
 
 function changeValue(el){
-    if (el === "0"){
-        document.getElementById("nm-number-div").style.display = 'none';
-        document.getElementById('nm-number').disabled = true;
+    let numberInput = document.getElementById('nm-number');
+    if (el === "-1"){
+        numberInput.disabled = true;
+        numberInput.value = "";
     }
     else{
-        document.getElementById("nm-number-div").style.display = 'flex';
-        document.getElementById('nm-number').disabled = false;
-    }
-    let nm_arr_str = localStorage.getItem('nm');
-    let nm_arr = JSON.parse(nm_arr_str);
-    let current_doc = nm_arr[el - 1];
+        numberInput.disabled = false;
 
-    document.getElementById('nm-number').value = current_doc.counter + 1;
+        let nm_arr_str = localStorage.getItem('nm');
+        let nm_arr = JSON.parse(nm_arr_str);
+        let current_doc = nm_arr[el - 1];
+    
+        numberInput.value = current_doc.counter + 1;
+    }
 }
 
 document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);

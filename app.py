@@ -125,7 +125,7 @@ class Task(db.Model):
     is_archived: bool
     status_id: int
     parent_task_id: int
-    doctype_subtype_counter_id: int
+    doctype_id: int
     
     id = db.Column(db.Integer, primary_key=True)
     executor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -152,8 +152,9 @@ class Task(db.Model):
     parent_task =db.relationship('Task', remote_side = id, foreign_keys=parent_task_id)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
     when_deleted = db.Column(db.DateTime, nullable=True)
-    doctype_subtype_counter_id = db.Column(db.Integer, db.ForeignKey('doc_type_sub_type.id', ondelete = 'SET NULL'), nullable=True)
-    doctype_subtype_counter = db.relationship('DocTypeSubType', backref=db.backref('doc-type-sub-type', lazy=True), foreign_keys=[doctype_subtype_counter_id])
+    doctype_id = db.Column(db.Integer, db.ForeignKey('doc_type_sub_type.id', ondelete = 'SET NULL'), nullable=True)
+    doctype = db.relationship('DocTypeSubType', backref=db.backref('doc-type-sub-type', lazy=True), foreign_keys=[doctype_id])
+    docnum = db.Column(db.Integer, nullable=True)
 
     def is_overdue(self):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
@@ -305,6 +306,8 @@ def add():
         dtst = DocTypeSubType.query.get(nm_doc)
         if (dtst):
             dtst.counter = nm_number
+        else:
+            nm_doc = None
 
         # Генерируем task_id для новой задачи
         task_id = str(len(Task.query.all()) + 1)
@@ -364,7 +367,9 @@ def add():
                 employeeId = employeeId,
                 for_review=for_review,
                 creator_file=creator_file_path,
-                status_id = status_id
+                status_id = status_id,
+                doctype_id = nm_doc,
+                docnum = nm_number
             )
             db.session.add(new_task)
             db.session.commit()    
