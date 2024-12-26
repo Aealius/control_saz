@@ -47,6 +47,7 @@
         <div class="d-flex align-items-center w-100">
             <div class="w-75 mr-3">
                 <select id="nm-select" name="nm-select" class="w-100 form-control">
+                    <option value="-1">Другое</option>
                     {%for nm in nomenclature %}
                     {%if nm.subtype%}
                     <option value="{{loop.index}}">{{nm.doctype.name + ' (' + nm.subtype.name + ')'}}</option>
@@ -54,7 +55,6 @@
                     <option value="{{loop.index}}">{{nm.doctype.name}}</option>
                     {%endif%}
                     {%endfor%}
-                    <option value="-1">Другое</option>
                 </select>
             </div>
             <div id="nm-number-div" class="input-group w-25">
