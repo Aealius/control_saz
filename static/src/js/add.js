@@ -11,13 +11,46 @@ const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
 const base_url = window.location.origin;
+const base_api_url = window.location.origin + '/api';
 
 let files  = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     toggleDeadline();
     updateSelectedExecutors(executorSelect, selectedExecutorsDiv);
+
+    await fetch(base_api_url + '/nomenclature/counters')
+            .then((response) => {
+                console.log(response);
+                return response.json();
+            }).then((data) => localStorage.setItem('nm', JSON.stringify(data)))
+            .then(() =>{
+                if (document.getElementById('nm-select'))
+                    changeValue(document.getElementById('nm-select').value);
+            })
+
 });
+
+
+document.getElementById('nm-select') && document.getElementById('nm-select').addEventListener('change', (e) =>{
+    changeValue(e.target.value);
+});
+
+function changeValue(el){
+    if (el === "0"){
+        document.getElementById("nm-number-div").style.display = 'none';
+        document.getElementById('nm-number').disabled = true;
+    }
+    else{
+        document.getElementById("nm-number-div").style.display = 'flex';
+        document.getElementById('nm-number').disabled = false;
+    }
+    let nm_arr_str = localStorage.getItem('nm');
+    let nm_arr = JSON.parse(nm_arr_str);
+    let current_doc = nm_arr[el - 1];
+
+    document.getElementById('nm-number').value = current_doc.counter + 1;
+}
 
 document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);
 document.getElementById('executor').addEventListener('change', (event) => {
@@ -58,13 +91,6 @@ document.getElementById('description').addEventListener('change', (event) => {
     }
 });
 
-document.getElementById('nm-select').addEventListener('change', (e) =>{
-    changeValue(e.target.value);
-});
-
-function changeValue(el){
-    document.getElementById('nm-number').value = el;
-}
 
 // Функция из файла fileUpload.js для добавления addEventListener к инпуту
 addUploadEventListeners(fileInput, dropZone);

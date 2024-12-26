@@ -297,6 +297,14 @@ def add():
     if request.method == 'POST':
 
         selected_executors = request.form.get('executor[]')
+        #получаем тип документа по номенлатуре (номер)
+        nm_doc = request.form.get('nm-select')
+        #получаем порядковый номер типа документа
+        nm_number = request.form.get('nm-number')
+        
+        dtst = DocTypeSubType.query.get(nm_doc)
+        if (dtst):
+            dtst.counter = nm_number
 
         # Генерируем task_id для новой задачи
         task_id = str(len(Task.query.all()) + 1)
@@ -359,7 +367,8 @@ def add():
                 status_id = status_id
             )
             db.session.add(new_task)
-            db.session.commit()
+            db.session.commit()    
+        
 
         flash('Задача успешно добавлена!', 'success')
         return '', 200
@@ -923,6 +932,12 @@ def review(task_id):
         flash('Вы ознакомились с задачей.', 'success')
         return '', 200  #  Перенаправление на главную страницу
     return render_template('review.html', task=task)
+
+@app.route('/api/nomenclature/counters')
+@login_required
+def getDocCounterData():
+    dtst = DocTypeSubType.query.all()
+    return jsonify(dtst)
 
 #API-метод, возвращающий список сотрудников по id отдела 
 @app.route('/api/users/<int:user_id>/employees', methods=['GET'])
