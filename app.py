@@ -126,6 +126,7 @@ class Task(db.Model):
     status_id: int
     parent_task_id: int
     doctype_id: int
+    docnum : int
     
     id = db.Column(db.Integer, primary_key=True)
     executor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
