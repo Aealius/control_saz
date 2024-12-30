@@ -481,6 +481,8 @@ def resend(task_id):
     deadline = task.deadline
     description = task.description
     for_review = task.for_review
+    doctype_id = task.doctype_id
+    docnum = task.docnum
 
     try:        
         creator_file_path = ''
@@ -517,7 +519,9 @@ def resend(task_id):
             employeeId = employeeId,
             for_review=for_review,
             creator_file=creator_file_path,
-            parent_task_id = task_id
+            parent_task_id = task_id,
+            docnum = docnum,
+            doctype_id = doctype_id
         )
         db.session.add(new_task)
         db.session.commit()
@@ -595,14 +599,29 @@ def edit(task_id):
                     creator_file_path += tmp_file_path + ';'
             task.creator_file = creator_file_path
         
+        #получаем тип документа по номенлатуре (номер)
+        nm_doc = request.form.get('nm-select')
+        #получаем порядковый номер типа документа
+        nm_number = request.form.get('nm-number')
+        
+        dtst = DocTypeSubType.query.get(nm_doc)
+        if (dtst):
+            dtst.counter = nm_number
+        
+        task.doctype_id = nm_doc,
+        task.docnum = nm_number
+        
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
         return '', 200
 
+    nomenclature = DocTypeSubType.query.all()
+    
     return render_template('edit.html', task=task,
                                         executors=executors,
                                         status = Status,
                                         current_user = current_user,
+                                        nomenclature = nomenclature,
                                         datetime=datetime)
 
 

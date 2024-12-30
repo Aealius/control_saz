@@ -37,6 +37,29 @@
             <input type="date" class="form-control" id="deadline" name="deadline"
                    value="{% if task.deadline %}{{ task.deadline.strftime('%Y-%m-%d') }}{% endif %}">
         </div>
+        {%if current_user.is_admin%}
+        <div class="form-group">
+            <label for="description">Номенклатура:</label>
+            <div class="d-flex align-items-center w-100">
+                <div class="w-75 mr-3">
+                    <select id="nm-select" name="nm-select" class="w-100 form-control">
+                        <option value="-1">Другое</option>
+                        {%for nm in nomenclature %}
+                        {%if nm.subtype%}
+                        <option value="{{loop.index}}" {% if loop.index == task.doctype_id %}selected{% endif %}>{{nm.doctype.name + ' (' + nm.subtype.name + ')'}}</option>
+                        {%else%}
+                        <option value="{{loop.index}}" {% if loop.index == task.doctype_id %}selected{% endif %}>{{nm.doctype.name}}</option>
+                        {%endif%}
+                        {%endfor%}
+                    </select>
+                </div>
+                <div id="nm-number-div" class="input-group w-25">
+                    <span class="input-group-text" id="number">№</span>
+                    <input name="nm-number" id="nm-number" type="text" class="form-control" value="{{ task.docnum }}" aria-describedby="number">
+                </div>
+            </div>
+        </div>
+        {%endif%}
         <div class="form-group">
             <label for="description">Описание:</label>
             <textarea class="form-control" id="description" name="description"
@@ -75,6 +98,7 @@
 
     <script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
     <script src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
+    <script src="{{url_for('static', filename = 'src/js/nomenclature.js') }}"></script>
     <script src="{{url_for('static', filename = 'src/js/edit.js')}}"></script>
     <script>
         
