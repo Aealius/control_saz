@@ -42,6 +42,7 @@ FILTER_PARAM_KEYS = ['executor',
                     'month',
                     'date',
                     'status',
+                    'nm-select',
                     'sn']
 
 STATUS_DICT =  {'in_work' : 'В работе',
@@ -62,6 +63,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+    
 
 @dataclass(unsafe_hash=True)
 class User(UserMixin, db.Model):
@@ -124,6 +126,8 @@ class Task(db.Model):
     is_archived: bool
     status_id: int
     parent_task_id: int
+    doctype_id: int
+    docnum : int
     
     id = db.Column(db.Integer, primary_key=True)
     executor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -150,6 +154,9 @@ class Task(db.Model):
     parent_task =db.relationship('Task', remote_side = id, foreign_keys=parent_task_id)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
     when_deleted = db.Column(db.DateTime, nullable=True)
+    doctype_id = db.Column(db.Integer, db.ForeignKey('doc_type_sub_type.id', ondelete = 'SET NULL'), nullable=True)
+    doctype = db.relationship('DocTypeSubType', backref=db.backref('doc-type-sub-type', lazy=True), foreign_keys=[doctype_id])
+    docnum = db.Column(db.Integer, nullable=True)
 
     def is_overdue(self):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
@@ -190,7 +197,38 @@ class Head(db.Model):
     patronymic = db.Column(db.String(255), nullable=True)
     position = db.Column(db.String(1000), nullable=False)
     signature_path = db.Column(db.String(1000), nullable=True)
+
+
+@dataclass
+class DocType(db.Model):
+    id : int
+    name : str
     
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    
+@dataclass
+class SubType(db.Model):
+    id: int
+    name: str
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+
+@dataclass
+class DocTypeSubType(db.Model):
+    id : int
+    doctype_id : int
+    subtype_id : int
+    counter : int
+    
+    id = db.Column(db.Integer, primary_key=True)
+    doctype_id = db.Column(db.Integer, db.ForeignKey('doc_type.id'), nullable=False)
+    doctype =db.relationship("DocType", backref=db.backref("doc-type", lazy=True), foreign_keys=[doctype_id])
+    subtype_id = db.Column(db.Integer, db.ForeignKey('sub_type.id'), nullable=True)
+    subtype =db.relationship("SubType", backref=db.backref("sub-type", lazy=True), foreign_keys=[subtype_id])
+    counter = db.Column(db.Integer, nullable=False)
+
 
 @app.route('/', methods = ['GET'])
 @login_required
@@ -227,6 +265,7 @@ def index():
     executors_for_resend = hide_buh(current_user.login)
         
     employees = Executive.query.all()
+    nomenclature = DocTypeSubType.query.all()
     
     buh = User.query.filter(User.login == app.config.get('BUH_LOGIN')).first()
     return render_template('index.html',tasks=tasks,
@@ -246,6 +285,7 @@ def index():
                                         status = Status,
                                         status_dict = STATUS_DICT,
                                         per_page = PER_PAGE,
+                                        nomenclature = nomenclature,
                                         BUH_LOGIN = app.config.get('BUH_LOGIN')) 
 
 
@@ -257,10 +297,21 @@ def add():
         return redirect(url_for('index'))
 
     executors = hide_buh(current_user.login)
+    nomenclature = DocTypeSubType.query.all()
     
     if request.method == 'POST':
 
         selected_executors = request.form.get('executor[]')
+        #получаем тип документа по номенлатуре (номер)
+        nm_doc = request.form.get('nm-select')
+        #получаем порядковый номер типа документа
+        nm_number = request.form.get('nm-number')
+        
+        dtst = DocTypeSubType.query.get(nm_doc)
+        if (dtst):
+            dtst.counter = nm_number
+        else:
+            nm_doc = None
 
         # Генерируем task_id для новой задачи
         task_id = str(len(Task.query.all()) + 1)
@@ -320,15 +371,19 @@ def add():
                 employeeId = employeeId,
                 for_review=for_review,
                 creator_file=creator_file_path,
-                status_id = status_id
+                status_id = status_id,
+                doctype_id = nm_doc,
+                docnum = nm_number
             )
             db.session.add(new_task)
-            db.session.commit()
+            db.session.commit()    
+        
 
         flash('Задача успешно добавлена!', 'success')
         return '', 200
 
     return render_template('add.html',  executors=executors,
+                                        nomenclature = nomenclature,
                                         current_user=current_user,
                                         datetime=datetime)
 
@@ -426,6 +481,8 @@ def resend(task_id):
     deadline = task.deadline
     description = task.description
     for_review = task.for_review
+    doctype_id = task.doctype_id
+    docnum = task.docnum
 
     try:        
         creator_file_path = ''
@@ -462,7 +519,9 @@ def resend(task_id):
             employeeId = employeeId,
             for_review=for_review,
             creator_file=creator_file_path,
-            parent_task_id = task_id
+            parent_task_id = task_id,
+            docnum = docnum,
+            doctype_id = doctype_id
         )
         db.session.add(new_task)
         db.session.commit()
@@ -540,14 +599,25 @@ def edit(task_id):
                     creator_file_path += tmp_file_path + ';'
             task.creator_file = creator_file_path
         
+        #получаем тип документа по номенлатуре (номер)
+        nm_doc = request.form.get('nm-select')
+        #получаем порядковый номер типа документа
+        nm_number = request.form.get('nm-number')
+        
+        task.doctype_id = nm_doc,
+        task.docnum = nm_number
+        
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
         return '', 200
 
+    nomenclature = DocTypeSubType.query.all()
+    
     return render_template('edit.html', task=task,
                                         executors=executors,
                                         status = Status,
                                         current_user = current_user,
+                                        nomenclature = nomenclature,
                                         datetime=datetime)
 
 
@@ -887,6 +957,12 @@ def review(task_id):
         return '', 200  #  Перенаправление на главную страницу
     return render_template('review.html', task=task)
 
+@app.route('/api/nomenclature/counters')
+@login_required
+def getDocCounterData():
+    dtst = DocTypeSubType.query.all()
+    return jsonify(dtst)
+
 #API-метод, возвращающий список сотрудников по id отдела 
 @app.route('/api/users/<int:user_id>/employees', methods=['GET'])
 @login_required
@@ -1075,7 +1151,31 @@ def filter_data(dataset, page : int, **params):
             dataset = dataset.filter(Task.status_id == 8)
         case _:
             pass      
-                
+           
+    match params.get('nm-select'):
+        case '1':
+            dataset = dataset.filter(Task.doctype_id == 1)
+        case '2':
+            dataset = dataset.filter(Task.doctype_id == 2)
+        case '3':
+            dataset = dataset.filter(Task.doctype_id == 3)
+        case '4':
+            dataset = dataset.filter(Task.doctype_id == 4)
+        case '5':
+            dataset = dataset.filter(Task.doctype_id == 5)
+        case '6':
+            dataset = dataset.filter(Task.doctype_id == 6)
+        case '7':
+            dataset = dataset.filter(Task.doctype_id == 7)
+        case '8':
+            dataset = dataset.filter(Task.doctype_id == 8)
+        case '9':
+            dataset = dataset.filter(Task.doctype_id == 9)
+        case '10':
+            dataset = dataset.filter(Task.doctype_id == 10)
+        case _:
+            pass  
+             
     if params.get('executor'):
         dataset = dataset.filter(Task.executor_id == User.query
                                                             .filter(User.department == params['executor'])
@@ -1133,4 +1233,4 @@ app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Bl
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0', debug = True)
+    app.run(host='0.0.0.0')

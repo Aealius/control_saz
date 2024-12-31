@@ -11,12 +11,24 @@ const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
 const base_url = window.location.origin;
+const base_api_url = window.location.origin + '/api';
 
 let files  = [];
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     toggleDeadline();
     updateSelectedExecutors(executorSelect, selectedExecutorsDiv);
+
+    await fetch(base_api_url + '/nomenclature/counters')
+            .then((response) => {
+                console.log(response);
+                return response.json();
+            }).then((data) => localStorage.setItem('nm', JSON.stringify(data)))
+            .then(() =>{
+                if (document.getElementById('nm-select'))
+                    changeValue(document.getElementById('nm-select').value);
+            })
+
 });
 
 document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);
@@ -57,6 +69,7 @@ document.getElementById('description').addEventListener('change', (event) => {
         event.preventDefault();
     }
 });
+
 
 // Функция из файла fileUpload.js для добавления addEventListener к инпуту
 addUploadEventListeners(fileInput, dropZone);
