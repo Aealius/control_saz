@@ -80,6 +80,21 @@
                         </div>
                         <input type="hidden" id="hiddenSender" name="sn" value="">
                     </div>
+                    <div class="mb-4">
+                        <div class="form-group">
+                            <label for="description">Номенклатура:</label>
+                            <select id="nm-select" name="nm-select" class="w-100 form-control">
+                                <option value="">Все</option>
+                                {%for nm in nomenclature %}
+                                {%if nm.subtype%}
+                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>{{nm.doctype.name + ' (' + nm.subtype.name + ')'}}</option>
+                                {%else%}
+                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>{{nm.doctype.name}}</option>
+                                {%endif%}
+                                {%endfor%}
+                            </select>
+                        </div>
+                    </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <button id="submitFilterFormButton" type="submit" class="btn btn-primary">Применить
                             фильтр</button>
@@ -196,6 +211,19 @@
                         unquote(file.split('/')[-1]) }}</a></div>
                 {% endfor %}
                 {% endif %}
+                {% if task.docnum %}
+                <br/>
+                <br/>
+                <div class="text-muted font-italic">
+                    {{ 'Номенклатурный тип: '}}
+                    {%if task.doctype.subtype%}
+                    {{task.doctype.doctype.name + ' (' + task.doctype.subtype.name + ')'}}
+                    {%else%}
+                    {{task.doctype.doctype.name}}
+                    {%endif%}
+                    {{ ' №' + task.docnum|string }}
+                </div>
+                {% endif %}
             </td>
             <td>
                 <div>
@@ -278,8 +306,7 @@
                                 {% if task.creator_file %}
                                 {% for file in task.creator_files%}
                                 <div class="text-break mb-1">
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank"
-                                        download="{{ unquote(file.split('/')[-1]) }}">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
                                         {{ unquote(file.split('/')[-1]) }}
                                     </a>
                                 </div>
@@ -317,13 +344,26 @@
                             </div>
                             <div class="modal-body">
                                 <p>Задача: {{ task.description }}</p>
+                                {% if task.creator_file %}
+                                <div> Файлы, прикрепленные отправителем:</div>
+                                {% for file in task.creator_files %}
+                                <div class="text-break mb-1">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                        {{ unquote(file.split('/')[-1]) }}
+                                    </a>
+                                </div>
+                                {%endfor%}
+                                {% endif %}
                                 <p>Заметка исполнителя: {{ task.completion_note }}</p>
                                 {% if task.attached_file %}
-                                <p>Прикрепленный файл: <a
-                                        href="{{ url_for('uploaded_file', filename=task.attached_file) }}"
-                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{
-                                        unquote(task.attached_file.split('/')[-1]) }} </a>
-                                </p>
+                                <div>Файлы, прикрепленные исполнителем: </div>
+                                {% for file in task.attached_files%}
+                                <div class="text-break mb-1">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                        {{ unquote(file.split('/')[-1]) }}
+                                    </a>
+                                </div>
+                                {% endfor %}
                                 {% endif %}
                                 <div class="form-group">
                                     <label for="admin_note">Заметка администратора:</label>
@@ -363,13 +403,26 @@
                             </div>
                             <div class="modal-body">
                                 <p>Задача: {{ task.description }}</p>
+                                {% if task.creator_file %}
+                                <div> Файлы, прикрепленные отправителем:</div>
+                                {% for file in task.creator_files %}
+                                <div class="text-break mb-1">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                        {{ unquote(file.split('/')[-1]) }}
+                                    </a>
+                                </div>
+                                {%endfor%}
+                                {% endif %}
                                 <p>Заметка исполнителя: {{ task.completion_note }}</p>
                                 {% if task.attached_file %}
-                                <div>Прикрепленный файл: <a
-                                        href="{{ url_for('uploaded_file', filename=task.attached_file) }}"
-                                        target="_blank" download="{{ unquote(task.attached_file.split('/')[-1]) }} ">{{
-                                        unquote(task.attached_file.split('/')[-1]) }} </a>
+                                <div> Файлы, прикрепленные исполнителем:</div>
+                                {% for file in task.attached_files %}
+                                <div class="text-break mb-1">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                        {{ unquote(file.split('/')[-1]) }}
+                                    </a>
                                 </div>
+                                {%endfor%}
                                 {% endif %}
                                 <div>
                                     <label for="deputy_note">Заметка администратора:</label>

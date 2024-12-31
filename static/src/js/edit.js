@@ -12,11 +12,18 @@ const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
 const base_url = window.location.origin;
+const base_api_url = window.location.origin + '/api';
 
 let files = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     handleDepartmentAppearing(executorSelect);
+
+    fetch(base_api_url + '/nomenclature/counters')
+        .then((response) => {
+            console.log(response);
+            return response.json();
+        }).then((data) => localStorage.setItem('nm', JSON.stringify(data)));
 });
 
 document.getElementById('executor').addEventListener('change', (event) => {
@@ -104,6 +111,10 @@ extendDeadlineCheckbox.addEventListener('change', function () {
 
 //функция фетчит сотрудников отдела, когда выбирается отдел из первого дропдауна
 function handleDepartmentAppearing(executorSelect){
+    if(!document.getElementById('selectpicker2')){
+        return;
+    }
+
     let divSelectEmployee = document.getElementById('selectpicker2');
 
     // Пока что удаляем все значения и получаем их с бэка заново.

@@ -74,7 +74,7 @@ addMemoForm.addEventListener('submit', async (event) => {
             method: 'POST',
             body: formData,
         }).then(() =>
-            window.location.replace(window.location.origin + localStorage.getItem('refqstr') ?? '/?sn=in&p=1')   
+            window.location.replace(window.location.origin + (localStorage.getItem('refqstr') ?? '/?sn=in&p=1'))   
         );  
     }    
 });
