@@ -344,6 +344,16 @@
                             </div>
                             <div class="modal-body">
                                 <p>Задача: {{ task.description }}</p>
+                                {% if task.creator_file %}
+                                <div> Файлы, прикрепленные отправителем:</div>
+                                {% for file in task.creator_files %}
+                                <div class="text-break mb-1">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                        {{ unquote(file.split('/')[-1]) }}
+                                    </a>
+                                </div>
+                                {%endfor%}
+                                {% endif %}
                                 <p>Заметка исполнителя: {{ task.completion_note }}</p>
                                 {% if task.attached_file %}
                                 <div>Файлы, прикрепленные исполнителем: </div>
@@ -393,6 +403,16 @@
                             </div>
                             <div class="modal-body">
                                 <p>Задача: {{ task.description }}</p>
+                                {% if task.creator_file %}
+                                <div> Файлы, прикрепленные отправителем:</div>
+                                {% for file in task.creator_files %}
+                                <div class="text-break mb-1">
+                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                        {{ unquote(file.split('/')[-1]) }}
+                                    </a>
+                                </div>
+                                {%endfor%}
+                                {% endif %}
                                 <p>Заметка исполнителя: {{ task.completion_note }}</p>
                                 {% if task.attached_file %}
                                 <div> Файлы, прикрепленные исполнителем:</div>
