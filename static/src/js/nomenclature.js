@@ -17,5 +17,4 @@ function changeValue(el){
     
         numberInput.value = current_doc.counter + 1;
     }
-    //в локал сторадж сейвить итем
 }

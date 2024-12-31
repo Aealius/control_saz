@@ -604,10 +604,6 @@ def edit(task_id):
         #получаем порядковый номер типа документа
         nm_number = request.form.get('nm-number')
         
-        dtst = DocTypeSubType.query.get(nm_doc)
-        if (dtst):
-            dtst.counter = nm_number
-        
         task.doctype_id = nm_doc,
         task.docnum = nm_number
         
