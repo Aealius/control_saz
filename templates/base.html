@@ -9,7 +9,27 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}" nonce="{{ nonce }}">
 
     <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
-
+    <!--НГ-->
+    <style type="text/css">
+        #gir {
+            background-image:url({{ url_for('static', filename='gir.png') }});
+            height: 62px;
+            width: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none
+        }  
+        .gir_1 {
+            background-position: 0 0
+        }  
+        .gir_2 {
+            background-position: 0 -62px
+        }  
+        .gir_3 {
+            background-position: 0 -124px
+        }
+    </style>
+    <!---->
     <title>Задачи САЗ</title>
 </head>
 <body>
@@ -56,7 +76,12 @@
         </div>
     </nav>
 
+    <!--НГ-->
+    <div class="gir_1" id="gir"></div>
+    <!---->
+
     <div class="w-75 mt-4 mx-auto">
+        
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
@@ -71,7 +96,6 @@
         {% block content %}
         {% endblock %}
     </div>
-
     
     <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
@@ -79,6 +103,8 @@
     <script src="{{ url_for('static', filename='js/defaults-ru_RU.js') }}"></script>
 
 </body>
+
+
 
 <script>
     let logoutLink = document.getElementById("logoutLink");
@@ -103,6 +129,16 @@
     archTaskLink.addEventListener('click', () => {
         sessionStorage.clear();
     });
+
+    /*---------------------------НГ-----------------------------------------------*/
+    function gir() {
+        let nums = document.getElementById('gir').className; 
+        if(nums == 'gir_1') {document.getElementById('gir').className='gir_2';}  
+        if(nums == 'gir_2') {document.getElementById('gir').className='gir_3';}  
+        if(nums == 'gir_3') {document.getElementById('gir').className='gir_1';} 
+    }  
+    setInterval(gir, 2500);
+    /*----------------------------------------------------------------------------*/
 </script>
 
 </html>
