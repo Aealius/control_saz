@@ -44,14 +44,7 @@ createMemoForm.addEventListener('submit', async (event) => {
 
     //получение примера документа по ссылке справа от формы
     document.getElementById('exdocref').addEventListener('click',  async (e) => {
-        await fetch(reportApiUrl + `/MemoReport?filename=Пример служебной записки.pdf`, 
-        {
-            method: 'GET',
-        }).then((response) =>{
-            return response.blob();
-        }).then(blob => {
-            let files =  [new File([blob], 'Пример служебной записки.pdf', {type:"application/pdf", lastModified:new Date().getTime()}),];
-        });
+        window.open(reportApiUrl + '\/MemoReport?filename=Reports\\Пример служебной записки.pdf', '_blank').focus();
     });
          
 
