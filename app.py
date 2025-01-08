@@ -1071,6 +1071,7 @@ def archived():
         elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
             creator_department[task.executor.id] = task.executor.department
 
+    nomenclature = DocTypeSubType.query.all()
     return render_template('archived.html', data = archived_data,
                                             task_count = task_count,
                                             executors = executors,
@@ -1082,6 +1083,7 @@ def archived():
                                             date=date,
                                             datetime=datetime,
                                             executive = Executive,
+                                            nomenclature = nomenclature,
                                             unquote = unquote,
                                             status = Status,
                                             status_dict = STATUS_DICT)
@@ -1233,4 +1235,4 @@ app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Bl
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug = True)
