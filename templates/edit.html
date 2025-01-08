@@ -55,7 +55,7 @@
                 </div>
                 <div id="nm-number-div" class="input-group w-25">
                     <span class="input-group-text" id="number">№</span>
-                    <input name="nm-number" id="nm-number" type="text" class="form-control" value="{{ task.docnum }}" aria-describedby="number">
+                    <input name="nm-number" id="nm-number" type="text" class="form-control" {% if task.docnum %}value="{{ task.docnum }}"{%else%}disabled{% endif %}  aria-describedby="number">
                 </div>
             </div>
         </div>
