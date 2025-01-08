@@ -118,15 +118,15 @@
         });
     }, 4000);
 
-    logoutLink.addEventListener('click', () => {
+    logoutLink && logoutLink.addEventListener('click', () => {
         sessionStorage.clear();
     });
 
-    taskLink.addEventListener('click', () => {
+    logoutLink && taskLink.addEventListener('click', () => {
         sessionStorage.clear();
     });
 
-    archTaskLink.addEventListener('click', () => {
+    logoutLink && archTaskLink.addEventListener('click', () => {
         sessionStorage.clear();
     });
 
