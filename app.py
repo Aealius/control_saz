@@ -1025,7 +1025,7 @@ def reports():
                 Task.executor_id == user.id,
                 Task.is_deleted == False,
                 db.extract('month', Task.date_created) == month,
-                Task.date_created >= date(2024,12,1) # Попросили начать отсчет с 1 декабря 2024, поэтому старые пока не учитываем
+                Task.date_created >= date(2025,1,1) # Попросили начать отсчет с 1 января 2025, поэтому старые пока не учитываем
             ).all()
 
             total_penalty = 0
