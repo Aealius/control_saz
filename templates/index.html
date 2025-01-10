@@ -167,9 +167,7 @@
             <td>{{ task.executor.department}}
                 {% if task.employeeId %}
                 <div class="text-muted font-italic" style="font-size:smaller">
-                    {{ "Отв. лицо: " + executive.query.filter_by(id = task.employeeId).first().surname + ' ' +
-                    executive.query.filter_by(id = task.employeeId).first().name[0] + "." + executive.query.filter_by(id
-                    = task.employeeId).first().patronymic[0] + "." }}
+                    {{ "Отв. лицо: " + task.executive.surname + ' ' + task.executive.name[0] + "." + task.executive.patronymic[0] + "." }}
                 </div>
                 {%endif%}
             </td>
