@@ -33,7 +33,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form method="GET" id="filterForm" action="{{ url_for('archived', p=1, **filter_params_dict) }}">
+                <form method="GET" id="filterForm" action="{{ url_for('core.archived', p=1, **filter_params_dict) }}">
                     <div class="form-group">
                         <label for="executorFilter">Исполнитель:</label>
                         <select class="form-control" id="executorFilter" name="executor">
@@ -117,7 +117,7 @@
                 {{task.executor.department}}
                 {% if task.employeeId %}
                 <div class="text-muted font-italic" style="font-size:smaller">
-                    {{ "Отв. лицо: " + executive.query.filter_by(id = task.employeeId).first().surname + ' ' + executive.query.filter_by(id = task.employeeId).first().name[0] + "." + executive.query.filter_by(id = task.employeeId).first().patronymic[0] + "." }}
+                    {{ "Отв. лицо: " + task.executive.surname + ' ' + task.executive.name[0] + "." + task.executive.patronymic[0] + "." }}
                 </div>     
                 {%endif%}
             </td>

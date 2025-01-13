@@ -33,10 +33,7 @@ STATUS_DICT =  {'in_work' : 'В работе',
                 'invalid' :'Недействительно',
                 'pending' :'Ожидается выполнение'} 
 
-
-if not os.path.exists(current_app.config['UPLOAD_FOLDER']):
-    os.makedirs(current_app.config['UPLOAD_FOLDER'])
-
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
@@ -132,14 +129,14 @@ def add():
         if 'all' in selected_executors:
             # Добавляем всех пользователей как исполнителей
             executors_for_task = executors
-            task_uploads_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], task_id, 'creator')
+            task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), task_id, 'creator')
             os.makedirs(task_uploads_folder, exist_ok=True)
         else:
             # Добавляем выбранных пользователей как исполнителей
             executors_for_task = db.session.query(User).filter(
                 User.id.in_([int(executor) for executor in selected_executors.split(',')])
             ).all()
-            task_uploads_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], task_id, 'creator')
+            task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), task_id, 'creator')
             os.makedirs(task_uploads_folder, exist_ok=True)
 
         date_created = datetime.combine(datetime.strptime(request.form['date_created'], '%Y-%m-%d'), datetime.now().time())
@@ -168,7 +165,7 @@ def add():
                 creator_file_path += tmp_file_path + ';'
 
         for executor in executors_for_task:
-            if str(executor.id) in current_app.config['CanGetResendedTasksArr']:
+            if str(executor.id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
                 employeeId = request.form.get('employee') or None
             else:
                 employeeId = None
@@ -221,14 +218,14 @@ def add_memo():
         if 'all' in selected_executor_id:
             all_count = 1
             # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
-            while os.path.exists(os.path.join(current_app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
+            while os.path.exists(os.path.join(current_app.config.get('UPLOAD_FOLDER'), f'all{all_count}', 'creator')):
                 all_count += 1
             task_id = f'all{all_count}' # Использовать "all" + счетчик
         else:
             # Генерируем task_id для "не all"
             task_id = str(len(db.session.query(Task).all()) + 1)
 
-            memo_uploads_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+            memo_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), task_id, 'creator') # Папка для всех записок
             os.makedirs(memo_uploads_folder, exist_ok=True)
         
         creator_file_path = ''
@@ -243,7 +240,7 @@ def add_memo():
                 creator_file_path += tmp_file_path + ';'
                 
         for executor_id in selected_executor_id:
-            if str(executor_id) in current_app.config['CanGetResendedTasksArr']:
+            if str(executor_id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
                 employeeId = request.form.get('employee') or None
             else:
                 employeeId = None
@@ -284,8 +281,8 @@ def resend(task_id):
 
     executor_for_task_id = request.json.get('executors').split(',')
     if 'all' in executor_for_task_id:
-        executor_for_task_id = [executor.id for executor in User.query.filter(User.is_deleted == False).all() if executor.id != current_user.id]
-    task_uploads_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], new_task_id, 'creator')
+        executor_for_task_id = [executor.id for executor in db.session.query(User).filter(User.is_deleted == False).all() if executor.id != current_user.id]
+    task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), new_task_id, 'creator')
     os.makedirs(task_uploads_folder, exist_ok=True)
 
     date_created = datetime.now()
@@ -298,7 +295,7 @@ def resend(task_id):
 
     try:        
         creator_file_path = ''
-        uploadFolder = os.getcwd() + '/' + current_app.config['UPLOAD_FOLDER'] + '/'
+        uploadFolder = os.getcwd() + '/' + current_app.config.get('UPLOAD_FOLDER') + '/'
 
         file_path_arr = task.creator_file.rstrip(';').split(';')
         # Сохраняем файл только один раз
@@ -316,7 +313,7 @@ def resend(task_id):
         return '', 500
     
     for executor_id in executor_for_task_id:
-        if str(executor_id) in current_app.config['CanGetResendedTasksArr']:
+        if str(executor_id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
             employeeId = request.json.get('employee') or None
         else:
             employeeId = None
@@ -346,7 +343,7 @@ def resend(task_id):
 @bp.route('/edit/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get(task_id)
     if task.creator_id != current_user.id and not current_user.is_admin:  # Проверка прав
         flash('У вас нет прав для редактирования этой задачи.', 'danger')
         return redirect(url_for('core.index'))
@@ -364,7 +361,7 @@ def edit(task_id):
         task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
         files = request.files.getlist('files') #массив файлов
         
-        if str(task.executor_id) in current_app.config['CanGetResendedTasksArr']:
+        if str(task.executor_id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
             task.employeeId = request.form.get('employee') or None
         else:
             task.employeeId = None
@@ -401,7 +398,7 @@ def edit(task_id):
                     task_id = str(task_id)
                     tmp_file_path = ''
 
-                    memo_uploads_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+                    memo_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), task_id, 'creator') # Папка для всех записок
                     os.makedirs(memo_uploads_folder, exist_ok=True)
 
                     # Сохранение файла
@@ -423,7 +420,7 @@ def edit(task_id):
         flash('Задача успешно отредактирована!', 'success')
         return '', 200
 
-    nomenclature = DocTypeSubType.query.all()
+    nomenclature = db.session.query(DocTypeSubType).all()
     
     return render_template('core/edit.html', task=task,
                                         executors=executors,
@@ -437,7 +434,7 @@ def edit(task_id):
 @bp.route('/delete/<int:task_id>', methods=['POST'])
 @login_required
 def delete(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = db.session.get(Task, task_id)
     if task.creator_id != current_user.id and not current_user.is_admin:  # Проверка прав
         flash('У вас нет прав для удаления этой задачи.', 'danger')
         return redirect(url_for('index'))
@@ -447,17 +444,17 @@ def delete(task_id):
     
     db.session.commit()
     flash('Задача успешно удалена!', 'success')
-    return redirect(request.referrer or url_for('index'))
+    return redirect(request.referrer or url_for('core.index'))
 
 
 @bp.route('/complete/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def complete(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get_or_404(task_id)
 
     if current_user.id != task.executor_id:
         flash('Вы можете изменять только свои задачи.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     if request.method == 'POST':
 
@@ -468,7 +465,7 @@ def complete(task_id):
                 tmp_file_path = ''
                 filename = file.filename  # Оригинальное имя
             
-                task_uploads_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], str(task_id), 'executor')
+                task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), str(task_id), 'executor')
                 os.makedirs(task_uploads_folder, exist_ok=True)
 
                 file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем с оригинальным именем!
@@ -490,7 +487,7 @@ def complete(task_id):
 @bp.route('/uploads/<path:filename>')
 @login_required
 def uploaded_file(filename):
-    uploads_folder = current_app.config['UPLOAD_FOLDER']
+    uploads_folder = current_app.config.get('UPLOAD_FOLDER')
     safe_path = safe_join(uploads_folder, filename) # Используем safe_join
     if safe_path and os.path.exists(safe_path):
        return send_from_directory(uploads_folder, filename, as_attachment=False)
@@ -505,7 +502,7 @@ def confirm_task(task_id):
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
         return redirect(url_for('core.index'))
     
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get(task_id)
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
     
@@ -530,7 +527,7 @@ def reject_task(task_id):
         flash('У вас нет прав для отклонения выполнения задач.', 'danger')
         return redirect(url_for('core.index'))
     
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get_or_404(task_id)
 
     if task.attached_file != None and task.attached_file != "":
         for file in task.attached_file.rstrip(';').split(';'):
@@ -548,9 +545,9 @@ def reject_task(task_id):
 def confirm_task_deputy(task_id):
     if not current_user.is_deputy:
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get_or_404(task_id)
     if task.creator_id != current_user.id:
         flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
         return redirect(url_for('core.index'))
@@ -579,8 +576,8 @@ def confirm_task_deputy(task_id):
             # Работа с файлами
             try:        
                 exev_file_path = ''
-                task_uploads_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], str(task.parent_task_id), 'executor')
-                uploadFolder = os.getcwd() + '/' + current_app.config['UPLOAD_FOLDER'] + '/'
+                task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), str(task.parent_task_id), 'executor')
+                uploadFolder = os.getcwd() + '/' + current_app.config.get('UPLOAD_FOLDER') + '/'
                 if not os.path.exists(uploadFolder):
                     os.makedirs(uploadFolder)
                 os.makedirs(task_uploads_folder, exist_ok=True)
@@ -639,7 +636,7 @@ def users():
     if not current_user.is_admin:
         flash('У вас нет прав для просмотра этой страницы.', 'danger')
         return redirect(url_for('index'))
-    users = User.query.filter(User.is_deleted == False).all()
+    users = db.session.query(User).filter(User.is_deleted == False).all()
     return render_template('core/users.html', users=users)
 
 
@@ -657,7 +654,7 @@ def add_user():
         is_admin = request.form.get('is_admin') == 'on'
         is_deputy = request.form.get('is_deputy') == 'on' # Добавляем проверку на is_deputy
 
-        existing_user = User.query.filter_by(login=login).first()
+        existing_user = db.session.query(User).filter_by(User.login == login).first()
         if existing_user:
             flash('Пользователь с таким логином уже существует.', 'danger')
             return redirect(url_for('core.add_user'))
@@ -678,7 +675,7 @@ def delete_user(user_id):
         flash('У вас нет прав для удаления пользователей.', 'danger')
         return redirect(url_for('core.index'))
 
-    user = User.query.get_or_404(user_id)
+    user = db.session.get(User, user_id)
     
     user.is_deleted = True
     user.when_deleted = datetime.now()
@@ -691,7 +688,7 @@ def delete_user(user_id):
 @bp.route('/review/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def review(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get(task_id)
     if request.method == 'POST':  #  Обработка POST-запроса от кнопки "Ознакомлен"
         task.completion_confirmed_at = datetime.now()
         task.status_id = Status.reviewed.value
@@ -709,13 +706,13 @@ def reports():
         flash('У вас нет прав для просмотра этой страницы.', 'danger')
         return redirect(url_for('core.index'))
 
-    all_users = User.query.filter(User.is_deleted == False).all()
+    all_users = db.session.query(User).filter(User.is_deleted == False).all()
     report_data = {}
 
     for user in all_users:
         report_data[user] = {}
         for month in range(1, 13): #  Перебираем все месяцы
-            tasks_in_month = Task.query.filter(
+            tasks_in_month = db.session.query(Task).filter(
                 Task.executor_id == user.id,
                 Task.is_deleted == False,
                 db.extract('month', Task.date_created) == month,
@@ -738,13 +735,13 @@ def archived():
     filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
     page = request.args.get('p', 1, type=int)
     if current_user.is_admin:
-        archived_data = Task.query.filter(Task.is_archived ==True, Task.is_deleted == False)
+        archived_data = db.session.query(Task).filter(Task.is_archived ==True, Task.is_deleted == False)
     else:
-        archived_data = Task.query.filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id),
+        archived_data = db.session.query(Task).filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id),
                                           Task.is_archived == True, Task.is_deleted == False)
 
     archived_data, task_count = filter_data(archived_data, page, **filter_params_dict)
-    executors = User.query.filter(User.is_deleted == False).all()
+    executors = db.session.query(User).filter(User.is_deleted == False).all()
 
     for task in archived_data:
         if task.extended_deadline:
@@ -757,7 +754,7 @@ def archived():
         task.creator_files = task.creator_file.rstrip(';').split(';')
 
 
-    nomenclature = DocTypeSubType.query.all()
+    nomenclature = db.session.query(DocTypeSubType).all()
     return render_template('core/archived.html', data = archived_data,
                                             task_count = task_count,
                                             executors = executors,
@@ -777,7 +774,7 @@ def archived():
 @bp.route('/create_memo', methods=['GET'])
 @login_required
 def create_memo():
-    executors = [executor for executor in User.query.all() if executor.id != current_user.id]
+    executors = [executor for executor in db.session.query(User).all() if executor.id != current_user.id]
     
     current_user_department = ''
     
@@ -790,10 +787,8 @@ def create_memo():
                                                current_user_department = current_user_department)
 
 
-
-
-# @bp.route('/favicon.ico', methods=['GET'])
-# def favicon():
-#     return send_from_directory(os.path.join(current_app.root_path, 'static'),
-#                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
+@bp.route('/favicon.ico', methods=['GET'])
+def favicon():
+    return send_from_directory(os.path.join(current_app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 

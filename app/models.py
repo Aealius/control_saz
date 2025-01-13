@@ -7,8 +7,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 
 
-
-
 class Base(DeclarativeBase):
     pass
 
@@ -184,7 +182,7 @@ class Task(Base):
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime)
     description: Mapped[str] = mapped_column(Text)
     is_archived: Mapped[int] = mapped_column(TINYINT(1), default=False)
-    status_id: Mapped[int] = mapped_column(SmallInteger)
+    status_id: Mapped[int] = mapped_column(SmallInteger, default=1)
     is_deleted: Mapped[int] = mapped_column(TINYINT(1), default=False)
     deadline: Mapped[Optional[datetime.date]] = mapped_column(Date)
     extended_deadline: Mapped[Optional[datetime.date]] = mapped_column(Date)
@@ -213,7 +211,7 @@ class Task(Base):
         return self.deadline < datetime.today().date() if self.deadline is not None else False
     
     def get_deadline_for_check(self):
-        return self.extended_deadline or self.deadline or datetime(9999, 12, 31).date()
+        return self.extended_deadline or self.deadline or datetime.datetime(9999, 12, 31).date()
     
     
     def to_dict(self):

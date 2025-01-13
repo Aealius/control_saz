@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
 from flask_login import LoginManager
+from waitress import serve
 from config import Config
 import logging
 from logging.handlers import RotatingFileHandler
@@ -22,7 +23,7 @@ def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
     db.init_app(app)
-    migrate.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     bootstrap.init_app(app)
     
@@ -36,14 +37,20 @@ def create_app(config_class=Config) -> Flask:
     app.register_blueprint(api_bp)
     
     if not app.debug:
-        if not os.path.exists('logs'):
-            os.mkdir('logs')
+        
+        if not os.path.exists(app.config.get('UPLOAD_FOLDER')):
+            os.makedirs(app.config.get('UPLOAD_FOLDER'))
+        
+        if not os.path.exists(app.config.get('LOGS_FOLDER')):
+            os.mkdir(app.config.get('LOGS_FOLDER'))
             
-        file_handler = RotatingFileHandler('logs/app.log', maxBytes=1024 * 1024 * 10 ,backupCount=10, encoding='utf-8')
+        file_handler = RotatingFileHandler(app.config.get('LOGS_FOLDER') + '/app.log', maxBytes=1024 * 1024 * 10 ,backupCount=10, encoding='utf-8')
         app.logger.addHandler(file_handler)
 
         console_handler = logging.StreamHandler()
         app.logger.addHandler(console_handler)
+        
+        serve(app, listen='0.0.0.0:5000', threads=28)
         
     return app
 
