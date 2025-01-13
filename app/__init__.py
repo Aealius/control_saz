@@ -13,7 +13,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 bootstrap = Bootstrap()
-login_manager.login_view = 'login'
+login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Для того, чтобы просматривать эту страницу необходим вход'
 
 

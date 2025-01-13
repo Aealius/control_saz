@@ -21,13 +21,13 @@ def login():
             return redirect(url_for('core.index', sn = 'in', p=1))
         else:
             flash('Неверный логин или пароль', 'danger')
-    return render_template('auth.login.html')
+    return render_template('auth/login.html')
 
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     if request.method == 'POST':
         department = request.form['department']
         login = request.form['login']
@@ -36,15 +36,15 @@ def register():
         existing_user = User.query.filter_by(login=login).first()
         if existing_user:
             flash('Пользователь с таким логином уже существует.', 'danger')
-            return redirect(url_for('register'))
+            return redirect(url_for('auth.register'))
 
         hashed_password = generate_password_hash(password)
         new_user = User(department=department, login=login, password_hash=hashed_password)
         db.session.add(new_user)
         db.session.commit()
         flash('Регистрация прошла успешно! Теперь вы можете войти.', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html')
+        return redirect(url_for('auth.login'))
+    return render_template('auth/register.html')
 
 
 @bp.route('/change_password', methods=['GET', 'POST'])
@@ -57,20 +57,20 @@ def change_password():
 
         if not current_user.check_password(old_password):
             flash('Неверный текущий пароль', 'danger')
-            return redirect(url_for('change_password'))
+            return redirect(url_for('auth.change_password'))
 
         if new_password != confirm_password:
             flash('Новый пароль и подтверждение не совпадают', 'danger')
-            return redirect(url_for('change_password'))
+            return redirect(url_for('auth.change_password'))
 
         current_user.set_password(new_password)
         db.session.commit()
         flash('Пароль успешно изменен!', 'success')
         return redirect(url_for('core.index'))  # Перенаправляем на главную после смены пароля
-    return render_template('change_password.html')
+    return render_template('auth/change_password.html')
 
 @bp.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('auth.login'))

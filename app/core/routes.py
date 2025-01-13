@@ -1,12 +1,12 @@
 import os
-from flask import (render_template, request, redirect, url_for, flash, send_from_directory, jsonify, current_app)
+from flask import (render_template, request, redirect, url_for, flash, send_from_directory, current_app)
 from datetime import datetime, date, time
-import werkzeug
 from werkzeug.security import generate_password_hash
 from flask_login import login_required, current_user
 from werkzeug.utils import safe_join
 from urllib.parse import unquote
-from enums.status_enum import Status
+from app.core.utils import calculate_penalty, filter_data, hide_buh
+from app.enums.status_enum import Status
 from app import db, login_manager
 from app.core import bp
 from app.models import (
@@ -16,11 +16,6 @@ from app.models import (
     Executive)
 import shutil
 
-
-
-
-UPLOAD_FOLDER = 'uploads'
-PER_PAGE = 20
 FILTER_PARAM_KEYS = ['executor',
                     'creator',
                     'month',
@@ -39,8 +34,8 @@ STATUS_DICT =  {'in_work' : 'В работе',
                 'pending' :'Ожидается выполнение'} 
 
 
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+if not os.path.exists(current_app.config['UPLOAD_FOLDER']):
+    os.makedirs(current_app.config['UPLOAD_FOLDER'])
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -101,7 +96,7 @@ def index():
                                         executive = Executive,
                                         status = Status,
                                         status_dict = STATUS_DICT,
-                                        per_page = PER_PAGE,
+                                        per_page = current_app.config['PER_PAGE'],
                                         nomenclature = nomenclature,
                                         BUH_LOGIN = current_app.config.get('BUH_LOGIN')) 
 
@@ -199,7 +194,7 @@ def add():
         flash('Задача успешно добавлена!', 'success')
         return '', 200
 
-    return render_template('add.html',  executors=executors,
+    return render_template('core/add.html',  executors=executors,
                                         nomenclature = nomenclature,
                                         current_user=current_user,
                                         datetime=datetime)
@@ -270,7 +265,7 @@ def add_memo():
         flash('Служебная записка успешно отправлена!', 'success')
         return '', 200
 
-    return render_template('add_memo.html', executors=executors, current_user = current_user)  #  Передаем executors в шаблон
+    return render_template('core/add_memo.html', executors=executors, current_user = current_user)  #  Передаем executors в шаблон
 
 @bp.route('/resend/<int:task_id>', methods=['POST'])
 @login_required
@@ -354,7 +349,7 @@ def edit(task_id):
     task = Task.query.get_or_404(task_id)
     if task.creator_id != current_user.id and not current_user.is_admin:  # Проверка прав
         flash('У вас нет прав для редактирования этой задачи.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     executors = hide_buh(current_user.login)
         
@@ -384,7 +379,7 @@ def edit(task_id):
                     task.extended_deadline = extended_deadline_date
                 except ValueError:
                     flash("Некорректный формат даты продления", "danger")
-                    return render_template('edit.html', task=task,
+                    return render_template('core/edit.html', task=task,
                                                         executors=executors,
                                                         current_user = current_user,
                                                         status = Status,
@@ -430,7 +425,7 @@ def edit(task_id):
 
     nomenclature = DocTypeSubType.query.all()
     
-    return render_template('edit.html', task=task,
+    return render_template('core/edit.html', task=task,
                                         executors=executors,
                                         status = Status,
                                         current_user = current_user,
@@ -489,7 +484,7 @@ def complete(task_id):
         flash('Отметка о выполнении отправлена администратору.', 'success')
         return '', 200
 
-    return render_template('complete.html', task=task)
+    return render_template('core/complete.html', task=task)
 
 
 @bp.route('/uploads/<path:filename>')
@@ -501,14 +496,14 @@ def uploaded_file(filename):
        return send_from_directory(uploads_folder, filename, as_attachment=False)
     else:
         flash(f"File not found: {filename}")
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
 @bp.route('/admin/tasks/<int:task_id>/confirm', methods=['POST'])
 @login_required
 def confirm_task(task_id):
     if not current_user.is_admin:
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     
     task = Task.query.get_or_404(task_id)
     task.completion_confirmed_at = datetime.now()
@@ -533,7 +528,7 @@ def confirm_task(task_id):
 def reject_task(task_id):
     if not current_user.is_admin:
         flash('У вас нет прав для отклонения выполнения задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     
     task = Task.query.get_or_404(task_id)
 
@@ -558,7 +553,7 @@ def confirm_task_deputy(task_id):
     task = Task.query.get_or_404(task_id)
     if task.creator_id != current_user.id:
         flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
@@ -620,12 +615,12 @@ def confirm_task_deputy(task_id):
 def reject_task_deputy(task_id):
     if not current_user.is_deputy:
         flash('У вас нет прав для отклонения задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     
     task = Task.query.get_or_404(task_id)
     if task.creator_id != current_user.id:
         flash('Вы можете отклоненять только задачи, которые вы выдали.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     if task.attached_file != None and task.attached_file != "":
         os.remove(task.attached_file)
@@ -645,7 +640,7 @@ def users():
         flash('У вас нет прав для просмотра этой страницы.', 'danger')
         return redirect(url_for('index'))
     users = User.query.filter(User.is_deleted == False).all()
-    return render_template('users.html', users=users)
+    return render_template('core/users.html', users=users)
 
 
 @bp.route('/add_user', methods=['GET', 'POST'])
@@ -653,7 +648,7 @@ def users():
 def add_user():
     if not current_user.is_admin:
         flash('У вас нет прав для создания пользователей.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     if request.method == 'POST':
         department = request.form['department']
@@ -665,15 +660,15 @@ def add_user():
         existing_user = User.query.filter_by(login=login).first()
         if existing_user:
             flash('Пользователь с таким логином уже существует.', 'danger')
-            return redirect(url_for('add_user'))
+            return redirect(url_for('core.add_user'))
 
         hashed_password = generate_password_hash(password)
         new_user = User(department=department, login=login, password_hash=hashed_password, is_admin=is_admin, is_deputy=is_deputy)
         db.session.add(new_user)
         db.session.commit()
         flash('Пользователь успешно добавлен!', 'success')
-        return redirect(url_for('users'))
-    return render_template('add_user.html')
+        return redirect(url_for('core.users'))
+    return render_template('core/add_user.html')
 
 
 @bp.route('/delete_user/<int:user_id>', methods=['POST'])
@@ -681,7 +676,7 @@ def add_user():
 def delete_user(user_id):
     if not current_user.is_admin:
         flash('У вас нет прав для удаления пользователей.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     user = User.query.get_or_404(user_id)
     
@@ -690,7 +685,7 @@ def delete_user(user_id):
     
     db.session.commit()
     flash('Пользователь успешно удален!', 'success')
-    return redirect(url_for('users'))
+    return redirect(url_for('core.users'))
 
 
 @bp.route('/review/<int:task_id>', methods=['GET', 'POST'])
@@ -704,7 +699,7 @@ def review(task_id):
         db.session.commit()
         flash('Вы ознакомились с задачей.', 'success')
         return '', 200  #  Перенаправление на главную страницу
-    return render_template('review.html', task=task)
+    return render_template('core/review.html', task=task)
 
 
 @bp.route('/reports')
@@ -712,7 +707,7 @@ def review(task_id):
 def reports():
     if not current_user.is_admin:
         flash('У вас нет прав для просмотра этой страницы.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     all_users = User.query.filter(User.is_deleted == False).all()
     report_data = {}
@@ -734,7 +729,7 @@ def reports():
                 total_penalty += penalty
             report_data[user][month] = total_penalty
 
-    return render_template('reports.html', report_data=report_data, all_users=all_users, date=date, any=any)
+    return render_template('core/reports.html', report_data=report_data, all_users=all_users, date=date, any=any)
 
 @bp.route('/archived')
 @login_required
@@ -761,21 +756,12 @@ def archived():
 
         task.creator_files = task.creator_file.rstrip(';').split(';')
 
-    creator_department = {}
-    for task in archived_data:
-        if task.creator_id not in creator_department:  # Проверяем creator_id, а не executor_id
-            creator_department[task.creator_id] = task.creator.department
-        if current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor_id] = task.executor.department
-        elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor.id] = task.executor.department
 
     nomenclature = DocTypeSubType.query.all()
-    return render_template('archived.html', data = archived_data,
+    return render_template('core/archived.html', data = archived_data,
                                             task_count = task_count,
                                             executors = executors,
-                                            creator_department = creator_department,
-                                            per_page = PER_PAGE,
+                                            per_page = current_app.config['PER_PAGE'],
                                             page=page,
                                             filter_params_dict = filter_params_dict,
                                             time=time,
@@ -800,121 +786,14 @@ def create_memo():
     else:
         current_user_department = current_user.department.split(' ', maxsplit=1)[1]
     
-    return render_template('create_memo.html', executors = executors,
+    return render_template('core/create_memo.html', executors = executors,
                                                current_user_department = current_user_department)
 
 
 
 
-@bp.route('/favicon.ico', methods=['GET'])
-def favicon():
-    return send_from_directory(os.path.join(current_app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+# @bp.route('/favicon.ico', methods=['GET'])
+# def favicon():
+#     return send_from_directory(os.path.join(current_app.root_path, 'static'),
+#                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-def filter_data(dataset, page : int, **params):
-
-    match params.get('sn'):
-        case 'in':
-            dataset = dataset.filter(Task.executor_id == current_user.id)
-        case 'out':
-            dataset = dataset.filter(Task.creator_id == current_user.id)
-        case 'all':
-            if (not current_user.is_admin):
-                dataset = dataset.filter(db.or_(Task.executor_id == current_user.id,
-                                                Task.creator_id == current_user.id))
-        case _:
-            dataset = dataset.filter(Task.executor_id == current_user.id)
-                
-    match params.get('status'):
-        case 'in_work':
-            dataset = dataset.filter(Task.status_id == 1)
-        case 'at_check':
-            dataset = dataset.filter(Task.status_id == 2)
-        case 'reviewed':
-            dataset = dataset.filter(Task.status_id == 3)
-        case 'completed':
-            dataset = dataset.filter(Task.status_id == 4)
-        case 'complete_delayed':
-            dataset = dataset.filter(Task.status_id == 5)
-        case 'delayed':
-            dataset = dataset.filter(Task.status_id == 6)
-        case 'invalid':
-            dataset = dataset.filter(Task.status_id == 7)
-        case 'pending':
-            dataset = dataset.filter(Task.status_id == 8)
-        case _:
-            pass      
-           
-    match params.get('nm-select'):
-        case '1':
-            dataset = dataset.filter(Task.doctype_id == 1)
-        case '2':
-            dataset = dataset.filter(Task.doctype_id == 2)
-        case '3':
-            dataset = dataset.filter(Task.doctype_id == 3)
-        case '4':
-            dataset = dataset.filter(Task.doctype_id == 4)
-        case '5':
-            dataset = dataset.filter(Task.doctype_id == 5)
-        case '6':
-            dataset = dataset.filter(Task.doctype_id == 6)
-        case '7':
-            dataset = dataset.filter(Task.doctype_id == 7)
-        case '8':
-            dataset = dataset.filter(Task.doctype_id == 8)
-        case '9':
-            dataset = dataset.filter(Task.doctype_id == 9)
-        case '10':
-            dataset = dataset.filter(Task.doctype_id == 10)
-        case _:
-            pass  
-             
-    if params.get('executor'):
-        dataset = dataset.filter(Task.executor_id ==  db.session.query(User)
-                                                                .filter(User.department == params['executor'])
-                                                                .first().id)
-
-    if params.get('creator'):
-        creator = db.session.query(User).filter(User.department == params['creator']).first()
-        if creator:
-            dataset = dataset.filter(Task.creator_id== creator.id)
-    
-    if params.get('month'):
-        try:
-            year, month = map(int, params['month'].split('-'))
-            dataset = dataset.filter(db.extract('year', Task.date_created) == year,
-                                 db.extract('month', Task.date_created) == month)
-        except ValueError:
-            # Обработка некорректного формата месяца
-            flash("Некорректный формат месяца", "danger")
-
-    if params.get('date'):
-        date_filter = datetime.strptime(params['date'], '%Y-%m-%d').date()
-        dataset = dataset.filter(db.cast(Task.date_created, db.Date) == date_filter)
-
-    dataset_count = dataset.count()
-    
-
-    dataset = dataset.options(db.joinedload(Task.executor)).order_by(
-        #Task.status_id.desc(),
-        Task.date_created.desc(),
-        Task.deadline.desc() if not Task.is_бессрочно else Task.id).paginate(page=page, per_page=PER_PAGE)
-    
-    return (dataset, dataset_count,)
-
-def hide_buh(current_user_login : str):
-    if current_user_login == '8':
-        return db.session.query(User).filter(User.id != current_user.id, User.is_deleted == False).all()
-    else:
-        #бухгалтерия скрыта по запросу главбуха
-        return db.session.query(User).filter(User.id != current_user.id, User.login != current_app.config.get('BUH_LOGIN'), User.is_deleted == False).all()
-         
-
-def calculate_penalty(task : Task):  
-    if (task.status_id == Status.completed.value or task.status_id == Status.complete_delayed.value) and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
-        overdue_days = (task.completion_confirmed_at.date() - task.deadline_for_check).days
-        if overdue_days > 0:
-            max_penalty = 20
-            penalty = min(overdue_days, max_penalty)
-            return penalty
-    return 0
