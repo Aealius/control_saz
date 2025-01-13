@@ -10,10 +10,10 @@
             Фильтрация
         </button>
         {% if current_user.is_admin or current_user.is_deputy %}
-        <a href="{{ url_for('add') }}" class="btn btn-success mr-2">Добавить задачу</a>
+        <a href="{{ url_for('core.add') }}" class="btn btn-success mr-2">Добавить задачу</a>
         {% endif %}
 
-        <a href="{{ url_for('add_memo') }}" class="btn btn-success mr-2">Создать служебную записку</a>
+        <a href="{{ url_for('core.add_memo') }}" class="btn btn-success mr-2">Создать служебную записку</a>
     </div>
     <div>
         <select id="select-task-sender" class="selectpicker show-tick">
@@ -36,7 +36,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form method="GET" id="filterForm" action="{{ url_for('index', p=1, **filter_params_dict) }}">
+                <form method="GET" id="filterForm" action="{{ url_for('core.index', p=1, **filter_params_dict) }}">
                     <div class="form-group">
                         <label for="executorFilter">Исполнитель:</label>
                         <select class="form-control" id="executorFilter" name="executor">
@@ -205,7 +205,7 @@
                 {% if task.creator_file %}
                 {%for file in task.creator_files%}
                 <div><a title="{{ unquote(file.split('/')[-1]) }}" class="long-href"
-                        href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">{{
+                        href="{{ url_for('core.uploaded_file', filename=file) }}" target="_blank">{{
                         unquote(file.split('/')[-1]) }}</a></div>
                 {% endfor %}
                 {% endif %}
@@ -254,11 +254,11 @@
                 <!--кнопки редактирования и удаления-->
                 {% if current_user.is_admin or task.creator_id == current_user.id %}
                 <div class="btn-group" role="group">
-                    <a href="{{ url_for('edit', task_id=task.id) }}" class="btn btn-primary btn-sm"
+                    <a href="{{ url_for('core.edit', task_id=task.id) }}" class="btn btn-primary btn-sm"
                         data-toggle="tooltip" title="Редактировать">
                         <i class="fas fa-pencil-alt"></i>
                     </a>
-                    <form method="POST" action="{{ url_for('delete', task_id=task.id) }}"
+                    <form method="POST" action="{{ url_for('core.delete', task_id=task.id) }}"
                         onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');" class="d-inline-block">
                         <button type="submit" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Удалить">
                             <i class="fas fa-trash-alt"></i>
@@ -280,11 +280,11 @@
                     task.status_id != status.reviewed.value%}
                 {% if current_user.id == task.executor_id and not task.completion_note and not
                 task.for_review %}
-                <a href="{{ url_for('complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
+                <a href="{{ url_for('core.complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
                 {% endif %}
 
                 {% if task.for_review and current_user.id == task.executor_id and task.status_id != status.reviewed.value%}
-                <a href="{{ url_for('review', task_id=task.id) }}" class="btn btn-secondary btn-sm" data-toggle="modal"
+                <a href="{{ url_for('core.review', task_id=task.id) }}" class="btn btn-secondary btn-sm" data-toggle="modal"
                     data-target="#reviewModal-{{ task.id }}">
                     Ознакомиться
                 </a>
@@ -304,7 +304,7 @@
                                 {% if task.creator_file %}
                                 {% for file in task.creator_files%}
                                 <div class="text-break mb-1">
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                    <a href="{{ url_for('core.uploaded_file', filename=file) }}" target="_blank">
                                         {{ unquote(file.split('/')[-1]) }}
                                     </a>
                                 </div>
@@ -346,7 +346,7 @@
                                 <div> Файлы, прикрепленные отправителем:</div>
                                 {% for file in task.creator_files %}
                                 <div class="text-break mb-1">
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                    <a href="{{ url_for('core.uploaded_file', filename=file) }}" target="_blank">
                                         {{ unquote(file.split('/')[-1]) }}
                                     </a>
                                 </div>
@@ -357,7 +357,7 @@
                                 <div>Файлы, прикрепленные исполнителем: </div>
                                 {% for file in task.attached_files%}
                                 <div class="text-break mb-1">
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                    <a href="{{ url_for('core.uploaded_file', filename=file) }}" target="_blank">
                                         {{ unquote(file.split('/')[-1]) }}
                                     </a>
                                 </div>
@@ -405,7 +405,7 @@
                                 <div> Файлы, прикрепленные отправителем:</div>
                                 {% for file in task.creator_files %}
                                 <div class="text-break mb-1">
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                    <a href="{{ url_for('core.uploaded_file', filename=file) }}" target="_blank">
                                         {{ unquote(file.split('/')[-1]) }}
                                     </a>
                                 </div>
@@ -416,7 +416,7 @@
                                 <div> Файлы, прикрепленные исполнителем:</div>
                                 {% for file in task.attached_files %}
                                 <div class="text-break mb-1">
-                                    <a href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">
+                                    <a href="{{ url_for('core.uploaded_file', filename=file) }}" target="_blank">
                                         {{ unquote(file.split('/')[-1]) }}
                                     </a>
                                 </div>
@@ -467,7 +467,7 @@
     <nav aria-label="paging">
         <ul class="pagination justify-content-end">
             <li class="page-item {% if page == 1 %} disabled {% endif %}">
-                <a class="page-link" href="{{url_for('index', p=page-1, **filter_params_dict)}}">Предыдущая</a>
+                <a class="page-link" href="{{url_for('core.index', p=page-1, **filter_params_dict)}}">Предыдущая</a>
             </li>
             {% for page_number in tasks.iter_pages(right_current=2)%}
             {% if page_number == None %}
@@ -476,11 +476,11 @@
             <li class="page-item active"><a class="page-link">{{page_number}}</a></li>
             {%else %}
             <li class="page-item"><a class="page-link"
-                    href="{{url_for('index', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
+                    href="{{url_for('core.index', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
             {% endif %}
             {% endfor %}
             <li class="page-item {% if page == tasks.pages %}disabled{% endif %}">
-                <a class="page-link" href="{{url_for('index', p=page+1, **filter_params_dict)}}">Следующая</a>
+                <a class="page-link" href="{{url_for('core.index', p=page+1, **filter_params_dict)}}">Следующая</a>
             </li>
         </ul>
     </nav>

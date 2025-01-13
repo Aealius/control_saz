@@ -1,5 +1,4 @@
 from typing import List, Optional
-from flask import url_for
 from flask_login import UserMixin
 from sqlalchemy import Date, DateTime, ForeignKeyConstraint, Index, Integer, SmallInteger, String, Text
 from sqlalchemy.dialects.mysql import TINYINT

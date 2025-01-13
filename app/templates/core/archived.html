@@ -156,7 +156,7 @@
                 {{task.description}}
                 {% if task.creator_file %}
                 {%for file in task.creator_files%}
-                <div><a title="{{ unquote(file.split('/')[-1]) }}" class="long-href" href="{{ url_for('uploaded_file', filename=file) }}" target="_blank">{{ unquote(file.split('/')[-1]) }}</a>
+                <div><a title="{{ unquote(file.split('/')[-1]) }}" class="long-href" href="{{ url_for('core.uploaded_file', filename=file) }}" target="_blank">{{ unquote(file.split('/')[-1]) }}</a>
                 </div>
                 {%endfor%}
                 {%endif%}
@@ -237,11 +237,11 @@
             {%elif page_number == page%}
             <li class="page-item active"><a class="page-link">{{page_number}}</a></li>
             {%else %}
-            <li class="page-item"><a class="page-link" href="{{url_for('archived', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
+            <li class="page-item"><a class="page-link" href="{{url_for('core.archived', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
             {% endif %}
             {% endfor %}
             <li class="page-item {% if page == data.pages %}disabled{% endif %}">
-                <a class="page-link" href="{{url_for('archived', p=page+1, **filter_params_dict)}}">Следующая</a>
+                <a class="page-link" href="{{url_for('core.archived', p=page+1, **filter_params_dict)}}">Следующая</a>
             </li>
         </ul>
     </nav>
