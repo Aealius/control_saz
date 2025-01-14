@@ -2,7 +2,7 @@
 
 {% block content %}
 <h1>Пользователи</h1>
-<a href="{{ url_for('add_user') }}" class="btn btn-success">Добавить пользователя</a>
+<a href="{{ url_for('core.add_user') }}" class="btn btn-success mb-2">Добавить пользователя</a>
 <table class="table table-bordered">
     <thead class="primary-th">
         <tr>
@@ -24,7 +24,7 @@
             <td>{{ 'Да' if user.is_admin else 'Нет' }}</td>
             <td>{{ 'Да' if user.is_deputy else 'Нет' }}</td>
             <td>
-                <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}"
+                <form method="POST" action="{{ url_for('core.delete_user', user_id=user.id) }}"
                     onsubmit="return confirm('Вы уверены, что хотите удалить этого пользователя?');">
                     <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
                 </form>

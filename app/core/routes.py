@@ -1,42 +1,21 @@
-import logging
-from logging.handlers import RotatingFileHandler
 import os
-from flask import (Flask, make_response, render_template, request, redirect, url_for, flash, send_from_directory, Blueprint, jsonify)
-from flask_sqlalchemy import SQLAlchemy
+from flask import (render_template, request, redirect, url_for, flash, send_from_directory, current_app)
 from datetime import datetime, date, time
-from flask_bootstrap import Bootstrap
-from flask_migrate import Migrate
-import werkzeug
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from werkzeug.utils import secure_filename, safe_join
-from urllib.parse import quote, unquote
-from enums.status_enum import Status
-from dataclasses import dataclass
+from werkzeug.security import generate_password_hash
+from flask_login import login_required, current_user
+from werkzeug.utils import safe_join
+from urllib.parse import unquote
+from app.core.utils import calculate_penalty, filter_data, hide_buh
+from app.enums.status_enum import Status
+from app import db, login_manager
+from app.core import bp
+from app.models import (
+    User,
+    Task,
+    DocTypeSubType,
+    Executive)
 import shutil
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345@localhost/control_saz'
-app.config['JSON_AS_ASCII'] = False # Важно!
-db = SQLAlchemy(app)
-Bootstrap(app)
-migrate = Migrate(app, db)
-
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
-
-logger = logging.getLogger('werkzeug')
-if not os.path.exists('logs'):
-    os.mkdir('logs')
-file_handler = RotatingFileHandler('logs/app.log',maxBytes=1024 * 1024 ,backupCount=10, encoding='utf-8')
-logger.addHandler(file_handler)
-console_handler = logging.StreamHandler()
-logger.addHandler(console_handler)
-
-
-UPLOAD_FOLDER = 'uploads'
-PER_PAGE = 20
 FILTER_PARAM_KEYS = ['executor',
                     'creator',
                     'month',
@@ -54,183 +33,12 @@ STATUS_DICT =  {'in_work' : 'В работе',
                 'invalid' :'Недействительно',
                 'pending' :'Ожидается выполнение'} 
 
-
-# Id отделов, у которых можно выбрать конкретного исполнителя
-app.config['CanGetResendedTasksArr'] = ['27'] # Бухгалтерия
-app.config['BUH_LOGIN'] = '234' #чтобы фильтровать по бухгалтерии
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
-
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-    
-
-@dataclass(unsafe_hash=True)
-class User(UserMixin, db.Model):
-    id:int
-    department:str
-    full_department: str
-    login:str
-    is_admin:bool
-    is_deputy:bool
-    
-    id = db.Column(db.Integer, primary_key=True)
-    department = db.Column(db.String(255), nullable=False, default='Общая служба')
-    full_department = db.Column(db.String(1000), nullable=True) # полное название отдела
-    login = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)
-    is_deputy = db.Column(db.Boolean, default=False)  # Новый атрибут для заместителя
-    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    when_deleted = db.Column(db.DateTime, nullable=True)
-    head = db.relationship('Head', primaryjoin="User.id == Head.user_id", backref=db.backref('department_head', lazy=True), uselist=False, viewonly=True)
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-@dataclass
-class CreateMemoDTO():
-    department:str
-    full_department: str
-    headName:str
-    headSurname:str
-    headPatronymic:str
-    headPosition:str
-    headSignaturePath:str
-
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
-@dataclass
-class Task(db.Model):
-    id: int
-    executor_id: int
-    creator_id: int
-    date_created: datetime
-    deadline: datetime
-    extended_deadline: datetime
-    edit_datetime: datetime
-    description: str
-    completion_note: str
-    completion_confirmed_at: datetime
-    admin_note: str
-    attached_file: str
-    creator_file: str
-    is_бессрочно: bool
-    for_review: bool
-    employeeId: int
-    is_archived: bool
-    status_id: int
-    parent_task_id: int
-    doctype_id: int
-    docnum : int
-    
-    id = db.Column(db.Integer, primary_key=True)
-    executor_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    executor = db.relationship('User', backref=db.backref('tasks', lazy=True), foreign_keys=[executor_id])
-    creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    creator = db.relationship('User', backref=db.backref('created_tasks', lazy=True), foreign_keys=[creator_id])
-    date_created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow) #теперь datetime
-    deadline = db.Column(db.Date, nullable=True)
-    extended_deadline = db.Column(db.Date, nullable=True)
-    edit_datetime = db.Column(db.DateTime, nullable=True) #поле, запоминающее дату последнего редактирования
-    description = db.Column(db.Text, nullable=False)
-    completion_note = db.Column(db.Text)
-    completion_confirmed_at = db.Column(db.DateTime)
-    admin_note = db.Column(db.Text)
-    attached_file = db.Column(db.String(255))  
-    creator_file = db.Column(db.String(2048))  
-    is_бессрочно = db.Column(db.Boolean, default=False)
-    for_review = db.Column(db.Boolean, default=False)
-    employeeId = db.Column(db.Integer, db.ForeignKey('executive.id'), nullable=True)
-    employee = db.relationship('Executive', backref=db.backref('executed_tasks', lazy=True), foreign_keys=[employeeId])
-    is_archived = db.Column(db.Boolean, default = False, nullable = False)
-    status_id = db.Column(db.SmallInteger, default=1, nullable=False)
-    parent_task_id = db.Column(db.Integer, db.ForeignKey('task.id', ondelete = 'SET NULL'), nullable=True)
-    parent_task =db.relationship('Task', remote_side = id, foreign_keys=parent_task_id)
-    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    when_deleted = db.Column(db.DateTime, nullable=True)
-    doctype_id = db.Column(db.Integer, db.ForeignKey('doc_type_sub_type.id', ondelete = 'SET NULL'), nullable=True)
-    doctype = db.relationship('DocTypeSubType', backref=db.backref('doc-type-sub-type', lazy=True), foreign_keys=[doctype_id])
-    docnum = db.Column(db.Integer, nullable=True)
-
-    def is_overdue(self):
-        return self.deadline < datetime.today().date() if self.deadline is not None else False
-    
-    def get_deadline_for_check(self):
-        return self.extended_deadline or self.deadline or datetime(9999, 12, 31).date()
-
-@dataclass
-class Executive(db.Model):
-    id: int
-    name: str
-    surname: str
-    patronymic: str
-    user_id: int
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    surname = db.Column(db.String(255), nullable=False)
-    patronymic = db.Column(db.String(255), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship("User", backref=db.backref("executive", lazy=True), foreign_keys=[user_id])
-
-@dataclass
-class Head(db.Model):
-    id : int
-    user_id : int
-    name: str
-    surname: str
-    patronymic : str
-    position : str
-    signature_path : str
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user = db.relationship("User", backref=db.backref("head_of_department", lazy=True), foreign_keys=[user_id])
-    name = db.Column(db.String(255), nullable=False)
-    surname = db.Column(db.String(255), nullable=False)
-    patronymic = db.Column(db.String(255), nullable=True)
-    position = db.Column(db.String(1000), nullable=False)
-    signature_path = db.Column(db.String(1000), nullable=True)
-
-
-@dataclass
-class DocType(db.Model):
-    id : int
-    name : str
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    
-@dataclass
-class SubType(db.Model):
-    id: int
-    name: str
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-
-@dataclass
-class DocTypeSubType(db.Model):
-    id : int
-    doctype_id : int
-    subtype_id : int
-    counter : int
-    
-    id = db.Column(db.Integer, primary_key=True)
-    doctype_id = db.Column(db.Integer, db.ForeignKey('doc_type.id'), nullable=False)
-    doctype =db.relationship("DocType", backref=db.backref("doc-type", lazy=True), foreign_keys=[doctype_id])
-    subtype_id = db.Column(db.Integer, db.ForeignKey('sub_type.id'), nullable=True)
-    subtype =db.relationship("SubType", backref=db.backref("sub-type", lazy=True), foreign_keys=[subtype_id])
-    counter = db.Column(db.Integer, nullable=False)
-
-
-@app.route('/', methods = ['GET'])
+@bp.route('/', methods = ['GET'])
 @login_required
 def index():
     
@@ -239,10 +47,11 @@ def index():
     
     # Начальный фильтр, если user - admin
     if current_user.is_admin:
-        tasks = Task.query.filter(Task.is_archived == False, Task.is_deleted == False)
+        tasks = db.session.query(Task).filter(Task.is_archived == False, Task.is_deleted == False)
     else:
         # Если user - обычный пользователь, то видим только задачи где он - executor, а также те, которые он отправил
-       tasks = Task.query.filter(
+        
+        tasks = db.session.query(Task).filter(
             db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id), Task.is_archived == False, Task.is_deleted == False)
        
     tasks, task_count = filter_data(tasks, page, **filter_params_dict)
@@ -260,15 +69,15 @@ def index():
             task.attached_files = task.attached_file.rstrip(';').split(';')
     
 
-    executors =  User.query.filter(User.is_deleted == False).all()
+    executors =  db.session.query(User).filter(User.is_deleted == False).all()
         
     executors_for_resend = hide_buh(current_user.login)
         
-    employees = Executive.query.all()
-    nomenclature = DocTypeSubType.query.all()
+    employees = db.session.query(Executive).all()
+    nomenclature = db.session.query(DocTypeSubType).all()
     
-    buh = User.query.filter(User.login == app.config.get('BUH_LOGIN')).first()
-    return render_template('index.html',tasks=tasks,
+    buh = db.session.query(User).filter(User.login == current_app.config.get('BUH_LOGIN')).first()
+    return render_template('core/index.html',tasks=tasks,
                                         task_count = task_count,
                                         executors=executors,
                                         executors_for_resend = executors_for_resend,
@@ -284,12 +93,12 @@ def index():
                                         executive = Executive,
                                         status = Status,
                                         status_dict = STATUS_DICT,
-                                        per_page = PER_PAGE,
+                                        per_page = current_app.config['PER_PAGE'],
                                         nomenclature = nomenclature,
-                                        BUH_LOGIN = app.config.get('BUH_LOGIN')) 
+                                        BUH_LOGIN = current_app.config.get('BUH_LOGIN')) 
 
 
-@app.route('/add', methods=['GET', 'POST'])
+@bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
     if not current_user.is_admin and not current_user.is_deputy:  # Проверка прав
@@ -297,7 +106,7 @@ def add():
         return redirect(url_for('index'))
 
     executors = hide_buh(current_user.login)
-    nomenclature = DocTypeSubType.query.all()
+    nomenclature = db.session.query(DocTypeSubType).all()
     
     if request.method == 'POST':
 
@@ -307,27 +116,27 @@ def add():
         #получаем порядковый номер типа документа
         nm_number = request.form.get('nm-number')
         
-        dtst = DocTypeSubType.query.get(nm_doc)
+        dtst = db.session.get(DocTypeSubType, nm_doc)
         if (dtst):
             dtst.counter = nm_number
         else:
             nm_doc = None
 
         # Генерируем task_id для новой задачи
-        task_id = str(len(Task.query.all()) + 1)
+        task_id = str(len(db.session.query(Task).all()) + 1)
 
         # Обработка 'all'
         if 'all' in selected_executors:
             # Добавляем всех пользователей как исполнителей
             executors_for_task = executors
-            task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator')
+            task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), task_id, 'creator')
             os.makedirs(task_uploads_folder, exist_ok=True)
         else:
             # Добавляем выбранных пользователей как исполнителей
-            executors_for_task = User.query.filter(
+            executors_for_task = db.session.query(User).filter(
                 User.id.in_([int(executor) for executor in selected_executors.split(',')])
             ).all()
-            task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator')
+            task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), task_id, 'creator')
             os.makedirs(task_uploads_folder, exist_ok=True)
 
         date_created = datetime.combine(datetime.strptime(request.form['date_created'], '%Y-%m-%d'), datetime.now().time())
@@ -356,7 +165,7 @@ def add():
                 creator_file_path += tmp_file_path + ';'
 
         for executor in executors_for_task:
-            if str(executor.id) in app.config['CanGetResendedTasksArr']:
+            if str(executor.id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
                 employeeId = request.form.get('employee') or None
             else:
                 employeeId = None
@@ -382,7 +191,7 @@ def add():
         flash('Задача успешно добавлена!', 'success')
         return '', 200
 
-    return render_template('add.html',  executors=executors,
+    return render_template('core/add.html',  executors=executors,
                                         nomenclature = nomenclature,
                                         current_user=current_user,
                                         datetime=datetime)
@@ -391,7 +200,7 @@ import shutil
 
 
 
-@app.route('/add_memo', methods=['GET', 'POST']) #  Маршрут для создания служебных записок
+@bp.route('/add_memo', methods=['GET', 'POST']) #  Маршрут для создания служебных записок
 @login_required
 def add_memo():
     
@@ -409,14 +218,14 @@ def add_memo():
         if 'all' in selected_executor_id:
             all_count = 1
             # Проверка, есть ли уже папка 'all1', 'all2' и т.д.
-            while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], f'all{all_count}', 'creator')):
+            while os.path.exists(os.path.join(current_app.config.get('UPLOAD_FOLDER'), f'all{all_count}', 'creator')):
                 all_count += 1
             task_id = f'all{all_count}' # Использовать "all" + счетчик
         else:
             # Генерируем task_id для "не all"
-            task_id = str(len(Task.query.all()) + 1)
+            task_id = str(len(db.session.query(Task).all()) + 1)
 
-            memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+            memo_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), task_id, 'creator') # Папка для всех записок
             os.makedirs(memo_uploads_folder, exist_ok=True)
         
         creator_file_path = ''
@@ -431,7 +240,7 @@ def add_memo():
                 creator_file_path += tmp_file_path + ';'
                 
         for executor_id in selected_executor_id:
-            if str(executor_id) in app.config['CanGetResendedTasksArr']:
+            if str(executor_id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
                 employeeId = request.form.get('employee') or None
             else:
                 employeeId = None
@@ -453,9 +262,9 @@ def add_memo():
         flash('Служебная записка успешно отправлена!', 'success')
         return '', 200
 
-    return render_template('add_memo.html', executors=executors, current_user = current_user)  #  Передаем executors в шаблон
+    return render_template('core/add_memo.html', executors=executors, current_user = current_user)  #  Передаем executors в шаблон
 
-@app.route('/resend/<int:task_id>', methods=['POST'])
+@bp.route('/resend/<int:task_id>', methods=['POST'])
 @login_required
 def resend(task_id):
     if not current_user.is_admin and not current_user.is_deputy:  # Проверка прав
@@ -463,8 +272,8 @@ def resend(task_id):
         return redirect(url_for('index'))
 
     # Генерируем new_task_id для новой задачи
-    new_task_id = str(len(Task.query.all()) + 1)
-    task = Task.query.get_or_404(task_id)
+    new_task_id = str(len(db.session.query(Task).all()) + 1)
+    task = db.session.query(Task).get_or_404(task_id)
     
     # Пока что меняем статус только для задач. Для служебных записок не меняем.
     if not task.for_review:
@@ -472,8 +281,8 @@ def resend(task_id):
 
     executor_for_task_id = request.json.get('executors').split(',')
     if 'all' in executor_for_task_id:
-        executor_for_task_id = [executor.id for executor in User.query.filter(User.is_deleted == False).all() if executor.id != current_user.id]
-    task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], new_task_id, 'creator')
+        executor_for_task_id = [executor.id for executor in db.session.query(User).filter(User.is_deleted == False).all() if executor.id != current_user.id]
+    task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), new_task_id, 'creator')
     os.makedirs(task_uploads_folder, exist_ok=True)
 
     date_created = datetime.now()
@@ -486,7 +295,7 @@ def resend(task_id):
 
     try:        
         creator_file_path = ''
-        uploadFolder = os.getcwd() + '/' + app.config['UPLOAD_FOLDER'] + '/'
+        uploadFolder = os.getcwd() + '/' + current_app.config.get('UPLOAD_FOLDER') + '/'
 
         file_path_arr = task.creator_file.rstrip(';').split(';')
         # Сохраняем файл только один раз
@@ -504,7 +313,7 @@ def resend(task_id):
         return '', 500
     
     for executor_id in executor_for_task_id:
-        if str(executor_id) in app.config['CanGetResendedTasksArr']:
+        if str(executor_id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
             employeeId = request.json.get('employee') or None
         else:
             employeeId = None
@@ -531,13 +340,13 @@ def resend(task_id):
 
 
 
-@app.route('/edit/<int:task_id>', methods=['GET', 'POST'])
+@bp.route('/edit/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get(task_id)
     if task.creator_id != current_user.id and not current_user.is_admin:  # Проверка прав
         flash('У вас нет прав для редактирования этой задачи.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     executors = hide_buh(current_user.login)
         
@@ -552,7 +361,7 @@ def edit(task_id):
         task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
         files = request.files.getlist('files') #массив файлов
         
-        if str(task.executor_id) in app.config['CanGetResendedTasksArr']:
+        if str(task.executor_id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
             task.employeeId = request.form.get('employee') or None
         else:
             task.employeeId = None
@@ -567,7 +376,7 @@ def edit(task_id):
                     task.extended_deadline = extended_deadline_date
                 except ValueError:
                     flash("Некорректный формат даты продления", "danger")
-                    return render_template('edit.html', task=task,
+                    return render_template('core/edit.html', task=task,
                                                         executors=executors,
                                                         current_user = current_user,
                                                         status = Status,
@@ -589,7 +398,7 @@ def edit(task_id):
                     task_id = str(task_id)
                     tmp_file_path = ''
 
-                    memo_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], task_id, 'creator') # Папка для всех записок
+                    memo_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), task_id, 'creator') # Папка для всех записок
                     os.makedirs(memo_uploads_folder, exist_ok=True)
 
                     # Сохранение файла
@@ -611,9 +420,9 @@ def edit(task_id):
         flash('Задача успешно отредактирована!', 'success')
         return '', 200
 
-    nomenclature = DocTypeSubType.query.all()
+    nomenclature = db.session.query(DocTypeSubType).all()
     
-    return render_template('edit.html', task=task,
+    return render_template('core/edit.html', task=task,
                                         executors=executors,
                                         status = Status,
                                         current_user = current_user,
@@ -622,10 +431,10 @@ def edit(task_id):
 
 
 
-@app.route('/delete/<int:task_id>', methods=['POST'])
+@bp.route('/delete/<int:task_id>', methods=['POST'])
 @login_required
 def delete(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = db.session.get(Task, task_id)
     if task.creator_id != current_user.id and not current_user.is_admin:  # Проверка прав
         flash('У вас нет прав для удаления этой задачи.', 'danger')
         return redirect(url_for('index'))
@@ -635,17 +444,17 @@ def delete(task_id):
     
     db.session.commit()
     flash('Задача успешно удалена!', 'success')
-    return redirect(request.referrer or url_for('index'))
+    return redirect(request.referrer or url_for('core.index'))
 
 
-@app.route('/complete/<int:task_id>', methods=['GET', 'POST'])
+@bp.route('/complete/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def complete(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get_or_404(task_id)
 
     if current_user.id != task.executor_id:
         flash('Вы можете изменять только свои задачи.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     if request.method == 'POST':
 
@@ -656,7 +465,7 @@ def complete(task_id):
                 tmp_file_path = ''
                 filename = file.filename  # Оригинальное имя
             
-                task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(task_id), 'executor')
+                task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), str(task_id), 'executor')
                 os.makedirs(task_uploads_folder, exist_ok=True)
 
                 file.save(os.path.join(task_uploads_folder, filename)) # Сохраняем с оригинальным именем!
@@ -672,28 +481,28 @@ def complete(task_id):
         flash('Отметка о выполнении отправлена администратору.', 'success')
         return '', 200
 
-    return render_template('complete.html', task=task)
+    return render_template('core/complete.html', task=task)
 
 
-@app.route('/uploads/<path:filename>')
+@bp.route('/uploads/<path:filename>')
 @login_required
 def uploaded_file(filename):
-    uploads_folder = app.config['UPLOAD_FOLDER']
+    uploads_folder = current_app.config.get('UPLOAD_FOLDER')
     safe_path = safe_join(uploads_folder, filename) # Используем safe_join
     if safe_path and os.path.exists(safe_path):
        return send_from_directory(uploads_folder, filename, as_attachment=False)
     else:
         flash(f"File not found: {filename}")
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
-@app.route('/admin/tasks/<int:task_id>/confirm', methods=['POST'])
+@bp.route('/admin/tasks/<int:task_id>/confirm', methods=['POST'])
 @login_required
 def confirm_task(task_id):
     if not current_user.is_admin:
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get(task_id)
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
     
@@ -711,14 +520,14 @@ def confirm_task(task_id):
     return '', 200
 
 
-@app.route('/admin/tasks/<int:task_id>/reject', methods=['POST'])
+@bp.route('/admin/tasks/<int:task_id>/reject', methods=['POST'])
 @login_required
 def reject_task(task_id):
     if not current_user.is_admin:
         flash('У вас нет прав для отклонения выполнения задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get_or_404(task_id)
 
     if task.attached_file != None and task.attached_file != "":
         for file in task.attached_file.rstrip(';').split(';'):
@@ -731,17 +540,17 @@ def reject_task(task_id):
     flash('Выполнение задачи отклонено.', 'warning')
     return '', 200
 
-@app.route('/deputy/tasks/<int:task_id>/confirm', methods=['POST'])
+@bp.route('/deputy/tasks/<int:task_id>/confirm', methods=['POST'])
 @login_required
 def confirm_task_deputy(task_id):
     if not current_user.is_deputy:
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get_or_404(task_id)
     if task.creator_id != current_user.id:
         flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
@@ -767,8 +576,8 @@ def confirm_task_deputy(task_id):
             # Работа с файлами
             try:        
                 exev_file_path = ''
-                task_uploads_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(task.parent_task_id), 'executor')
-                uploadFolder = os.getcwd() + '/' + app.config['UPLOAD_FOLDER'] + '/'
+                task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), str(task.parent_task_id), 'executor')
+                uploadFolder = os.getcwd() + '/' + current_app.config.get('UPLOAD_FOLDER') + '/'
                 if not os.path.exists(uploadFolder):
                     os.makedirs(uploadFolder)
                 os.makedirs(task_uploads_folder, exist_ok=True)
@@ -798,17 +607,17 @@ def confirm_task_deputy(task_id):
     flash('Выполнение задачи подтверждено.', 'success')
     return '', 200
 
-@app.route('/deputy/tasks/<int:task_id>/reject', methods=['POST'])
+@bp.route('/deputy/tasks/<int:task_id>/reject', methods=['POST'])
 @login_required
 def reject_task_deputy(task_id):
     if not current_user.is_deputy:
         flash('У вас нет прав для отклонения задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     
     task = Task.query.get_or_404(task_id)
     if task.creator_id != current_user.id:
         flash('Вы можете отклоненять только задачи, которые вы выдали.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     if task.attached_file != None and task.attached_file != "":
         os.remove(task.attached_file)
@@ -821,22 +630,22 @@ def reject_task_deputy(task_id):
     flash('Выполнение задачи отклонено.', 'warning')
     return '', 200
 
-@app.route('/users')
+@bp.route('/users')
 @login_required
 def users():
     if not current_user.is_admin:
         flash('У вас нет прав для просмотра этой страницы.', 'danger')
         return redirect(url_for('index'))
-    users = User.query.filter(User.is_deleted == False).all()
-    return render_template('users.html', users=users)
+    users = db.session.query(User).filter(User.is_deleted == False).all()
+    return render_template('core/users.html', users=users)
 
 
-@app.route('/add_user', methods=['GET', 'POST'])
+@bp.route('/add_user', methods=['GET', 'POST'])
 @login_required
 def add_user():
     if not current_user.is_admin:
         flash('У вас нет прав для создания пользователей.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     if request.method == 'POST':
         department = request.form['department']
@@ -845,109 +654,41 @@ def add_user():
         is_admin = request.form.get('is_admin') == 'on'
         is_deputy = request.form.get('is_deputy') == 'on' # Добавляем проверку на is_deputy
 
-        existing_user = User.query.filter_by(login=login).first()
+        existing_user = db.session.query(User).filter_by(User.login == login).first()
         if existing_user:
             flash('Пользователь с таким логином уже существует.', 'danger')
-            return redirect(url_for('add_user'))
+            return redirect(url_for('core.add_user'))
 
         hashed_password = generate_password_hash(password)
         new_user = User(department=department, login=login, password_hash=hashed_password, is_admin=is_admin, is_deputy=is_deputy)
         db.session.add(new_user)
         db.session.commit()
         flash('Пользователь успешно добавлен!', 'success')
-        return redirect(url_for('users'))
-    return render_template('add_user.html')
+        return redirect(url_for('core.users'))
+    return render_template('core/add_user.html')
 
 
-@app.route('/delete_user/<int:user_id>', methods=['POST'])
+@bp.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
 def delete_user(user_id):
     if not current_user.is_admin:
         flash('У вас нет прав для удаления пользователей.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
-    user = User.query.get_or_404(user_id)
+    user = db.session.get(User, user_id)
     
     user.is_deleted = True
     user.when_deleted = datetime.now()
     
     db.session.commit()
     flash('Пользователь успешно удален!', 'success')
-    return redirect(url_for('users'))
+    return redirect(url_for('core.users'))
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        login = request.form['login']
-        password = request.form['password']
-        user = User.query.filter(User.login == login, User.is_deleted == False).first()
-        if user and user.check_password(password):
-            login_user(user)
-            flash('Вы успешно авторизовались!', 'success')
-            return redirect(url_for('index', sn = 'in', p=1))
-        else:
-            flash('Неверный логин или пароль', 'danger')
-    return render_template('login.html')
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        department = request.form['department']
-        login = request.form['login']
-        password = request.form['password']
-
-        existing_user = User.query.filter_by(login=login).first()
-        if existing_user:
-            flash('Пользователь с таким логином уже существует.', 'danger')
-            return redirect(url_for('register'))
-
-        hashed_password = generate_password_hash(password)
-        new_user = User(department=department, login=login, password_hash=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        flash('Регистрация прошла успешно! Теперь вы можете войти.', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html')
-
-
-@app.route('/change_password', methods=['GET', 'POST'])
-@login_required
-def change_password():
-    if request.method == 'POST':
-        old_password = request.form['old_password']
-        new_password = request.form['new_password']
-        confirm_password = request.form['confirm_password']
-
-        if not current_user.check_password(old_password):
-            flash('Неверный текущий пароль', 'danger')
-            return redirect(url_for('change_password'))
-
-        if new_password != confirm_password:
-            flash('Новый пароль и подтверждение не совпадают', 'danger')
-            return redirect(url_for('change_password'))
-
-        current_user.set_password(new_password)
-        db.session.commit()
-        flash('Пароль успешно изменен!', 'success')
-        return redirect(url_for('index'))  # Перенаправляем на главную после смены пароля
-    return render_template('change_password.html')
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-@app.route('/review/<int:task_id>', methods=['GET', 'POST'])
+@bp.route('/review/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def review(task_id):
-    task = Task.query.get_or_404(task_id)
+    task = db.session.query(Task).get(task_id)
     if request.method == 'POST':  #  Обработка POST-запроса от кнопки "Ознакомлен"
         task.completion_confirmed_at = datetime.now()
         task.status_id = Status.reviewed.value
@@ -955,73 +696,23 @@ def review(task_id):
         db.session.commit()
         flash('Вы ознакомились с задачей.', 'success')
         return '', 200  #  Перенаправление на главную страницу
-    return render_template('review.html', task=task)
-
-@app.route('/api/nomenclature/counters')
-@login_required
-def getDocCounterData():
-    dtst = DocTypeSubType.query.all()
-    return jsonify(dtst)
-
-#API-метод, возвращающий список сотрудников по id отдела 
-@app.route('/api/users/<int:user_id>/employees', methods=['GET'])
-@login_required
-def getEmployees(user_id):
-    employees = Executive.query.filter(Executive.user_id == user_id).all()
-    return jsonify(employees)
-
-#API-метод, возвращающий задачу по ее id
-@app.route('/api/tasks/<int:task_id>', methods=['GET'])
-@login_required
-def getTaskById(task_id):
-    task = Task.query.filter_by(id = task_id).first()
-    if (not task):
-        return '', 404
-    return jsonify(task)
-
-@app.route('/api/users/current_user', methods=['GET'])
-@login_required
-def getCurrentUser():
-    user = User.query.filter_by(id = current_user.id).first()
-    if (not user):
-        return '', 404
-    return jsonify(user)
-
-@app.route('/api/users/current_user_with_head', methods=['GET'])
-@login_required
-def getCurrentUserWithHead():
-    user = User.query.filter_by(id = current_user.id).first()
-    if (not user):
-        return make_response(jsonify('Пользователь с данным id не найден'), 404)
-
-    depHead = Head.query.filter_by(user_id = current_user.id).first()
-    if (not depHead):
-        return make_response(jsonify('Данные начальника отдела не найдены'), 404)
-    
-    data = CreateMemoDTO(user.department, user.full_department, depHead.name, depHead.surname, depHead.patronymic, depHead.position, depHead.signature_path)
-    
-    data.headSignaturePath = current_user.head.signature_path
-    
-    return jsonify(data)
+    return render_template('core/review.html', task=task)
 
 
-reports_bp = Blueprint('reports', __name__) # Создаем Blueprint
-
-
-@reports_bp.route('/reports')
+@bp.route('/reports')
 @login_required
 def reports():
     if not current_user.is_admin:
         flash('У вас нет прав для просмотра этой страницы.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
-    all_users = User.query.filter(User.is_deleted == False).all()
+    all_users = db.session.query(User).filter(User.is_deleted == False).all()
     report_data = {}
 
     for user in all_users:
         report_data[user] = {}
         for month in range(1, 13): #  Перебираем все месяцы
-            tasks_in_month = Task.query.filter(
+            tasks_in_month = db.session.query(Task).filter(
                 Task.executor_id == user.id,
                 Task.is_deleted == False,
                 db.extract('month', Task.date_created) == month,
@@ -1035,22 +726,22 @@ def reports():
                 total_penalty += penalty
             report_data[user][month] = total_penalty
 
-    return render_template('reports.html', report_data=report_data, all_users=all_users, date=date, any=any)
+    return render_template('core/reports.html', report_data=report_data, all_users=all_users, date=date, any=any)
 
-@app.route('/archived')
+@bp.route('/archived')
 @login_required
 def archived():
 
     filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
     page = request.args.get('p', 1, type=int)
     if current_user.is_admin:
-        archived_data = Task.query.filter(Task.is_archived ==True, Task.is_deleted == False)
+        archived_data = db.session.query(Task).filter(Task.is_archived ==True, Task.is_deleted == False)
     else:
-        archived_data = Task.query.filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id),
+        archived_data = db.session.query(Task).filter(db.or_(Task.executor_id == current_user.id, Task.creator_id == current_user.id),
                                           Task.is_archived == True, Task.is_deleted == False)
 
     archived_data, task_count = filter_data(archived_data, page, **filter_params_dict)
-    executors = User.query.filter(User.is_deleted == False).all()
+    executors = db.session.query(User).filter(User.is_deleted == False).all()
 
     for task in archived_data:
         if task.extended_deadline:
@@ -1062,35 +753,28 @@ def archived():
 
         task.creator_files = task.creator_file.rstrip(';').split(';')
 
-    creator_department = {}
-    for task in archived_data:
-        if task.creator_id not in creator_department:  # Проверяем creator_id, а не executor_id
-            creator_department[task.creator_id] = task.creator.department
-        if current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor_id] = task.executor.department
-        elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor.id] = task.executor.department
 
-    return render_template('archived.html', data = archived_data,
+    nomenclature = db.session.query(DocTypeSubType).all()
+    return render_template('core/archived.html', data = archived_data,
                                             task_count = task_count,
                                             executors = executors,
-                                            creator_department = creator_department,
-                                            per_page = PER_PAGE,
+                                            per_page = current_app.config['PER_PAGE'],
                                             page=page,
                                             filter_params_dict = filter_params_dict,
                                             time=time,
                                             date=date,
                                             datetime=datetime,
                                             executive = Executive,
+                                            nomenclature = nomenclature,
                                             unquote = unquote,
                                             status = Status,
                                             status_dict = STATUS_DICT)
     
 
-@app.route('/create_memo', methods=['GET'])
+@bp.route('/create_memo', methods=['GET'])
 @login_required
 def create_memo():
-    executors = [executor for executor in User.query.all() if executor.id != current_user.id]
+    executors = [executor for executor in db.session.query(User).all() if executor.id != current_user.id]
     
     current_user_department = ''
     
@@ -1099,138 +783,12 @@ def create_memo():
     else:
         current_user_department = current_user.department.split(' ', maxsplit=1)[1]
     
-    return render_template('create_memo.html', executors = executors,
+    return render_template('core/create_memo.html', executors = executors,
                                                current_user_department = current_user_department)
 
 
-@app.errorhandler(werkzeug.exceptions.NotFound)
-def page_not_found(error):
-    return render_template('404.html'), 404
-
-@app.errorhandler(werkzeug.exceptions.InternalServerError)
-def internal_server_error(error):
-    db.session.rollback()
-    return render_template('500.html', error = error), 500
-
-
-@app.route('/favicon.ico', methods=['GET'])
+@bp.route('/favicon.ico', methods=['GET'])
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
+    return send_from_directory(os.path.join(current_app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-def filter_data(dataset, page : int, **params):
-
-    match params.get('sn'):
-        case 'in':
-            dataset = dataset.filter(Task.executor_id == current_user.id)
-        case 'out':
-            dataset = dataset.filter(Task.creator_id == current_user.id)
-        case 'all':
-            if (not current_user.is_admin):
-                dataset = dataset.filter(db.or_(Task.executor_id == current_user.id,
-                                                Task.creator_id == current_user.id))
-        case _:
-            dataset = dataset.filter(Task.executor_id == current_user.id)
-                
-    match params.get('status'):
-        case 'in_work':
-            dataset = dataset.filter(Task.status_id == 1)
-        case 'at_check':
-            dataset = dataset.filter(Task.status_id == 2)
-        case 'reviewed':
-            dataset = dataset.filter(Task.status_id == 3)
-        case 'completed':
-            dataset = dataset.filter(Task.status_id == 4)
-        case 'complete_delayed':
-            dataset = dataset.filter(Task.status_id == 5)
-        case 'delayed':
-            dataset = dataset.filter(Task.status_id == 6)
-        case 'invalid':
-            dataset = dataset.filter(Task.status_id == 7)
-        case 'pending':
-            dataset = dataset.filter(Task.status_id == 8)
-        case _:
-            pass      
-           
-    match params.get('nm-select'):
-        case '1':
-            dataset = dataset.filter(Task.doctype_id == 1)
-        case '2':
-            dataset = dataset.filter(Task.doctype_id == 2)
-        case '3':
-            dataset = dataset.filter(Task.doctype_id == 3)
-        case '4':
-            dataset = dataset.filter(Task.doctype_id == 4)
-        case '5':
-            dataset = dataset.filter(Task.doctype_id == 5)
-        case '6':
-            dataset = dataset.filter(Task.doctype_id == 6)
-        case '7':
-            dataset = dataset.filter(Task.doctype_id == 7)
-        case '8':
-            dataset = dataset.filter(Task.doctype_id == 8)
-        case '9':
-            dataset = dataset.filter(Task.doctype_id == 9)
-        case '10':
-            dataset = dataset.filter(Task.doctype_id == 10)
-        case _:
-            pass  
-             
-    if params.get('executor'):
-        dataset = dataset.filter(Task.executor_id == User.query
-                                                            .filter(User.department == params['executor'])
-                                                            .first().id)
-
-    if params.get('creator'):
-        creator = User.query.filter(User.department == params['creator']).first()
-        if creator:
-            dataset = dataset.filter(Task.creator_id== creator.id)
-    
-    if params.get('month'):
-        try:
-            year, month = map(int, params['month'].split('-'))
-            dataset = dataset.filter(db.extract('year', Task.date_created) == year,
-                                 db.extract('month', Task.date_created) == month)
-        except ValueError:
-            # Обработка некорректного формата месяца
-            flash("Некорректный формат месяца", "danger")
-
-    if params.get('date'):
-        date_filter = datetime.strptime(params['date'], '%Y-%m-%d').date()
-        dataset = dataset.filter(db.cast(Task.date_created, db.Date) == date_filter)
-
-    dataset_count = dataset.count()
-    
-
-    dataset = dataset.options(db.joinedload(Task.executor)).order_by(
-        #Task.status_id.desc(),
-        Task.date_created.desc(),
-        Task.deadline.desc() if not Task.is_бессрочно else Task.id).paginate(page=page, per_page=PER_PAGE)
-    
-    return (dataset, dataset_count,)
-
-def hide_buh(current_user_login : str):
-    if current_user_login == '8':
-        return User.query.filter(User.id != current_user.id, User.is_deleted == False).all()
-    else:
-        #бухгалтерия скрыта по запросу главбуха
-        return User.query.filter(User.id != current_user.id, User.login != app.config.get('BUH_LOGIN'), User.is_deleted == False).all()
-         
-
-def calculate_penalty(task : Task):  
-    if (task.status_id == Status.completed.value or task.status_id == Status.complete_delayed.value) and task.deadline_for_check and task.completion_confirmed_at: # task.completion_confirmed_at
-        overdue_days = (task.completion_confirmed_at.date() - task.deadline_for_check).days
-        if overdue_days > 0:
-            max_penalty = 20
-            penalty = min(overdue_days, max_penalty)
-            return penalty
-    return 0
-
-app.register_blueprint(reports_bp, url_prefix='/') # Регистрируем Blueprint
-
-
-
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(host='0.0.0.0')

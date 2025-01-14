@@ -3,7 +3,8 @@
 
 
 <h3>Создание служебной записки</h3>
-<div> Пожалуйста, заполните нижеприведенные поля для того, чтобы можно было сформировать необходимый документ</div>
+<div> Пожалуйста, заполните нижеприведенные поля для того, чтобы можно было сформировать необходимый документ.</div>
+<div> </div>
 <br/>
 <form method="post" id="createMemoForm">
     <div class="form-group">
@@ -34,12 +35,14 @@
             <button type="submit" class="btn btn-success">Сформировать</button>
             <button onclick="window.location.replace(document.referrer)" class="btn btn-light">Отмена</button>
         </div>
-        <!--<button id="exdocref">Пример служебной записки</button>-->
+       
     </div>
     
 
 </form>
 
+<br/>
+<button id="exdocref" class="btn btn-outline-secondary">Пример служебной записки</button>
     
 <script src="{{url_for('static', filename = 'src/js/create_memo.js') }}"></script>
 
