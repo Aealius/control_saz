@@ -50,8 +50,6 @@ def create_app(config_class=Config) -> Flask:
         console_handler = logging.StreamHandler()
         app.logger.addHandler(console_handler)
         
-        serve(app, listen='0.0.0.0:5000', threads=28)
-        
     return app
 
 
