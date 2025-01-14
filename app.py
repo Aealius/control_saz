@@ -1062,20 +1062,10 @@ def archived():
 
         task.creator_files = task.creator_file.rstrip(';').split(';')
 
-    creator_department = {}
-    for task in archived_data:
-        if task.creator_id not in creator_department:  # Проверяем creator_id, а не executor_id
-            creator_department[task.creator_id] = task.creator.department
-        if current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor_id] = task.executor.department
-        elif not current_user.is_admin and task.executor and task.executor_id not in creator_department:
-            creator_department[task.executor.id] = task.executor.department
-
     nomenclature = DocTypeSubType.query.all()
     return render_template('archived.html', data = archived_data,
                                             task_count = task_count,
                                             executors = executors,
-                                            creator_department = creator_department,
                                             per_page = PER_PAGE,
                                             page=page,
                                             filter_params_dict = filter_params_dict,
