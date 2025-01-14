@@ -1,6 +1,7 @@
 from flask import jsonify
 from flask_login import current_user, login_required
 from app.api import bp
+from app.api.dtos import CreateMemoDTO
 from app.models import DocTypeSubType,Executive, Task, User
 from app import db
 
@@ -44,7 +45,16 @@ def getCurrentUser():
 @bp.route('/api/users/current_user_with_head', methods=['GET'])
 @login_required
 def getCurrentUserWithHead():
-    data = db.session.get(User, current_user.id).to_dict(with_head=True)
+    data = db.session.get(User, current_user.id)
+    current_user_with_head = CreateMemoDTO(
+        department=data.department,
+        full_department=data.full_department,
+        headName=data.head[0].name,
+        headSurname=data.head[0].surname,
+        headPatronymic=data.head[0].patronymic,
+        headPosition=data.head[0].position,
+        headSignaturePath=data.head[0].signature_path,
+    )
     if (not data):
         return '', 404
-    return jsonify(data)
+    return jsonify(current_user_with_head)

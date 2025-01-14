@@ -156,7 +156,7 @@ class Head(Base):
             'surname':self.surname,
             'position':self.position,
             'patronymic':self.patronymic,
-            #'signature_path':self.signature_path,
+            'signature_path':self.signature_path,
         }
         return data
 
