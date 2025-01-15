@@ -492,7 +492,7 @@ def uploaded_file(filename):
     if safe_path and os.path.exists(safe_path):
        return send_from_directory(uploads_folder, filename, as_attachment=False)
     else:
-        flash(f"File not found: {filename}")
+        flash(f"Файл не найден: {filename}")
         return redirect(url_for('core.index'))
 
 @bp.route('/admin/tasks/<int:task_id>/confirm', methods=['POST'])
@@ -635,7 +635,7 @@ def reject_task_deputy(task_id):
 def users():
     if not current_user.is_admin:
         flash('У вас нет прав для просмотра этой страницы.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
     users = db.session.query(User).filter(User.is_deleted == False).all()
     return render_template('core/users.html', users=users)
 
@@ -654,7 +654,7 @@ def add_user():
         is_admin = request.form.get('is_admin') == 'on'
         is_deputy = request.form.get('is_deputy') == 'on' # Добавляем проверку на is_deputy
 
-        existing_user = db.session.query(User).filter_by(User.login == login).first()
+        existing_user = db.session.query(User).filter(User.login == login).first()
         if existing_user:
             flash('Пользователь с таким логином уже существует.', 'danger')
             return redirect(url_for('core.add_user'))

@@ -4,7 +4,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
 from flask_login import LoginManager
-from waitress import serve
 from config import Config
 import logging
 from logging.handlers import RotatingFileHandler
@@ -22,7 +21,10 @@ def create_app(config_class=Config) -> Flask:
     
     app = Flask(__name__)
     app.config.from_object(config_class)
+    
     db.init_app(app)
+    
+    
     migrate.init_app(app, db)
     login_manager.init_app(app)
     bootstrap.init_app(app)
@@ -51,6 +53,3 @@ def create_app(config_class=Config) -> Flask:
         app.logger.addHandler(console_handler)
         
     return app
-
-
-from app import models

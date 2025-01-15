@@ -4,13 +4,11 @@ from sqlalchemy import Date, DateTime, ForeignKeyConstraint, Index, Integer, Sma
 from sqlalchemy.dialects.mysql import TINYINT
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from werkzeug.security import generate_password_hash, check_password_hash
+from app import db
 import datetime
 
 
-class Base(DeclarativeBase):
-    pass
-
-class DocType(Base):
+class DocType(db.Model):
     __tablename__ = 'doc_type'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -19,7 +17,7 @@ class DocType(Base):
     doc_type_sub_type: Mapped[List['DocTypeSubType']] = relationship('DocTypeSubType', back_populates='doctype')
 
 
-class SubType(Base):
+class SubType(db.Model):
     __tablename__ = 'sub_type'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -28,7 +26,7 @@ class SubType(Base):
     doc_type_sub_type: Mapped[List['DocTypeSubType']] = relationship('DocTypeSubType', back_populates='subtype')
 
 
-class User(UserMixin, Base):
+class User(UserMixin, db.Model):
     __tablename__ = 'user'
     __table_args__ = (
         Index('login', 'login', unique=True),
@@ -38,10 +36,10 @@ class User(UserMixin, Base):
     department: Mapped[str] = mapped_column(String(255))
     login: Mapped[str] = mapped_column(String(100))
     password_hash: Mapped[str] = mapped_column(String(255))
-    is_deleted: Mapped[int] = mapped_column(TINYINT(1))
+    is_deleted: Mapped[bool] = mapped_column(TINYINT(1), default=False)
     full_department: Mapped[Optional[str]] = mapped_column(String(1000))
-    is_admin: Mapped[Optional[int]] = mapped_column(TINYINT(1))
-    is_deputy: Mapped[Optional[int]] = mapped_column(TINYINT(1))
+    is_admin: Mapped[Optional[bool]] = mapped_column(TINYINT(1))
+    is_deputy: Mapped[Optional[bool]] = mapped_column(TINYINT(1))
     when_deleted: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
 
     executive: Mapped[List['Executive']] = relationship('Executive', back_populates='user')
@@ -75,7 +73,7 @@ class User(UserMixin, Base):
         return data
 
 
-class DocTypeSubType(Base):
+class DocTypeSubType(db.Model):
     __tablename__ = 'doc_type_sub_type'
     __table_args__ = (
         ForeignKeyConstraint(['doctype_id'], ['doc_type.id'], name='doc_type_sub_type_ibfk_1'),
@@ -103,7 +101,7 @@ class DocTypeSubType(Base):
         return data
 
 
-class Executive(Base):
+class Executive(db.Model):
     __tablename__ = 'executive'
     __table_args__ = (
         ForeignKeyConstraint(['user_id'], ['user.id'], name='executive_ibfk_1'),
@@ -131,7 +129,7 @@ class Executive(Base):
     
 
 
-class Head(Base):
+class Head(db.Model):
     __tablename__ = 'head'
     __table_args__ = (
         ForeignKeyConstraint(['user_id'], ['user.id'], name='head_ibfk_1'),
@@ -161,7 +159,7 @@ class Head(Base):
         return data
 
 
-class Task(Base):
+class Task(db.Model):
     __tablename__ = 'task'
     __table_args__ = (
         ForeignKeyConstraint(['creator_id'], ['user.id'], name='task_ibfk_1'),
@@ -181,9 +179,9 @@ class Task(Base):
     creator_id: Mapped[int] = mapped_column(Integer)
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime)
     description: Mapped[str] = mapped_column(Text)
-    is_archived: Mapped[int] = mapped_column(TINYINT(1), default=False)
+    is_archived: Mapped[bool] = mapped_column(TINYINT(1), default=False)
     status_id: Mapped[int] = mapped_column(SmallInteger, default=1)
-    is_deleted: Mapped[int] = mapped_column(TINYINT(1), default=False)
+    is_deleted: Mapped[bool] = mapped_column(TINYINT(1), default=False)
     deadline: Mapped[Optional[datetime.date]] = mapped_column(Date)
     extended_deadline: Mapped[Optional[datetime.date]] = mapped_column(Date)
     edit_datetime: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
@@ -192,8 +190,8 @@ class Task(Base):
     admin_note: Mapped[Optional[str]] = mapped_column(Text)
     attached_file: Mapped[Optional[str]] = mapped_column(String(255))
     creator_file: Mapped[Optional[str]] = mapped_column(String(2048))
-    is_бессрочно: Mapped[Optional[int]] = mapped_column(TINYINT(1), default=False)
-    for_review: Mapped[Optional[int]] = mapped_column(TINYINT(1), default=False)
+    is_бессрочно: Mapped[Optional[bool]] = mapped_column(TINYINT(1), default=False)
+    for_review: Mapped[Optional[bool]] = mapped_column(TINYINT(1), default=False)
     employeeId: Mapped[Optional[int]] = mapped_column(Integer)
     parent_task_id: Mapped[Optional[int]] = mapped_column(Integer)
     when_deleted: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
