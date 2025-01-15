@@ -187,7 +187,7 @@ def add():
             db.session.add(new_task)
             db.session.commit()    
         
-
+        #TODO: notifications
         flash('Задача успешно добавлена!', 'success')
         return '', 200
 
@@ -259,6 +259,7 @@ def add_memo():
             db.session.add(new_memo)
             db.session.commit()
             
+        #TODO: notifications    
         flash('Служебная записка успешно отправлена!', 'success')
         return '', 200
 
@@ -334,7 +335,8 @@ def resend(task_id):
         )
         db.session.add(new_task)
         db.session.commit()
-
+        
+    #TODO: notifications
     flash('Задача успешно добавлена!', 'success')
     return '', 200
 
@@ -410,11 +412,16 @@ def edit(task_id):
         
         #получаем тип документа по номенлатуре (номер)
         nm_doc = request.form.get('nm-select')
-        #получаем порядковый номер типа документа
-        nm_number = request.form.get('nm-number')
-        
-        task.doctype_id = nm_doc,
-        task.docnum = nm_number
+
+        dtst = db.session.get(DocTypeSubType, nm_doc)
+        if (dtst):
+            #получаем порядковый номер типа документа
+            nm_number = request.form.get('nm-number')
+            task.doctype_id = nm_doc
+            task.docnum = nm_number
+        else:
+            task.doctype_id = None
+            task.docnum = None
         
         db.session.commit()
         flash('Задача успешно отредактирована!', 'success')
@@ -478,6 +485,8 @@ def complete(task_id):
         task.completion_note = request.form.get('completion_note')
         task.status_id = Status.at_check.value
         db.session.commit()
+        
+        #TODO: notifications
         flash('Отметка о выполнении отправлена администратору.', 'success')
         return '', 200
 
