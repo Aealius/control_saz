@@ -190,7 +190,6 @@ class Task(db.Model):
     admin_note: Mapped[Optional[str]] = mapped_column(Text)
     attached_file: Mapped[Optional[str]] = mapped_column(String(255))
     creator_file: Mapped[Optional[str]] = mapped_column(String(2048))
-    is_бессрочно: Mapped[Optional[bool]] = mapped_column(TINYINT(1), default=False)
     for_review: Mapped[Optional[bool]] = mapped_column(TINYINT(1), default=False)
     employeeId: Mapped[Optional[int]] = mapped_column(Integer)
     parent_task_id: Mapped[Optional[int]] = mapped_column(Integer)
@@ -230,7 +229,6 @@ class Task(db.Model):
             'admin_note':self.admin_note,
             'attached_file':self.attached_file,
             'creator_file':self.creator_file,
-            'is_бессрочно':self.is_бессрочно,
             'for_review':self.for_review,
             'employeeId':self.employeeId,
             'parent_task_id':self.parent_task_id,

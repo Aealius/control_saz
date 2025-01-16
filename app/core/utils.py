@@ -90,10 +90,8 @@ def filter_data(dataset, page : int, **params):
     dataset_count = dataset.count()
     
 
-    dataset = dataset.options(db.joinedload(Task.executor)).order_by(
-        #Task.status_id.desc(),
-        Task.date_created.desc(),
-        Task.deadline.desc() if not Task.is_бессрочно else Task.id).paginate(page=page, per_page=current_app.config['PER_PAGE'])
+    dataset = dataset.options(db.joinedload(Task.executor)).order_by(Task.date_created.desc())\
+                                                           .paginate(page=page, per_page=current_app.config['PER_PAGE'])
     
     return (dataset, dataset_count,)
 

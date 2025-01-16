@@ -29,7 +29,7 @@
                    value="{{ task.date_created.strftime('%Y-%m-%d') }}" disabled>
         </div>
         <div class="form-group form-check {%if not current_user.is_admin and not current_user.is_deputy%}hidden{%endif%}">
-            <input type="checkbox" class="form-check-input" id="is_бессрочно" name="is_бессрочно" {% if task.is_бессрочно %}checked{% endif %} onchange="toggleDeadline()">
+            <input type="checkbox" class="form-check-input" id="is_бессрочно" {% if task.deadline == None %}checked{% endif %} onchange="toggleDeadline()">
             <label class="form-check-label" for="is_бессрочно">Бессрочно</label>
         </div>
         <div id = "deadlineField" class="form-group">

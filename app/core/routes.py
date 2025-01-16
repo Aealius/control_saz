@@ -140,8 +140,11 @@ def add():
             os.makedirs(task_uploads_folder, exist_ok=True)
 
         date_created = datetime.combine(datetime.strptime(request.form['date_created'], '%Y-%m-%d'), datetime.now().time())
-        is_бессрочно = request.form.get('is_бессрочно') == 'on'
-        deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not is_бессрочно else None
+        
+        deadline = None
+        if 'deadline' in request.form.keys() :
+            deadline = datetime.strptime(request.form.get('deadline'), '%Y-%m-%d').date()
+            
         description = request.form['description']
         
         if(request.form.get('is_valid') == 'on'):
@@ -175,7 +178,6 @@ def add():
                 date_created=date_created,
                 deadline=deadline,
                 description=description,
-                is_бессрочно=is_бессрочно,
                 creator_id=current_user.id,
                 employeeId = employeeId,
                 for_review=for_review,
@@ -249,7 +251,6 @@ def add_memo():
                 executor_id=int(executor_id),
                 creator_id=current_user.id,
                 date_created=datetime.now(),
-                is_бессрочно=True,
                 for_review=True,
                 description=description,
                 creator_file=creator_file_path, # Запись пути к файлу в базу
@@ -287,7 +288,6 @@ def resend(task_id):
     os.makedirs(task_uploads_folder, exist_ok=True)
 
     date_created = datetime.now()
-    is_бессрочно = task.is_бессрочно
     deadline = task.deadline
     description = task.description
     for_review = task.for_review
@@ -324,7 +324,6 @@ def resend(task_id):
             date_created=date_created,
             deadline=deadline,
             description=description,
-            is_бессрочно=is_бессрочно,
             creator_id=current_user.id,
             employeeId = employeeId,
             for_review=for_review,
@@ -360,7 +359,7 @@ def edit(task_id):
             task.status_id = Status.invalid.value
             
         task.edit_datetime = datetime.now()
-        task.is_бессрочно = request.form.get('is_бессрочно') == 'on'
+        
         files = request.files.getlist('files') #массив файлов
         
         if str(task.executor_id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
@@ -370,7 +369,10 @@ def edit(task_id):
 
         
         if (current_user.is_admin or current_user.is_deputy):
-            task.deadline = datetime.strptime(request.form['deadline'], '%Y-%m-%d').date() if not task.is_бессрочно else None
+            
+            if 'deadline' in request.form.keys() :
+                task.deadline = datetime.strptime(request.form.get('deadline'), '%Y-%m-%d').date()
+            
             extend_deadline = request.form.get('extend_deadline')
             if extend_deadline:
                 try:

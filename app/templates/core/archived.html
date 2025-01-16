@@ -140,15 +140,14 @@
                 {%endif%}
             </td>
             <td>
-                {% if task.is_бессрочно %}
-                <div>Бессрочно</div>
-                {% elif task.deadline %} 
+                {% if task.deadline%}
                 <div>{{ task.deadline.strftime('%d.%m.%Y') }}</div>
                 {% if task.extended_deadline %}
-                <div class="text-muted font-italic" style="font-size:smaller">Продлена до: {{ task.extended_deadline.strftime('%d.%m.%Y') }}</div>
+                <div class="text-muted font-italic" style="font-size:smaller">Продлена до: {{
+                    task.extended_deadline.strftime('%d.%m.%Y') }}</div>
                 {% endif %}
                 {% else %}
-                -
+                <div>Бессрочно</div>
                 {% endif %}
             </td>
 
