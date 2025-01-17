@@ -335,7 +335,7 @@ function updateEmployee() {
 // Пересылка задачи
 function resendTask() {
 
-    if (validate([checkSimpleExecutorSelect(document.getElementById("executorResend"))], resendForm)) {
+    if (validate([checkExecutorSelectValidity(resendForm, resendSelect)], resendForm)) {
         let base_url = window.location.origin;
         let employee = '';
         let executors = '';
