@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Добавить задачу</h1>
 
-<form id="addTaskForm" method="POST" enctype="multipart/form-data">
+<form id="addTaskForm" method="POST" enctype="multipart/form-data" novalidate>
     <div id="selectpicker" class="form-group">
         <label for="executor">Исполнитель:</label>
         <select class="selectpicker show-tick form-control" id="executor" name="executor" data-live-search="true"

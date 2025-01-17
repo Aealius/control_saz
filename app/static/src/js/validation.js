@@ -15,8 +15,15 @@ function validate(validationResultArray, form){
                 form.querySelector('.dropdown.bootstrap-select.show-tick.form-control').classList.remove('is-invalid');
             }
             element.target.classList.remove('is-invalid');
-            if (element.target.nextElementSibling){
-                element.target.nextElementSibling.remove();
+            if (element.target.parentNode.classList.contains('input-group')) {
+                if (element.target.parentNode.nextElementSibling) {
+                    element.target.parentNode.nextElementSibling.remove();
+                }
+            }
+            else{
+                if (element.target.nextElementSibling) {
+                    element.target.nextElementSibling.remove();
+                }
             }
         }
     });
@@ -25,18 +32,30 @@ function validate(validationResultArray, form){
 }
 
 function createErrorView(text, target, form){
-    let errorMessageDiv = document.createElement('div');
-    errorMessageDiv.className = 'invalid'; //"опознавательный" класс для элементов ошибочной валидации (чтобы было с помощью чего их удалить)
-    errorMessageDiv.style.color = 'red';
-    errorMessageDiv.innerHTML = text;
 
     if (target == form.querySelector('.dropdown-menu')){ //здесь проверяем, является ли target-ом тот злополучный селект
         form.querySelector('.dropdown.bootstrap-select.show-tick.form-control').classList.add('is-invalid'); //и для него класс is-invalid ставим для родителя, потому что почему-то оно так работает
     }
 
+    let errorMessageDiv = createDescriptionElement(text);
+
     target.classList.add('is-invalid');
 
-    target.after(errorMessageDiv);
+    if (target.parentNode.classList.contains('input-group')){
+        target.parentNode.after(errorMessageDiv);
+    }
+    else{
+        target.after(errorMessageDiv);
+    }
+}
+
+function createDescriptionElement(text){
+    let errorMessageDiv = document.createElement('div');
+    errorMessageDiv.className = 'invalid'; //"опознавательный" класс для элементов ошибочной валидации (чтобы было с помощью чего их удалить)
+    errorMessageDiv.style.color = 'red';
+    errorMessageDiv.innerHTML = text;
+
+    return errorMessageDiv;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,3 +119,31 @@ function checkSimpleExecutorSelect(executorSelect){
     }
     return {valid: true, target: executorSelect};
 }
+/////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+function checkReceiverValidity(receiverInput){    
+    if (!receiverInput.value || receiverInput.value == '') {
+        console.log('invalid receiver');
+        return { valid: false, target: receiverInput, error: "Необходимо ввести данные о получателе" };
+    }
+    return {valid: true, target: receiverInput};
+}
+
+function checkDocNumberValidity(numberInput){    
+    if (!numberInput.value || numberInput.value == '') {
+        console.log('invalid description');
+        return { valid: false, target: numberInput, error: "Необходимо ввести номер документа по номенклатуре" };
+    }
+    return {valid: true, target: numberInput};
+}
+
+function checkThemeValidity(themeInput){    
+    if (!themeInput.value || themeInput.value == '') {
+        console.log('invalid description');
+        return { valid: false, target: themeInput, error: "Необходимо ввести тему служебной записки" };
+    }
+    return {valid: true, target: themeInput};
+}
+
