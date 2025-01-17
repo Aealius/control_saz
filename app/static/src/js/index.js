@@ -332,6 +332,16 @@ function updateEmployee() {
     }
 }
 
+
+resendSelect.addEventListener('change', (event) => {
+
+    let validationArray = [checkExecutorSelectValidity(resendForm, resendSelect)];
+
+    if (!validate(validationArray, resendForm)){
+        event.preventDefault();
+    }
+});
+
 // Пересылка задачи
 function resendTask() {
 
