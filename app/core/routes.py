@@ -296,7 +296,7 @@ def resend(task_id):
 
     try:        
         creator_file_path = ''
-        uploadFolder = os.getcwd() + '/' + current_app.config.get('UPLOAD_FOLDER') + '/'
+        uploadFolder = current_app.config.get('UPLOAD_FOLDER') + '/'
 
         file_path_arr = task.creator_file.rstrip(';').split(';')
         # Сохраняем файл только один раз
@@ -506,66 +506,21 @@ def uploaded_file(filename):
         flash(f"Файл не найден: {filename}")
         return redirect(url_for('core.index'))
 
-@bp.route('/admin/tasks/<int:task_id>/confirm', methods=['POST'])
-@login_required
-def confirm_task(task_id):
-    if not current_user.is_admin:
-        flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
-        return redirect(url_for('core.index'))
-    
-    task = db.session.query(Task).get(task_id)
-    task.completion_confirmed_at = datetime.now()
-    task.admin_note = request.json.get('note')
-    
-    
-    if task.deadline:
-        if(task.get_deadline_for_check() < datetime.now().date()):
-            task.status_id = Status.complete_delayed.value
-        else:
-            task.status_id = Status.completed.value
-    else:
-        task.status_id = Status.completed.value
-        
-    db.session.commit()
-    flash('Выполнение задачи подтверждено.', 'success')
-    return '', 200
-
-
-@bp.route('/admin/tasks/<int:task_id>/reject', methods=['POST'])
-@login_required
-def reject_task(task_id):
-    if not current_user.is_admin:
-        flash('У вас нет прав для отклонения выполнения задач.', 'danger')
-        return redirect(url_for('core.index'))
-    
-    task = db.session.query(Task).get_or_404(task_id)
-
-    if task.attached_file != None and task.attached_file != "":
-        for file in task.attached_file.rstrip(';').split(';'):
-            os.remove(file)
-    task.attached_file = None
-    task.completion_note = None
-    task.admin_note = request.json.get('note')
-    task.status_id = Status.in_work.value
-    db.session.commit()
-    flash('Выполнение задачи отклонено.', 'warning')
-    return '', 200
-
-@bp.route('/deputy/tasks/<int:task_id>/confirm', methods=['POST'])
+@bp.route('/tasks/<int:task_id>/confirm', methods=['POST'])
 @login_required
 def confirm_task_deputy(task_id):
-    if not current_user.is_deputy:
+    if not current_user.is_deputy and not current_user.is_admin:
         flash('У вас нет прав для подтверждения выполнения задач.', 'danger')
         return redirect(url_for('core.index'))
     
     task = db.session.query(Task).get_or_404(task_id)
-    if task.creator_id != current_user.id:
+    if current_user.is_deputy and task.creator_id != current_user.id:
         flash('Вы можете подтверждать только задачи, которые вы выдали.', 'danger')
         return redirect(url_for('core.index'))
 
     task.completion_confirmed_at = datetime.now()
     task.admin_note = request.json.get('note')
-    
+        
     if task.deadline:
         if(task.get_deadline_for_check() < task.completion_confirmed_at.date()):
             task.status_id = Status.complete_delayed.value
@@ -574,8 +529,8 @@ def confirm_task_deputy(task_id):
     else:
         task.status_id = Status.completed.value
         
-    # Если задача была дочерней, то работаем с родителем
-    if task.parent_task_id != None:
+    # Если задача была дочерней и пользователь зам, то работаем с родителем
+    if current_user.is_deputy and task.parent_task_id != None:
         parentTask = Task.query.filter_by(id = task.parent_task_id).first()
         
         # Пока что для служебных записок с родителем ничего не делаем
@@ -588,7 +543,7 @@ def confirm_task_deputy(task_id):
             try:        
                 exev_file_path = ''
                 task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), str(task.parent_task_id), 'executor')
-                uploadFolder = os.getcwd() + '/' + current_app.config.get('UPLOAD_FOLDER') + '/'
+                uploadFolder = current_app.config.get('UPLOAD_FOLDER') + '/'
                 if not os.path.exists(uploadFolder):
                     os.makedirs(uploadFolder)
                 os.makedirs(task_uploads_folder, exist_ok=True)
@@ -606,7 +561,7 @@ def confirm_task_deputy(task_id):
                         filename = os.path.basename(filePath)
                         tmp_file_path = os.path.join(str(task.parent_task_id), 'executor', filename)
                         tmp_file_path = tmp_file_path.replace('\\', '/')
-                        exev_file_path += tmp_file_path # когда сделаем многофайловую загрузку - дописать + ';'
+                        exev_file_path += tmp_file_path + ';'
             except Exception as e:
                 s = str(e)
                 flash("Произошла ошибка: " + s, 'danger')
@@ -618,25 +573,28 @@ def confirm_task_deputy(task_id):
     flash('Выполнение задачи подтверждено.', 'success')
     return '', 200
 
-@bp.route('/deputy/tasks/<int:task_id>/reject', methods=['POST'])
+@bp.route('/tasks/<int:task_id>/reject', methods=['POST'])
 @login_required
 def reject_task_deputy(task_id):
-    if not current_user.is_deputy:
+    if not current_user.is_deputy and not current_user.is_admin:
         flash('У вас нет прав для отклонения задач.', 'danger')
         return redirect(url_for('core.index'))
     
     task = Task.query.get_or_404(task_id)
-    if task.creator_id != current_user.id:
+    
+    if current_user.is_deputy and task.creator_id != current_user.id:
         flash('Вы можете отклоненять только задачи, которые вы выдали.', 'danger')
         return redirect(url_for('core.index'))
 
     if task.attached_file != None and task.attached_file != "":
-        os.remove(task.attached_file)
+        for file in task.attached_file.rstrip(';').split(';'):
+            test = current_app.config.get('UPLOAD_FOLDER') + '/' + file
+            os.remove(current_app.config.get('UPLOAD_FOLDER') + '/' + file)
+ 
     task.attached_file = None
     task.completion_note = None
     task.admin_note = request.json.get('note')
     task.status_id = Status.in_work.value
-    
     db.session.commit()
     flash('Выполнение задачи отклонено.', 'warning')
     return '', 200

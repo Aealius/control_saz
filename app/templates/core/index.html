@@ -319,7 +319,7 @@
                 {% endif %}
                 {% endif %}
 
-                {% if current_user.is_admin and task.creator_id == current_user.id and task.completion_note and
+                {% if (current_user.is_admin or current_user.is_deputy) and task.creator_id == current_user.id and task.completion_note and
                 task.status_id == status.at_check.value %}
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
@@ -362,75 +362,14 @@
                                 {% endfor %}
                                 {% endif %}
                                 <div class="form-group">
-                                    <label for="admin_note">Заметка администратора:</label>
+                                    <label for="admin_note_{{ task.id }}">Заметка администратора:</label>
                                     <textarea class="form-control" type="text" id="admin_note_{{ task.id }}"
                                         name="admin_note_{{ task.id }}"></textarea>
                                 </div>
                                 <div class="w-50 mx-auto d-flex justify-content-between">
-                                    <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'admin')" type="submit"
+                                    <button onclick="taskConfirmation('{{task.id}}', 'confirm')" type="submit"
                                         class="btn btn-success">Подтвердить</button>
-                                    <button onclick="taskConfirmation('{{task.id}}', 'reject', 'admin')"
-                                        class="btn btn-danger">Отклонить</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if current_user.is_deputy and task.creator_id == current_user.id and task.completion_note and
-                task.status_id == status.at_check.value %}
-                <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
-                    data-target="#confirmModal{{ task.id }}">
-                    Контроль выполнения
-                </button>
-                <!--модалка на подтверждение выполнения задачи-->
-                <div class="modal fade" id="confirmModal{{ task.id }}" tabindex="-1" role="dialog"
-                    aria-labelledby="confirmModalLabel{{ task.id }}" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="confirmModalLabel{{ task.id }}">Контроль выполнения
-                                    задачи
-                                </h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">×</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <p>Задача: {{ task.description }}</p>
-                                {% if task.creator_file %}
-                                <div> Файлы, прикрепленные отправителем:</div>
-                                {% for file in task.creator_files %}
-                                <div class="text-break mb-1">
-                                    <a href="{{ url_for('core.uploaded_file', filename=file) }}" target="_blank">
-                                        {{ unquote(file.split('/')[-1]) }}
-                                    </a>
-                                </div>
-                                {%endfor%}
-                                {% endif %}
-                                <p>Заметка исполнителя: {{ task.completion_note }}</p>
-                                {% if task.attached_file %}
-                                <div> Файлы, прикрепленные исполнителем:</div>
-                                {% for file in task.attached_files %}
-                                <div class="text-break mb-1">
-                                    <a href="{{ url_for('core.uploaded_file', filename=file) }}" target="_blank">
-                                        {{ unquote(file.split('/')[-1]) }}
-                                    </a>
-                                </div>
-                                {%endfor%}
-                                {% endif %}
-                                <div>
-                                    <label for="deputy_note">Заметка администратора:</label>
-                                    <textarea type="text" class="form-control mb-3" id="deputy_note_{{ task.id }}"
-                                        name="deputy_note_{{ task.id }}"></textarea>
-                                </div>
-                                <input type="hidden" value="">
-                                <input type="hidden" value="">
-                                <div class="w-50 mx-auto d-flex justify-content-between">
-                                    <button onclick="taskConfirmation('{{task.id}}', 'confirm', 'deputy')"
-                                        class="btn btn-success">Подтвердить</button>
-                                    <button onclick="taskConfirmation('{{task.id}}', 'reject', 'deputy')"
+                                    <button onclick="taskConfirmation('{{task.id}}', 'reject')"
                                         class="btn btn-danger">Отклонить</button>
                                 </div>
                             </div>
