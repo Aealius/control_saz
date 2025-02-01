@@ -9,34 +9,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}" nonce="{{ nonce }}">
 
     <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
-    <!--НГ-->
-    <style type="text/css">
-        #gir {
-            background-image:url({{ url_for('static', filename='gir.png') }});
-            height: 62px;
-            width: 100%;
-            overflow: hidden;
-            z-index: 1;
-            pointer-events: none
-        }  
-        .gir_1 {
-            background-position: 0 0
-        }  
-        .gir_2 {
-            background-position: 0 -62px
-        }  
-        .gir_3 {
-            background-position: 0 -124px
-        }
-    </style>
-    <!---->
     <title>Задачи САЗ</title>
 </head>
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="d-flex align-items-center">
-            <h2><a class="navbar-brand" href="{{url_for('index', sn='in', p = 1)}}">Задачи САЗ</a></h2>
+            <h2><a class="navbar-brand" href="{{url_for('core.index', sn='in', p = 1)}}">Задачи САЗ</a></h2>
             <div><em class="text-muted" style="font-size:small">{{current_user.department}}</em></div>
         </div>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
@@ -47,38 +26,34 @@
             <ul class="navbar-nav ml-auto">
                 {% if current_user.is_authenticated %}
                 <li class="nav-item" id="taskLink">
-                    <a class="nav-link" href="{{ url_for('index', sn='in', p=1) }}">Задачи</a>
+                    <a class="nav-link" href="{{ url_for('core.index', sn='in', p=1) }}">Задачи</a>
                 </li>
                 <li class="nav-item" id="ataskLink">
-                    <a class="nav-link" href="{{ url_for('archived', sn='in', p=1) }}">Архив</a>
+                    <a class="nav-link" href="{{ url_for('core.archived', sn='in', p=1) }}">Архив</a>
                 </li>
                 {% if current_user.is_admin %}
                 <li class="nav-item">
                     
-                    <a class="nav-link" href="{{ url_for('users') }}">Пользователи</a>
+                    <a class="nav-link" href="{{ url_for('core.users') }}">Пользователи</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('reports.reports') }}">Просрочки</a>
+                    <a class="nav-link" href="{{ url_for('core.reports') }}">Просрочки</a>
                 </li>
                 {% endif %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('change_password') }}">Изменить пароль</a>
+                    <a class="nav-link" href="{{ url_for('auth.change_password') }}">Изменить пароль</a>
                 </li>
                 <li class="nav-item">
-                    <a id="logoutLink" class="nav-link" href="{{ url_for('logout') }}">Выход</a>
+                    <a id="logoutLink" class="nav-link" href="{{ url_for('auth.logout') }}">Выход</a>
                 </li>
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('login') }}">Вход</a>
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">Вход</a>
                 </li>
                 {% endif %}
             </ul>
         </div>
     </nav>
-
-    <!--НГ-->
-    <div class="gir_1" id="gir"></div>
-    <!---->
 
     <div class="w-75 mt-4 mx-auto">
         
@@ -118,27 +93,17 @@
         });
     }, 4000);
 
-    logoutLink.addEventListener('click', () => {
+    logoutLink && logoutLink.addEventListener('click', () => {
         sessionStorage.clear();
     });
 
-    taskLink.addEventListener('click', () => {
+    logoutLink && taskLink.addEventListener('click', () => {
         sessionStorage.clear();
     });
 
-    archTaskLink.addEventListener('click', () => {
+    logoutLink && archTaskLink.addEventListener('click', () => {
         sessionStorage.clear();
     });
-
-    /*---------------------------НГ-----------------------------------------------*/
-    function gir() {
-        let nums = document.getElementById('gir').className; 
-        if(nums == 'gir_1') {document.getElementById('gir').className='gir_2';}  
-        if(nums == 'gir_2') {document.getElementById('gir').className='gir_3';}  
-        if(nums == 'gir_3') {document.getElementById('gir').className='gir_1';} 
-    }  
-    setInterval(gir, 2500);
-    /*----------------------------------------------------------------------------*/
 </script>
 
 </html>

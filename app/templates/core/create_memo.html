@@ -3,7 +3,12 @@
 
 
 <h3>Создание служебной записки</h3>
-<div> Пожалуйста, заполните нижеприведенные поля для того, чтобы можно было сформировать необходимый документ</div>
+<div class="text-muted"> Данная страница предназначена для формирования служебной записки. </div>
+<div class="text-muted" >Для успешного формирования служебной записки обязательным условием является заполнение всех полей приведенных ниже (в т. ч. и поле "Текст"). <br/>
+    После нажатия на кнопку "Сформировать", вы будете перенаправлены на страницу служебной записки, а сформированный файл будет прикреплен к создаваемой задаче. <br/>
+    <br/>
+    Ознакомиться с примерным внешним видом сформированной служебной записки можно по нажатию на кнопку "Пример служебной записки".
+</div>
 <br/>
 <form method="post" id="createMemoForm">
     <div class="form-group">
@@ -34,13 +39,16 @@
             <button type="submit" class="btn btn-success">Сформировать</button>
             <button onclick="window.location.replace(document.referrer)" class="btn btn-light">Отмена</button>
         </div>
-        <!--<button id="exdocref">Пример служебной записки</button>-->
+       
     </div>
     
 
 </form>
 
-    
+<br/>
+<button id="exdocref" class="btn btn-outline-secondary">Пример служебной записки</button>
+
+<script src="{{url_for('static', filename = 'src/js/validation.js') }}"></script>
 <script src="{{url_for('static', filename = 'src/js/create_memo.js') }}"></script>
 
 <!-- Импорт библиотеки для текстового редактора -->

@@ -15,7 +15,7 @@
                 <tr>
                     <td>{{ executor.name }}</td>
                     <td>
-                        <form method="POST" action="{{ url_for('delete_executor', executor_id=executor.id) }}" onsubmit="return confirm('Вы уверены, что хотите удалить этого исполнителя?');">
+                        <form method="POST" action="{{ url_for('core.delete_executor', executor_id=executor.id) }}" onsubmit="return confirm('Вы уверены, что хотите удалить этого исполнителя?');">
                             <input type="hidden" name="password" value="1234"> 
                             <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
                         </form>

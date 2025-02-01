@@ -14,17 +14,17 @@ function setTaskId(taskId) {
     globalTaskId = taskId;
 }
 
-function taskConfirmation(id, path, role) {
+function taskConfirmation(id, path) {
     let base_url = window.location.origin;
     let addNote = '';
 
-    addNote = document.getElementById(role + "_note_" + id).value;
+    addNote = document.getElementById("admin_note_" + id).value;
 
     console.log(addNote);
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
-    fetch(base_url + "/" + role + "/tasks/" + id + "/" + path, {
+    fetch(base_url + "/tasks/" + id + "/" + path, {
         method: "POST",
         body: JSON.stringify({ note: addNote }),
         headers: myHeaders,
@@ -332,10 +332,20 @@ function updateEmployee() {
     }
 }
 
+
+resendSelect.addEventListener('change', (event) => {
+
+    let validationArray = [checkExecutorSelectValidity(resendForm, resendSelect)];
+
+    if (!validate(validationArray, resendForm)){
+        event.preventDefault();
+    }
+});
+
 // Пересылка задачи
 function resendTask() {
 
-    if (validate([checkSimpleExecutorSelect(document.getElementById("executorResend"))], resendForm)) {
+    if (validate([checkExecutorSelectValidity(resendForm, resendSelect)], resendForm)) {
         let base_url = window.location.origin;
         let employee = '';
         let executors = '';

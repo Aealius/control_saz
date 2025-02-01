@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (document.getElementById('nm-select'))
                     changeValue(document.getElementById('nm-select').value);
             })
-
 });
 
 document.getElementById('is_бессрочно').addEventListener('change', toggleDeadline);
