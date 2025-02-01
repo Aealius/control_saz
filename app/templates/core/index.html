@@ -251,11 +251,13 @@
             <td>
                 <!--кнопки редактирования и удаления-->
                 {% if current_user.is_admin or task.creator_id == current_user.id %}
+                {% if task.status_id != status.reviewed.value and task.status_id != status.completed.value and task.status_id != status.complete_delayed.value%}
                 <div class="btn-group" role="group">
                     <a href="{{ url_for('core.edit', task_id=task.id) }}" class="btn btn-primary btn-sm"
                         data-toggle="tooltip" title="Редактировать">
                         <i class="fas fa-pencil-alt"></i>
                     </a>
+                    {%endif%}
                     <form method="POST" action="{{ url_for('core.delete', task_id=task.id) }}"
                         onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');" class="d-inline-block">
                         <button type="submit" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Удалить">
@@ -362,7 +364,7 @@
                                 {% endfor %}
                                 {% endif %}
                                 <div class="form-group">
-                                    <label for="admin_note_{{ task.id }}">Заметка администратора:</label>
+                                    <label for="admin_note_{{ task.id }}">Заметка проверящего:</label>
                                     <textarea class="form-control" type="text" id="admin_note_{{ task.id }}"
                                         name="admin_note_{{ task.id }}"></textarea>
                                 </div>
