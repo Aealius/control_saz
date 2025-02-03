@@ -1,5 +1,6 @@
 import os
-from flask import Flask
+from time import strftime
+from flask import Flask, current_app, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
@@ -46,10 +47,15 @@ def create_app(config_class=Config) -> Flask:
         if not os.path.exists(app.config.get('LOGS_FOLDER')):
             os.mkdir(app.config.get('LOGS_FOLDER'))
             
+        logger = logging.getLogger('waitress')
         file_handler = RotatingFileHandler(app.config.get('LOGS_FOLDER') + '/app.log', maxBytes=1024 * 1024 * 10 ,backupCount=10, encoding='utf-8')
-        app.logger.addHandler(file_handler)
-
-        console_handler = logging.StreamHandler()
-        app.logger.addHandler(console_handler)
+        file_handler.setLevel(logging.INFO)
+        logger.addHandler(file_handler)
+        
+        @app.after_request
+        def after_request(response):
+            timestamp = strftime('[%d.%m.%Y %H:%M]')
+            app.logger.error('%s %s - %s %s %s - %s', timestamp, request.remote_addr, request.scheme, request.method, request.full_path, response.status)
+            return response
         
     return app
