@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<h3>Техническая поддержка</h3>
+<br/>
+<form method="post" id="techSupportForm">
+    <div class="form-group">
+        <label for="compNumber">Инвентарный номер компьютера</label>
+        <div class="input-group flex-nowrap">
+            <span style="margin-left:-2px;" class="input-group-text" id="numberText">№</span>
+            <input type="text" id="compNumber" name="compNumber" class="form-control" aria-describedby="numberText">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="description">Описание проблемы</label>
+        <textarea name="description" id="description" class="form-control"></textarea>
+    </div>
+    <br/>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <button type="submit" class="btn btn-success">Отправить</button>
+            <button onclick="window.location.replace(document.referrer)" class="btn btn-light">Отмена</button>
+        </div>
+    </div>
+</form>
+
+<script src="{{url_for('static', filename = 'src/js/validation.js') }}"></script>
+<script src="{{url_for('static', filename = 'src/js/tech_support.js') }}"></script>
+
+{%endblock%}

@@ -13,7 +13,8 @@ from app.models import (
     User,
     Task,
     DocTypeSubType,
-    Executive)
+    Executive,
+    TechMessage)
 import shutil
 
 FILTER_PARAM_KEYS = ['executor',
@@ -755,6 +756,28 @@ def create_memo():
     return render_template('core/create_memo.html', executors = executors,
                                                current_user_department = current_user_department)
 
+
+@bp.route('/tech_support', methods=['GET', 'POST'])
+@login_required
+def tech_support():
+    if request.method == 'POST':
+        tech_message_id = str(len(db.session.query(TechMessage).all()) + 1)
+        date_created = datetime.now()
+        description = request.form['description']
+        comp_number = request.form['compNumber']
+                
+        new_tech_message = TechMessage(
+                id = tech_message_id,
+                date_created=date_created,
+                description=description,
+                user_id=current_user.id,
+                comp_number=comp_number  
+            )
+        db.session.add(new_tech_message)
+        db.session.commit()
+        flash('Сообщение успешно отправлено!', 'success')
+        return '', 200
+    return render_template('core/tech_support.html')
 
 @bp.route('/favicon.ico', methods=['GET'])
 def favicon():

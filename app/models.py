@@ -44,6 +44,7 @@ class User(UserMixin, db.Model):
 
     executive: Mapped[List['Executive']] = relationship('Executive', back_populates='user')
     head: Mapped[List['Head']] = relationship('Head', back_populates='user')
+    tech_message: Mapped[List['TechMessage']] = relationship('TechMessage', back_populates='user')
     task: Mapped[List['Task']] = relationship('Task', foreign_keys='[Task.creator_id]', back_populates='creator')
     task_: Mapped[List['Task']] = relationship('Task', foreign_keys='[Task.executor_id]', back_populates='executor')
     
@@ -235,5 +236,30 @@ class Task(db.Model):
             'when_deleted':self.when_deleted,
             'doctype_id':self.doctype_id,
             'docnum':self.docnum,
+        }
+        return data
+
+class TechMessage(db.Model):
+    __tablename__ = 'tech_message'
+    __table_args__ = (
+        ForeignKeyConstraint(['user_id'], ['user.id'], name='tech_message_ibfk_1'),
+        Index('user_id', 'user_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    description: Mapped[str] = mapped_column(String(2048))
+    comp_number: Mapped[int] = mapped_column(Integer)
+    user_id: Mapped[int] = mapped_column(Integer)
+    date_created: Mapped[datetime.datetime] = mapped_column(DateTime)
+
+    user: Mapped['User'] = relationship('User', back_populates='tech_message')
+    
+    def to_dict(self):
+        data = {
+            'id':self.id,
+            'description':self.description,
+            'comp_number':self.comp_number,
+            'date_created':self.date_created,
+            'user_id':self.user_id
         }
         return data

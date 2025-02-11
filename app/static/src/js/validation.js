@@ -7,7 +7,14 @@ function validate(validationResultArray, form){
             element.target.classList.remove('is-invalid');
             if (element.target.nextElementSibling){
                 element.target.nextElementSibling.remove();
+            } 
+            // для поля с № перед началом самого поля, иначе сообщение об ошибке не уберется
+            if (element.target.parentNode.classList.contains('input-group')) {
+                if (element.target.parentNode.nextElementSibling) {
+                    element.target.parentNode.nextElementSibling.remove();
+                }
             }
+
             createErrorView(element.error, element.target, form);
         }
         else { 
@@ -147,3 +154,10 @@ function checkThemeValidity(themeInput){
     return {valid: true, target: themeInput};
 }
 
+function checkCompNumberValidity(numberInput){    
+    if (!numberInput.value || numberInput.value == '') {
+        console.log('invalid computer number');
+        return { valid: false, target: numberInput, error: "Необходимо ввести номер компьютера" };
+    }
+    return {valid: true, target: numberInput};
+}
