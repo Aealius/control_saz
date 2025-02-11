@@ -39,6 +39,9 @@ def create_app(config_class=Config) -> Flask:
     from app.api import bp as api_bp
     app.register_blueprint(api_bp)
     
+    from app.tech_support import bp as support_bp
+    app.register_blueprint(support_bp)
+    
     if not app.debug:
         
         if not os.path.exists(app.config.get('UPLOAD_FOLDER')):
