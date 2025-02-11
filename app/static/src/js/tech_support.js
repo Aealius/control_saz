@@ -1,7 +1,7 @@
 const techSupportForm = document.getElementById("techSupportForm");
-
 const descriptionTextArea = document.getElementById('description');
 const docNumberinput = document.getElementById('compNumber');
+const commonIssuesSelect =document.getElementById('common-issues-select')
 
 techSupportForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -11,6 +11,8 @@ techSupportForm.addEventListener('submit', async (event) => {
     let validationResultArray = [checkDescriptionValidity(descriptionTextArea), checkCompNumberValidity(docNumberinput)];
 
     if (validate(validationResultArray, techSupportForm)) {
+
+        commonIssuesSelect.disabled = true;
 
         await fetch(base_url_api + '/tech_support', {
             method: 'POST',
@@ -37,3 +39,21 @@ docNumberinput.addEventListener('change', (event) => {
         event.preventDefault();
     }
 });
+
+commonIssuesSelect.addEventListener('change', (event) => {
+    let descriptionWrapper = document.getElementById("description-wrapper");
+    if (event.target.value == "Другое"){
+        descriptionTextArea.value = "";
+        descriptionWrapper.style.display = "block";
+    }
+    else{
+        if (descriptionWrapper){
+            descriptionWrapper.style.display = "none";
+            descriptionTextArea.value = event.target.value;
+        }
+        else
+            descriptionTextArea.value = event.target.value;
+    }
+});
+
+
