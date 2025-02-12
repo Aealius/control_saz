@@ -40,6 +40,9 @@ docNumberinput.addEventListener('change', (event) => {
     }
 });
 
+// Начальная инициализация
+descriptionTextArea.value = "Не печатает принтер";
+
 commonIssuesSelect.addEventListener('change', (event) => {
     let descriptionWrapper = document.getElementById("description-wrapper");
     if (event.target.value == "Другое"){
