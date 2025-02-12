@@ -2,7 +2,7 @@ from typing import List, Optional
 from flask_login import UserMixin
 from sqlalchemy import Date, DateTime, ForeignKeyConstraint, Index, Integer, SmallInteger, String, Text
 from sqlalchemy.dialects.mysql import TINYINT
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 import datetime
@@ -251,6 +251,8 @@ class TechMessage(db.Model):
     comp_number: Mapped[int] = mapped_column(Integer)
     user_id: Mapped[int] = mapped_column(Integer)
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime)
+    status_id : Mapped[int] = mapped_column(Integer, default = 8)
+    completion_confirmed_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
 
     user: Mapped['User'] = relationship('User', back_populates='tech_message')
     
@@ -260,6 +262,8 @@ class TechMessage(db.Model):
             'description':self.description,
             'comp_number':self.comp_number,
             'date_created':self.date_created,
-            'user_id':self.user_id
+            'user_id':self.user_id,
+            'status_id': self.status_id,
+            'completion_confirmed_at': self.completion_confirmed_at
         }
         return data
