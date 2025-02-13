@@ -11,9 +11,7 @@
 </p>
 
 <div class="d-flex justify-content-between align-items-end mb-2">
-    {%if current_user.is_admin%}
     <a href="{{ url_for('tech_support.tech_support') }}" class="btn btn-success mr-2">Оставить заявку</a>
-    {%endif%}
 </div>
 
 <table class="table table-bordered">
