@@ -13,7 +13,8 @@ FILTER_PARAM_KEYS = ['creator',
                     'status']
 
 
-@bp.route('/tech_support', methods=['GET', 'POST'])
+
+@bp.route('/add_issue', methods=['GET', 'POST'])
 @login_required
 def tech_support():
     if request.method == 'POST':
@@ -31,9 +32,9 @@ def tech_support():
         db.session.commit()
         flash('Сообщение успешно отправлено!', 'success')
         return '', 200
-    return render_template('tech_support/tech_support.html')
+    return render_template('tech_support/add_issue.html')
 
-@bp.route('/support_table', methods=['GET'])
+@bp.route('/issue_table', methods=['GET'])
 @login_required
 def tech_requests():
     filter_params_dict = {f : request.args.get(f) for f in FILTER_PARAM_KEYS if request.args.get(f)}
@@ -46,9 +47,30 @@ def tech_requests():
     
     tech_messages, messages_count = filter_TechMessage_data(tech_messages, page, **filter_params_dict)
     
-    return render_template('tech_support/support_table.html', tech_messages = tech_messages,
+    return render_template('tech_support/issue_table.html', tech_messages = tech_messages,
                                                               per_page = current_app.config['PER_PAGE'],
                                                               filter_params_dict = filter_params_dict,
                                                               status = Status,
                                                               page = page,
                                                               messages_count = messages_count)
+
+
+#почему когда тут оставляешь только ПОСТ то пишет 405 not allowed? хотя бтв отправляется пост 
+@bp.route('/issue_completed/<int:issue_id>', methods = ['GET', 'POST'])
+@login_required
+def issue_completed(issue_id):
+    if current_user.department == '205 ОАСУП':
+        issue = db.session.query(TechMessage).get(issue_id)
+        issue.status_id = Status.completed.value
+        issue.completion_confirmed_at = datetime.now()
+        db.session.commit()
+    return '', 200
+
+@bp.route('/issue_in_work/<int:issue_id>', methods = ['GET', 'POST'])
+@login_required
+def issue_in_work(issue_id):
+    if current_user.department == '205 ОАСУП':
+        issue = db.session.query(TechMessage).get(issue_id)
+        issue.status_id = Status.in_work.value
+        db.session.commit()
+    return '', 200
