@@ -11,7 +11,7 @@
 </p>
 
 <div class="d-flex justify-content-between align-items-end mb-2">
-    <a href="{{ url_for('tech_support.tech_support') }}" class="btn btn-success mr-2">Оставить заявку</a>
+    <a href="{{ url_for('tech_support.tech_support') }}" class="btn btn-primary mr-2">Оставить заявку</a>
 </div>
 
 <table class="table table-bordered">
@@ -28,18 +28,29 @@
         <tr>
             <td>{{message.user.department}}</td>
             <td>{{message.date_created.strftime('%d.%m.%Y %H:%M')}}</td>
-            <td>{{message.comp_number}}</td>
+            <td>№{{message.comp_number}}</td>
             <td>{{message.description}}</td>
             <td>
                 {% if message.status_id == status.completed.value %}
-                <span class="badge badge-success">Выполнено : </span>
+                <span class="badge badge-success">Выполнено {%if message.completion_confirmed_at%}: {{message.completion_confirmed_at.strftime('%d.%m.%Y %H:%M')}} {%endif%}</span>
                 {% elif message.status_id == status.in_work.value %}
                 <span class="badge badge-warning">В работе</span>
                 {% elif message.status_id == status.pending.value %}
                 <span class="badge badge-primary">Ожидается выполнение</span>
                 {% endif %}
             </td>
-            <td></td>
+            <td>
+                {% if message.status_id == status.pending.value%}
+                <button id="issue-in-work-button" class="btn btn-primary btn-sm" onclick="setStatusInWork('{{message.id}}')">
+                    Принять в работу
+                </button>
+                {%endif%}
+                {% if message.status_id == status.in_work.value%}
+                <button id="issue-in-work-button" class="btn btn-success ess btn-sm" onclick="setStatusCompleted('{{message.id}}')">
+                    Завершить
+                </button>
+                {%endif%}
+            </td>
         </tr>
     {% endfor %}
     </tbody>
@@ -86,5 +97,6 @@
     {%endif%}
 </div>
 
-
+<script src="{{ url_for('static', filename='src/js/support_table.js') }}"></script>
 {% endblock %}
+

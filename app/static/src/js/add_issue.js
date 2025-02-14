@@ -14,12 +14,13 @@ techSupportForm.addEventListener('submit', async (event) => {
 
         commonIssuesSelect.disabled = true;
 
-        await fetch(base_url_api + '/tech_support', {
+        await fetch(base_url_api + '/tech/add_issue', {
             method: 'POST',
             body: formData,
-        }).then(() =>
-            window.location.replace(document.referrer)
-        );  
+        }).then((response) => {
+            console.log(response);
+            window.location.replace(document.referrer);
+        });  
     }
 });
 
