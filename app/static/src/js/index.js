@@ -47,11 +47,11 @@ function taskReview(id) {
     })
 }
 
-// Здесь document.documentElement.innerHTML меняется напрямую, вследствие чего слетает js код и 
-// некоторые вещи могут перестать работать. Приходится заного навешивать все ивенты на html элементы.
+// Здесь document.documentElement.innerHTML меняется напрямую, вследствие чего слетает js код, и 
+// некоторые вещи могут перестать работать. Приходится заново навешивать все ивенты на html элементы.
 // 
-// TODO: По хорошему найти другой способ обновить отдельную строку или хотя бы целую страницу и убрать
-// это костыльное решение
+// TODO: По-хорошему найти другой способ обновить отдельную строку или хотя бы целую страницу и убрать
+// это костыльное решение --- по поводу этого можно было бы посмотреть в сторону htmx (но эта библиотека выглядит странной и непонятной (да и разбираться с ней лень :D))
 function updateIndex() {
     let base_url = window.location.origin;
     const queryString = window.location.search;
@@ -99,6 +99,7 @@ function updateIndex() {
                     'overdue',
                     'completed',
                     'sn',
+                    'dn',
                     'p'
                 ];
 
@@ -139,6 +140,10 @@ function updateIndex() {
                 });
 
                 filterForm.querySelectorAll('input[type=checkbox]').forEach(input => {
+                    if (input.value == '') input.disabled = true;
+                });
+
+                filterForm.querySelectorAll('input[type=text]').forEach(input => {
                     if (input.value == '') input.disabled = true;
                 });
 
@@ -238,6 +243,11 @@ filterForm.addEventListener('submit', () => {
         if (input.value == '') input.disabled = true;
     });
 
+    filterForm.querySelectorAll('input[type=text]').forEach(input => {
+        if (input.value == '') input.disabled = true;
+    });
+
+
     //добавляет спрятанное поле для того, чтобы отпралять параметр "sn" на бэк
     let senderHiddenInput = document.getElementById("hiddenSender");
     senderHiddenInput.value = senderSelect.value;
@@ -253,6 +263,8 @@ clearFilterHref.addEventListener('click', () => {
 
     window.location.replace(newUrl);
 });
+
+
 
 function buildQueryString(senderValue) { //построение строки параметров для последующей фильтрации по отправителю
 
@@ -272,10 +284,13 @@ function buildQueryString(senderValue) { //построение строки п�
 }
 
 
+
+//снимаем выбор с множественного селекта при его показе при пересылке
 $(document).on('show.bs.modal', '#resendModal', function () {
     $('.selectpicker').selectpicker('deselectAll');
 });
 
+//при загрузке множ селекта получаем с бэка сотрудников бухгалтерии (!!! загружен он уже при загрузке страницы и спрятан и это не совсем гуд)
 $(document).on('loaded.bs.select', '#employee', function () {
 
     let employeeId = '27';
@@ -333,6 +348,8 @@ function updateEmployee() {
 }
 
 
+
+//валидация формы в переслыке задачи
 resendSelect.addEventListener('change', (event) => {
 
     let validationArray = [checkExecutorSelectValidity(resendForm, resendSelect)];
@@ -368,6 +385,8 @@ function resendTask() {
     }
 }
 
+
+//необходимо для пересылки задачи так как там используется множественный селект с немного изменной логикой
 function updateSelectedExecutors() {
     let resendSelectedOptions = resendSelect.selectedOptions;
     let selectedValuesArray = [...resendSelectedOptions].map(o => o.value);

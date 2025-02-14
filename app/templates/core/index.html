@@ -80,19 +80,26 @@
                         </div>
                         <input type="hidden" id="hiddenSender" name="sn" value="">
                     </div>
-                    <div class="mb-4">
-                        <div class="form-group">
+                    <div class="d-flex mb-4">
+                        <div class="form-group mr-2">
                             <label for="description">Номенклатура:</label>
                             <select id="nm-select" name="nm-select" class="w-100 form-control">
                                 <option value="">Все</option>
                                 {%for nm in nomenclature %}
                                 {%if nm.subtype%}
-                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>{{nm.doctype.name + ' (' + nm.subtype.name + ')'}}</option>
+                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>
+                                    {{nm.doctype.name + ' (' + nm.subtype.name + ')'}}</option>
                                 {%else%}
-                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>{{nm.doctype.name}}</option>
+                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>
+                                    {{nm.doctype.name}}</option>
                                 {%endif%}
                                 {%endfor%}
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dn">№ документа</label>
+                            <input type="text" id="doc-number-input" class="form-control" name="dn" type="text" 
+                            {% if request.args.get('dn') %} value="{{ request.args.get('dn') }}" {% endif %}>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">

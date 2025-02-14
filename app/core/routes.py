@@ -22,8 +22,9 @@ FILTER_PARAM_KEYS = ['executor',
                     'month',
                     'date',
                     'status',
-                    'nm-select',
-                    'sn']
+                    'nm-select', #тип документа по номенклатуре
+                    'dn', #номер документа
+                    'sn'] #отправитель/получатель
 
 STATUS_DICT =  {'in_work' : 'В работе',
                 'at_check' : 'На проверке',

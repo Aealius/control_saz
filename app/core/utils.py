@@ -39,30 +39,37 @@ def filter_data(dataset, page : int, **params):
             dataset = dataset.filter(Task.status_id == 8)
         case _:
             pass      
-           
-    match params.get('nm-select'):
-        case '1':
-            dataset = dataset.filter(Task.doctype_id == 1)
-        case '2':
-            dataset = dataset.filter(Task.doctype_id == 2)
-        case '3':
-            dataset = dataset.filter(Task.doctype_id == 3)
-        case '4':
-            dataset = dataset.filter(Task.doctype_id == 4)
-        case '5':
-            dataset = dataset.filter(Task.doctype_id == 5)
-        case '6':
-            dataset = dataset.filter(Task.doctype_id == 6)
-        case '7':
-            dataset = dataset.filter(Task.doctype_id == 7)
-        case '8':
-            dataset = dataset.filter(Task.doctype_id == 8)
-        case '9':
-            dataset = dataset.filter(Task.doctype_id == 9)
-        case '10':
-            dataset = dataset.filter(Task.doctype_id == 10)
-        case _:
-            pass  
+    
+    
+    if params.get('nm-select'):      
+        match params.get('nm-select'):
+            case '1':
+                dataset = dataset.filter(Task.doctype_id == 1)
+            case '2':
+                dataset = dataset.filter(Task.doctype_id == 2)
+            case '3':
+                dataset = dataset.filter(Task.doctype_id == 3)
+            case '4':
+                dataset = dataset.filter(Task.doctype_id == 4)
+            case '5':
+                dataset = dataset.filter(Task.doctype_id == 5)
+            case '6':
+                dataset = dataset.filter(Task.doctype_id == 6)
+            case '7':
+                dataset = dataset.filter(Task.doctype_id == 7)
+            case '8':
+                dataset = dataset.filter(Task.doctype_id == 8)
+            case '9':
+                dataset = dataset.filter(Task.doctype_id == 9)
+            case '10':
+                dataset = dataset.filter(Task.doctype_id == 10)
+            case _:
+                pass
+        
+        if params.get('dn'):
+            dataset = dataset.filter(Task.docnum == params['dn'])
+            
+        
              
     if params.get('executor'):
         dataset = dataset.filter(Task.executor_id ==  db.session.query(User)
