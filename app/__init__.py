@@ -40,7 +40,7 @@ def create_app(config_class=Config) -> Flask:
     app.register_blueprint(api_bp)
     
     from app.tech_support import bp as support_bp
-    app.register_blueprint(support_bp)
+    app.register_blueprint(support_bp, url_prefix = '/tech')
     
     if not app.debug:
         
