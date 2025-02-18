@@ -5,6 +5,7 @@ let resendModal = document.getElementById("resendModal");
 let clearFilterHref = document.getElementById("clearFilterHref"); //строка "очистить фильтр" на форме фильтрации
 let submitFilterFormButton = document.getElementById("submitFilterformButton"); //кнопка "применить фильтр" на форме фильтрации
 let resendSelect = document.getElementById("executorResend"); //дропдаун с выбором исполнителей по отделам
+let nomenclatureSelect = document.getElementById("nm-select");
 let urlParams = new URLSearchParams(window.location.search);
 let globalTaskId = '';
 let currentUserLogin = '';
@@ -283,7 +284,14 @@ function buildQueryString(senderValue) { //построение строки п�
     return newUrl;
 }
 
-
+//дизейблим "№ документа" в фильтрации если выбрано "все"
+nomenclatureSelect.addEventListener('change', (event) => {
+    let docnumberInput = document.getElementById('doc-number-input');
+    docnumberInput.disabled = event.target.value == '' ? true : false;
+    if (docnumberInput.disabled){
+        docnumberInput.value = '';
+    }
+});
 
 //снимаем выбор с множественного селекта при его показе при пересылке
 $(document).on('show.bs.modal', '#resendModal', function () {

@@ -99,7 +99,7 @@
                         <div class="form-group">
                             <label for="dn">№ документа</label>
                             <input type="text" id="doc-number-input" class="form-control" name="dn" type="text" 
-                            {% if request.args.get('dn') %} value="{{ request.args.get('dn') }}" {% endif %}>
+                            {% if request.args.get('dn') %} value="{{ request.args.get('dn') }}" {%elif not request.args.get('dn') and not request.args.get('nm-select') %} disabled {% endif %} value=''>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
