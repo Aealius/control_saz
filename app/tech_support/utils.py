@@ -33,6 +33,9 @@ def filter_TechMessage_data(dataset, page : int, **params):
         date_filter = datetime.strptime(params['date'], '%Y-%m-%d').date()
         dataset = dataset.filter(db.cast(TechMessage.date_created, db.Date) == date_filter)
 
+    if params.get('search'):
+        dataset = dataset.filter(TechMessage.comp_number.contains(params.get('search')))
+            
     dataset_count = dataset.count()
     
 
