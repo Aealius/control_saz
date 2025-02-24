@@ -57,8 +57,7 @@ def tech_requests():
                                                               messages_count = messages_count)
 
 
-#почему когда тут оставляешь только ПОСТ то пишет 405 not allowed? хотя бтв отправляется пост 
-@bp.route('/issue_completed/<int:issue_id>', methods = ['GET', 'POST'])
+@bp.route('/issue_completed/<int:issue_id>', methods = ['POST'])
 @login_required
 def issue_completed(issue_id):
     if current_user.department == '205 ОАСУП':
@@ -68,7 +67,7 @@ def issue_completed(issue_id):
         db.session.commit()
     return '', 200
 
-@bp.route('/issue_in_work/<int:issue_id>', methods = ['GET', 'POST'])
+@bp.route('/issue_in_work/<int:issue_id>', methods = ['POST'])
 @login_required
 def issue_in_work(issue_id):
     if current_user.department == '205 ОАСУП':
