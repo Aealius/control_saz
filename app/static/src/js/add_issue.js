@@ -42,7 +42,7 @@ docNumberinput.addEventListener('change', (event) => {
 });
 
 // Начальная инициализация
-descriptionTextArea.value = "Не печатает принтер";
+descriptionTextArea.value = "Проблемы с принтером";
 
 commonIssuesSelect.addEventListener('change', (event) => {
     let descriptionWrapper = document.getElementById("description-wrapper");

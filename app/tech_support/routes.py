@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import current_app, flash, render_template, request
 from flask_login import current_user, login_required
 from app.enums.status_enum import Status
-from app.models import TechMessage, Task
+from app.models import TechMessage
 from app.tech_support import bp
 from app import db
 from app.tech_support.utils import filter_TechMessage_data
@@ -65,26 +65,6 @@ def issue_completed(issue_id):
         issue = db.session.query(TechMessage).get(issue_id)
         issue.status_id = Status.completed.value
         issue.completion_confirmed_at = datetime.now()
-
-        # Генерируем new_task_id для новой задачи
-        new_task_id = str(len(db.session.query(Task).all()) + 1)
-        
-        executor_for_task_id = issue.user_id
-        task_uploads_folder = os.path.join(current_app.config.get('UPLOAD_FOLDER'), new_task_id, 'creator')
-        os.makedirs(task_uploads_folder, exist_ok=True)
-
-        date_created = datetime.now()
-        description = "Ваш запрос к технической поддержке по теме \"" + issue.description + "\" выполнен"
-        
-        new_task = Task(
-            executor_id=executor_for_task_id,
-            date_created=date_created,
-            description=description,
-            creator_id=current_user.id,
-            for_review=True,
-            creator_file="",
-        )
-        db.session.add(new_task)
         db.session.commit()
     return '', 200
 
