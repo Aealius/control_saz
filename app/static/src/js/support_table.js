@@ -1,4 +1,6 @@
 const base_url = window.location.origin;
+const searchInput = document.getElementById('search-input');
+const xMarkIcon = document.querySelector('.search-cross');
 
 async function setStatusInWork(issue_id) {
     await fetch(base_url + '/tech/issue_in_work/' + issue_id, {
@@ -15,6 +17,29 @@ async function setStatusCompleted(issue_id){
             updatePage();
     })
 }
+
+
+function toggleClearButton() {
+    xMarkIcon.style.display = searchInput.value ? 'block' : 'none';
+}
+
+//начальное состояние
+toggleClearButton();
+
+searchInput.addEventListener('input', toggleClearButton);
+
+xMarkIcon.addEventListener('click', (e) => {
+    let currentURL = new URL(window.location.origin + window.location.pathname + window.location.search);
+    if (currentURL.searchParams.get("search")){
+        currentURL.searchParams.delete("search");
+        window.location.href = currentURL;
+    }
+    else{
+        searchInput.value = '';
+        toggleClearButton();
+        searchInput.focus();
+    }
+});
 
 
 // Здесь document.documentElement.innerHTML меняется напрямую, вследствие чего слетает js код, и 

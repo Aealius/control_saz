@@ -12,11 +12,12 @@
 
 <div class="d-flex justify-content-between align-items-end mb-2">
     <a href="{{ url_for('tech_support.tech_support') }}" class="btn btn-primary mr-2">Оставить заявку</a>
-    <form action="{{url_for('tech_support.tech_requests')}}" class="d-flex justify-content">
-        <div class="input-group flex-nowrap">
-            <input {%if request.args.get('search')%} value="{{request.args.get('search')}}" {%endif%}type="text" id="search" name="search" class="form-control">
+    <form action="{{url_for('tech_support.tech_requests')}}" class="d-flex justify-content justify-content-between">
+        <div class="d-flex flex-nowrap position-relative">
+            <input {%if request.args.get('search')%} value="{{request.args.get('search')}}" {%endif%}type="text" id="search-input" name="search" class="form-control" style="padding-right:30px;">
+            <i class="fa-solid fa-xmark search-cross"></i>
         </div>
-        <input class="btn btn-primary ml-2 mr-2" type="submit" value="Поиск"/>
+        <input class="btn btn-primary ml-2" type="submit" value="Поиск"/>
     </form>
 </div>
 
