@@ -18,6 +18,16 @@ async function setStatusCompleted(issue_id){
     })
 }
 
+async function deleteIssue(issue_id) {
+    if (confirm('Вы уверены, что хотите удалить эту задачу?')) {
+        await fetch(base_url + '/tech/delete/' + issue_id, {
+            method: "DELETE"
+        }).then(response => console.log(response)).then(() => {
+            updatePage();
+        })
+    }
+}
+
 
 function toggleClearButton() {
     xMarkIcon.style.display = searchInput.value ? 'block' : 'none';

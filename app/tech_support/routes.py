@@ -75,3 +75,12 @@ def issue_in_work(issue_id):
         issue.status_id = Status.in_work.value
         db.session.commit()
     return '', 200
+
+@bp.route("/delete/<int:issue_id>", methods = ['DELETE'])
+@login_required
+def delete_issue(issue_id):
+    issue_to_delete = db.session.get(TechMessage, issue_id)
+    db.session.delete(issue_to_delete)
+    db.session.commit()
+    flash('Заявка удалена!', 'success')
+    return '', 200
