@@ -29,7 +29,8 @@ function validate(validationResultArray, form){
             }
             else{
                 if (element.target.nextElementSibling) {
-                    element.target.nextElementSibling.remove();
+                    if (element.target.nextElementSibling.classList.contains('invalid'))
+                        element.target.nextElementSibling.remove();
                 }
             }
         }
