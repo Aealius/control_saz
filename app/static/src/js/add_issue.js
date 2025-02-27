@@ -61,7 +61,7 @@ docNumberinput.addEventListener('change', (event) => {
 });
 
 // Начальная инициализация
-descriptionTextArea.defaultValue = commonIssuesSelect.value;
+//descriptionTextArea.defaultValue = commonIssuesSelect.value;
 
 document.addEventListener('DOMContentLoaded', () => {
     handleConferenceSelect(commonIssuesSelect); 
@@ -107,7 +107,7 @@ function handleConferenceSelect(target) {
         }
 
         if (target.value != "Другое")
-            descriptionTextArea.value = event.target.value;
+            descriptionTextArea.value = target.value;
         else{
             descriptionTextArea.value = '';
         }
