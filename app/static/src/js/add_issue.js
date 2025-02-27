@@ -22,9 +22,28 @@ techSupportForm.addEventListener('submit', async (event) => {
     }
 });
 
+descriptionTextArea.addEventListener('input', (event) => {
+    let validationResultArray = [checkDescriptionValidity(event.target)];
+
+    if (!validate(validationResultArray, techSupportForm)) {
+        event.preventDefault();
+    }
+});
+
+
 descriptionTextArea.addEventListener('change', (event) => {
     let validationResultArray = [checkDescriptionValidity(event.target)];
 
+    if (!validate(validationResultArray, techSupportForm)) {
+        event.preventDefault();
+    }
+});
+
+
+docNumberinput.addEventListener('input', (event) => {
+    let validationResultArray = [checkCompNumberValidity(event.target)];
+
+    
     if (!validate(validationResultArray, techSupportForm)) {
         event.preventDefault();
     }

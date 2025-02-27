@@ -6,7 +6,8 @@ function validate(validationResultArray, form){
             }
             element.target.classList.remove('is-invalid');
             if (element.target.nextElementSibling){
-                element.target.nextElementSibling.remove();
+                if (element.target.nextElementSibling.classList.contains('invalid'))
+                    element.target.nextElementSibling.remove();
             } 
             // для поля с № перед началом самого поля, иначе сообщение об ошибке не уберется
             if (element.target.parentNode.classList.contains('input-group')) {
