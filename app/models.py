@@ -247,7 +247,8 @@ class TechMessage(db.Model):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    description: Mapped[str] = mapped_column(String(2048))
+    theme: Mapped[str] = mapped_column(String(512))
+    description: Mapped[Optional[str]] = mapped_column(String(2048))
     comp_number: Mapped[int] = mapped_column(Integer)
     user_id: Mapped[int] = mapped_column(Integer)
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime)
@@ -259,6 +260,7 @@ class TechMessage(db.Model):
     def to_dict(self):
         data = {
             'id':self.id,
+            'theme':self.theme,
             'description':self.description,
             'comp_number':self.comp_number,
             'date_created':self.date_created,
