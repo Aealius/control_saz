@@ -20,12 +20,13 @@ FILTER_PARAM_KEYS = ['creator',
 @login_required
 def tech_support():
     if request.method == 'POST':
-        date_created = datetime.now()
-        description = request.form['description']
-        comp_number = request.form['compNumber']
+        description = request.form.get('description')
+        comp_number = request.form.get('compNumber')
+        theme = request.form.get('common-issues')
                 
         new_tech_message = TechMessage(
-                date_created=date_created,
+                date_created=datetime.now(),
+                theme = theme,
                 description=description,
                 user_id=current_user.id,
                 comp_number=comp_number  
