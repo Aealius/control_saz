@@ -5,16 +5,14 @@ const commonIssuesSelect =document.getElementById('common-issues-select')
 
 techSupportForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const base_url_api = window.location.origin;
+    const base_url = window.location.origin;
     formData = new FormData(event.target);
 
     let validationResultArray = [checkDescriptionValidity(descriptionTextArea), checkCompNumberValidity(docNumberinput)];
 
     if (validate(validationResultArray, techSupportForm)) {
 
-        commonIssuesSelect.disabled = true;
-
-        await fetch(base_url_api + '/tech/add_issue', {
+        await fetch(base_url + '/tech/add_issue', {
             method: 'POST',
             body: formData,
         }).then((response) => {
@@ -42,22 +40,47 @@ docNumberinput.addEventListener('change', (event) => {
 });
 
 // Начальная инициализация
-descriptionTextArea.value = "Проблемы с принтером";
+descriptionTextArea.defaultValue = commonIssuesSelect.value;
 
 commonIssuesSelect.addEventListener('change', (event) => {
-    let descriptionWrapper = document.getElementById("description-wrapper");
-    if (event.target.value == "Другое"){
-        descriptionTextArea.value = "";
-        descriptionWrapper.style.display = "block";
+
+    let descriptionWrapper = document.getElementById('description-wrapper');
+
+    if (event.target.value == "Видео-конференц-связь"){
+        descriptionWrapper.insertAdjacentElement('beforeend', createWarningDiv());
+        createWarningBorder(descriptionWrapper.childNodes[3]);
+         descriptionTextArea.value = '';
     }
-    else{
-        if (descriptionWrapper){
-            descriptionWrapper.style.display = "none";
-            descriptionTextArea.value = event.target.value;
+    else {
+
+        let warningDiv = document.querySelector('.warning');
+
+        if (warningDiv){
+            warningDiv.remove();
+            descriptionTextArea.style.border = '1px solid #ced4da';
         }
-        else
+        else{
+            descriptionTextArea.style.border = '1px solid #ced4da';
+        }
+
+        if (event.target.value != "Другое")
             descriptionTextArea.value = event.target.value;
     }
 });
+
+function createWarningDiv(){
+    let descriptionDiv = document.createElement('div');
+    descriptionDiv.classList.add(...['warning']);
+    descriptionDiv.style.color = '#E29C45';
+    descriptionDiv.style.fontWeight = '600';
+    descriptionDiv.innerText = 'В описании проблемы обязательно укажите ссылку на видео-конференцию или контакты лица, ответственного за конференцию';
+    return descriptionDiv;
+}
+
+function createWarningBorder(targetElement){
+    if (targetElement instanceof Element){
+        targetElement.style.border ='1px solid #E29C45';
+    }
+}
 
 
