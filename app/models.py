@@ -254,6 +254,8 @@ class TechMessage(db.Model):
     date_created: Mapped[datetime.datetime] = mapped_column(DateTime)
     status_id : Mapped[int] = mapped_column(Integer, default = 8)
     completion_confirmed_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    is_archived: Mapped[bool] = mapped_column(TINYINT(1), default=False)
+    is_deleted: Mapped[bool] = mapped_column(TINYINT(1), default=False)
 
     user: Mapped['User'] = relationship('User', back_populates='tech_message')
     
