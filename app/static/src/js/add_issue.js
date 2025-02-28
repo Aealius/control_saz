@@ -44,16 +44,26 @@ docNumberinput.addEventListener('input', (event) => {
 
 
 // Начальная инициализация
-descriptionTextArea.value = commonIssuesSelect.value;
+//descriptionTextArea.value = commonIssuesSelect.value;
 
 commonIssuesSelect.addEventListener('change', (event) => {
-    //let descriptionWrapper = document.getElementById("description-wrapper");
+    let descriptionWrapper = document.getElementById("description-wrapper");
     if (event.target.value == "Видео-конференц-связь") {
-        descriptionTextArea.value = "";
+        descriptionWrapper.childNodes[1].append(createWarningDiv());
     }
-    else {
-        descriptionTextArea.value = event.target.value;
+    else{
+        let warningDiv = document.querySelector('.warning');
+        if (warningDiv){
+            warningDiv.remove();
+        }
     }
 });
+
+function createWarningDiv(){
+    let warningDiv = document.createElement('div');
+    warningDiv.classList.add(...['warning', 'mt-2']);
+    warningDiv.innerText ='В описании проблемы обязательно укажите ссылку на конференцию или контакты лица, ответственного за конференцию';
+    return warningDiv;
+}
 
 
