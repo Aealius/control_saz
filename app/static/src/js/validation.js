@@ -160,5 +160,9 @@ function checkCompNumberValidity(numberInput){
         console.log('invalid computer number');
         return { valid: false, target: numberInput, error: "Необходимо ввести номер компьютера" };
     }
+    else if (isNaN(numberInput.value)){
+        console.log('invalid computer number');
+        return { valid: false, target: numberInput, error: "Инвентарный номер компьютера не может содержать буквы и символы" };
+    }
     return {valid: true, target: numberInput};
 }
