@@ -24,7 +24,7 @@ techSupportForm.addEventListener('submit', async (event) => {
     }
 });
 
-descriptionTextArea.addEventListener('change', (event) => {
+descriptionTextArea.addEventListener('input', (event) => {
     let validationResultArray = [checkDescriptionValidity(event.target)];
 
     if (!validate(validationResultArray, techSupportForm)) {
@@ -32,31 +32,27 @@ descriptionTextArea.addEventListener('change', (event) => {
     }
 });
 
-docNumberinput.addEventListener('change', (event) => {
+docNumberinput.addEventListener('input', (event) => {
     let validationResultArray = [checkCompNumberValidity(event.target)];
 
-    
     if (!validate(validationResultArray, techSupportForm)) {
         event.preventDefault();
     }
 });
 
+
+
+
 // Начальная инициализация
-descriptionTextArea.value = "Проблемы с принтером";
+descriptionTextArea.value = commonIssuesSelect.value;
 
 commonIssuesSelect.addEventListener('change', (event) => {
-    let descriptionWrapper = document.getElementById("description-wrapper");
-    if (event.target.value == "Другое"){
+    //let descriptionWrapper = document.getElementById("description-wrapper");
+    if (event.target.value == "Видео-конференц-связь") {
         descriptionTextArea.value = "";
-        descriptionWrapper.style.display = "block";
     }
-    else{
-        if (descriptionWrapper){
-            descriptionWrapper.style.display = "none";
-            descriptionTextArea.value = event.target.value;
-        }
-        else
-            descriptionTextArea.value = event.target.value;
+    else {
+        descriptionTextArea.value = event.target.value;
     }
 });
 
