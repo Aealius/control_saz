@@ -2,8 +2,13 @@
 
 {% block content %}
 
-<h1>Техническая поддержка</h1>
+<h1>Техническая поддержка
+    {%if archive%}
+    <span>(архив)</span>
+    {%endif%}
+</h1>
 
+{%if not archive%}
 <p class="text-muted">
     Раздел "Техническая поддержка" позволяет оставить заявку в случае неполадок с оборудованием, необходимым в работе. <br>
     В таблице на данной странице отображены отправленные
@@ -15,9 +20,22 @@
     заявки. <br>
     Чтобы отправить заявку, нажмите на кнопку "Оставить заявку" и заполните приведенную форму.
 </p>
+{%else%}
+<p class="text-muted mb-4">
+    Раздел "Техническая поддержка (архив)" позволяет просмотреть завершенные заявки. <br>
+    В таблице на данной странице отображены отправленные
+    {%if current_user.login == '205'%} 
+    <span>пользователями </span>
+    {%else%}
+    <span>Вами </span>
+    {%endif%}
+    завершенные заявки, срок после завершения которых составляет более 3 дней. <br>
+</p>
+{%endif%}
 
-<div class="d-flex justify-content-between align-items-end mb-2">
-    <a href="{{ url_for('tech_support.tech_support') }}" class="btn btn-primary mr-2">Оставить заявку</a>
+<div class="d-flex justify-content-between align-items-end mb-2 {%if archive%}flex-row-reverse{%endif%}">
+    
+    <a href="{{ url_for('tech_support.tech_support') }}" class="btn btn-primary mr-2" {%if archive%} style="display:none"{%endif%}>Оставить заявку</a>
     <form action="{{url_for('tech_support.tech_requests')}}" id="search-form" class="d-flex justify-content justify-content-between">
         <div class="d-flex flex-nowrap position-relative">
             <input {%if request.args.get('search')%} value="{{request.args.get('search')}}" {%endif%}type="text" id="search-input" name="search" class="form-control" style="padding-right:30px;" placeholder="инв. №">
@@ -34,7 +52,11 @@
         <th>Инв. № устройства</th>
         <th>Текст</th>
         <th>Статус</th>
+
+        <!--если не архив, то рендерим еще один столбец-->
+        {%if not archive%}
         <th>Действия</th>
+        {%endif%}
     </thead>
     <tbody>
     {% for message in tech_messages %}
@@ -54,7 +76,12 @@
                 {% elif message.status_id == status.pending.value %}
                 <span class="badge badge-primary">Ожидается выполнение</span>
                 {% endif %}
+
+                {%if archive%}
+                <span class="badge archive p-1 my-0 mx-auto">Архивировано</span>
+                {%endif%}
             </td>
+            {%if not archive%}
             <td>
                 {% if message.status_id == status.pending.value and current_user.login == "205"%}
                 <button id="issue-in-work-button" class="btn btn-primary btn-sm" onclick="setStatusInWork('{{message.id}}')">
@@ -73,6 +100,7 @@
                 </button>
                 {%endif%}
             </td>
+            {%endif%}
         </tr>
     {% endfor %}
     </tbody>
