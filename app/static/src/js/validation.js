@@ -155,12 +155,15 @@ function checkThemeValidity(themeInput){
     return {valid: true, target: themeInput};
 }
 
-function checkCompNumberValidity(numberInput){    
+function checkCompNumberValidity(numberInput){
+    
+    const numberRE = new RegExp(/[^0-9]/, 'g');
+
     if (!numberInput.value || numberInput.value == '') {
         console.log('invalid computer number');
         return { valid: false, target: numberInput, error: "Необходимо ввести номер компьютера" };
     }
-    else if (isNaN(numberInput.value)){
+    else if (numberInput.value.match(numberRE)){
         console.log('invalid computer number');
         return { valid: false, target: numberInput, error: "Инвентарный номер компьютера не может содержать буквы и символы" };
     }
