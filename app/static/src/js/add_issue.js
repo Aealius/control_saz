@@ -68,7 +68,7 @@ commonIssuesSelect.addEventListener('change', (event) => {
     if (event.target.value == "Видео-конференц-связь"){
         descriptionWrapper.insertAdjacentElement('beforeend', createWarningDiv());
         createWarningBorder(descriptionWrapper.childNodes[3]);
-        descriptionTextArea.value = '';
+         descriptionTextArea.value = '';
     }
     else {
 
@@ -84,9 +84,6 @@ commonIssuesSelect.addEventListener('change', (event) => {
 
         if (event.target.value != "Другое")
             descriptionTextArea.value = event.target.value;
-        else{
-            descriptionTextArea.value = '';
-        }
     }
 });
 

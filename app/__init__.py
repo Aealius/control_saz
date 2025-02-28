@@ -62,7 +62,7 @@ def create_app(config_class=Config) -> Flask:
             app.logger.error('%s %s - %s %s %s - %s', timestamp, request.remote_addr, request.scheme, request.method, request.full_path, response.status)
             
             if 'Cache-Control' not in response.headers:
-                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, private'
                 
             return response
         
