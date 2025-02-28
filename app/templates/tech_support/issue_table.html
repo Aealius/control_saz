@@ -36,7 +36,10 @@
             <td>{{message.user.department}}</td>
             <td>{{message.date_created.strftime('%d.%m.%Y %H:%M')}}</td>
             <td>№{{message.comp_number}}</td>
-            <td>{{message.description}}</td>
+            <td>
+                <div><u>{{message.theme}}</u></div>
+                <div>{{message.description}}</div>
+            </td>
             <td>
                 {% if message.status_id == status.completed.value %}
                 <span class="badge badge-success">Выполнено {%if message.completion_confirmed_at%}: {{message.completion_confirmed_at.strftime('%d.%m.%Y %H:%M')}} {%endif%}</span>

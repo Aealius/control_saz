@@ -40,15 +40,15 @@ docNumberinput.addEventListener('input', (event) => {
     }
 });
 
-
-
-
-// Начальная инициализация
-//descriptionTextArea.value = commonIssuesSelect.value;
+document.addEventListener('DOMContentLoaded', handleSelection(commonIssuesSelect));
 
 commonIssuesSelect.addEventListener('change', (event) => {
+    handleSelection(event.target);
+});
+
+function handleSelection(target){
     let descriptionWrapper = document.getElementById("description-wrapper");
-    if (event.target.value == "Видео-конференц-связь") {
+    if (target.value == "Видео-конференц-связь") {
         descriptionWrapper.childNodes[1].append(createWarningDiv());
     }
     else{
@@ -57,7 +57,7 @@ commonIssuesSelect.addEventListener('change', (event) => {
             warningDiv.remove();
         }
     }
-});
+}
 
 function createWarningDiv(){
     let warningDiv = document.createElement('div');
@@ -65,5 +65,3 @@ function createWarningDiv(){
     warningDiv.innerText ='В описании проблемы обязательно укажите ссылку на конференцию или контакты лица, ответственного за конференцию';
     return warningDiv;
 }
-
-
