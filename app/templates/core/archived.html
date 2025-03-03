@@ -253,7 +253,8 @@
     </nav>
     {%endif%}
 </div>
-
-<script src="{{ url_for('static', filename='src/js/index.js')}}"></script>
 {%endblock%}
 
+{%block scripts%}
+<script src="{{ url_for('static', filename='src/js/index.js')}}"></script>
+{%endblock%}

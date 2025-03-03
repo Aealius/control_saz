@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" nonce="{{ nonce }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" nonce="{{ nonce }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/all.min.css') }}" nonce="{{ nonce }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}" nonce="{{ nonce }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" >
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
+
+    {%block style%}
+    {%endblock%}
 
     <title>Задачи САЗ</title>
 </head>
@@ -82,9 +83,12 @@
         {% endblock %}
     </div>
 
-    <script src="{{ url_for('static', filename='js/bootstrap-select.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/defaults-ru_RU.js') }}"></script>
-
+<script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap-select.js') }}"></script>
+<script src="{{ url_for('static', filename='js/defaults-ru_RU.js') }}"></script>
+{% block scripts%}
+{% endblock %}
 </body>
 
 

@@ -432,8 +432,9 @@
     </nav>
     {%endif%}
 </div>
+{% endblock %}
 
-
+{%block scripts%}
 <script src="{{ url_for('static', filename='src/js/validation.js') }}"></script>
 <script src="{{ url_for('static', filename='src/js/index.js') }}"></script>
 <script>
@@ -441,5 +442,4 @@
         $('[data-toggle="tooltip"]').tooltip()
     })
 </script>
-
-{% endblock %}
+{%endblock%}

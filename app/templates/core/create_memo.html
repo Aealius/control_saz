@@ -41,13 +41,13 @@
         </div>
        
     </div>
-    
-
 </form>
-
 <br/>
 <button id="exdocref" class="btn btn-outline-secondary">Пример служебной записки</button>
+{%endblock%}
 
+
+{%block scripts%}
 <script src="{{url_for('static', filename = 'src/js/validation.js') }}"></script>
 <script src="{{url_for('static', filename = 'src/js/create_memo.js') }}"></script>
 
@@ -80,5 +80,4 @@
         return test;
     }
 </script>
-
 {%endblock%}

@@ -16,7 +16,9 @@
     <ul id="fileList"></ul>
     <button type="submit" class="btn btn-primary">Отправить</button>
 </form>
+{% endblock %}
 
+{%block scripts%}
 <script src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
 <script>
     const completeForm = document.getElementById('completeForm');
@@ -24,8 +26,6 @@
     const fileInput = document.getElementById('fileInput');
     const fileList = document.getElementById('fileList');
     let files  = [];
-
-    
 
     addUploadEventListeners(fileInput, dropZone);
 
@@ -51,5 +51,4 @@
         });
     }
 </script>
-
-{% endblock %}
+{%endblock%}
