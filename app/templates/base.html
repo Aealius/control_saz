@@ -94,20 +94,6 @@
     const dropdownElementList = document.querySelectorAll('.dropdown-toggle')
     const dropdownList = [...dropdownElementList].map(dropdownToggleEl => new bootstrap.Dropdown(dropdownToggleEl));
 
-
-    //этот костыль решает проблему не-скрытия выпадающего меню в заглавной панели
-    //вероятно проблема где-то в пакетах в js однако иного решения на данный момент не нашлось
-    document.addEventListener('click', (e) => {
-        const dropdownWrapper = document.querySelector('.dropdown.show');
-        const dropdownMenu = document.querySelector('.dropdown-menu.show');
-        const toggle = document.querySelector('.dropdown-toggle');
-        if (dropdownWrapper && !dropdownMenu.contains(event.target) && !toggle.contains(event.target)){
-            dropdownMenu.classList.remove('show');
-            dropdownWrapper.classList.remove('show');
-            toggle.setAttribute('aria-expanded', 'false');
-        }
-    });
-
     let logoutLink = document.getElementById("logoutLink");
     let taskLink = document.getElementById('taskLink');
     let archTaskLink = document.getElementById('ataskLink');
