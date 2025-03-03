@@ -358,7 +358,7 @@ function updateEmployee() {
 
 
 //валидация формы в переслыке задачи
-resendSelect.addEventListener('change', (event) => {
+resendSelect && resendSelect.addEventListener('change', (event) => {
 
     let validationArray = [checkExecutorSelectValidity(resendForm, resendSelect)];
 
