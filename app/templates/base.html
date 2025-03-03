@@ -34,7 +34,7 @@
                     <a class="nav-link" href="{{ url_for('core.index', sn='in', p=1) }}">Задачи</a>
                 </li>
                 <li class="nav-item dropdown" id="ataskLink">
-                    <a class="nav-link dropdown-toggle" id="archiveDropdown"  role="button" data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">Архив</a>
+                    <a class="nav-link dropdown-toggle" id="archiveDropdown"  role="button" data-toggle="dropdown" aria-expanded="false">Архив</a>
                     <ul class="dropdown-menu">
                         <li><a href="{{ url_for('core.archived', sn='in', p=1) }}" class="dropdown-item">Задачи</a></li>
                         <li><a href="{{url_for('tech_support.archived_issues', p=1)}}" class="dropdown-item">Заявки на техподдержку</a></li>
@@ -83,8 +83,7 @@
         {% endblock %}
     </div>
 
-<script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script> <!--[includes Popper.js - v.4.5]-->
 <script src="{{ url_for('static', filename='js/bootstrap-select.js') }}"></script>
 <script src="{{ url_for('static', filename='js/defaults-ru_RU.js') }}"></script>
 {% block scripts%}
@@ -94,9 +93,6 @@
 
 
 <script>
-
-    const dropdownElementList = document.querySelectorAll('.dropdown-toggle')
-    const dropdownList = [...dropdownElementList].map(dropdownToggleEl => new bootstrap.Dropdown(dropdownToggleEl));
 
     let logoutLink = document.getElementById("logoutLink");
     let taskLink = document.getElementById('taskLink');
