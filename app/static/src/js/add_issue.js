@@ -62,6 +62,6 @@ function handleSelection(target){
 function createWarningDiv(){
     let warningDiv = document.createElement('div');
     warningDiv.classList.add(...['warning', 'mt-2']);
-    warningDiv.innerText ='В описании проблемы обязательно укажите ссылку на конференцию или контакты лица, ответственного за конференцию';
+    warningDiv.innerText ='В описании проблемы обязательно укажите ссылку на конференцию или контакты лица, ответственного за конференцию, а также дату и время её проведения';
     return warningDiv;
 }
