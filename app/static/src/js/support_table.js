@@ -19,7 +19,7 @@ async function setStatusCompleted(issue_id){
 }
 
 async function deleteIssue(issue_id) {
-    if (confirm('Вы уверены, что хотите удалить эту задачу?')) {
+    if (confirm('Вы уверены, что хотите удалить эту заявку?')) {
         await fetch(base_url + '/tech/delete/' + issue_id, {
             method: "DELETE"
         }).then(response => console.log(response)).then(() => {
