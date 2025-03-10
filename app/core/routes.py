@@ -103,9 +103,9 @@ def index():
 @bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
-    if not current_user.is_admin and not current_user.is_deputy:  # Проверка прав
+    if not current_user.is_admin and not current_user.is_deputy and not current_user.department == 'Канцелярия':  # Проверка прав
         flash('У вас нет прав для создания задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     executors = hide_buh(current_user.login)
     nomenclature = db.session.query(DocTypeSubType).all()

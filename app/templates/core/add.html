@@ -50,7 +50,7 @@
         <label for="deadline">Срок:</label>
         <input type="date" class="form-control" id="deadline" name="deadline" value="">
     </div>
-    {%if current_user.is_admin%}
+    {%if current_user.is_admin or current_user.department == 'Канцелярия'%}
     <div class="form-group">
         <label for="description">Номенклатура:</label>
         <div class="d-flex align-items-center w-100">
