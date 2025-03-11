@@ -1,13 +1,15 @@
 const base_url = window.location.origin;
 const searchInput = document.getElementById('search-input');
 const xMarkIcon = document.querySelector('.search-cross');
+const filterForm = document.getElementById('filter-form');
+const clearFilterA = document.getElementById('clearFilterHref');
 
 async function setStatusInWork(issue_id) {
     await fetch(base_url + '/tech/issue_in_work/' + issue_id, {
         method: "POST"
     }).then(response => console.log(response)).then(() => {
         updatePage();
-    })
+    });
 }
 
 async function setStatusCompleted(issue_id){
@@ -15,7 +17,7 @@ async function setStatusCompleted(issue_id){
         method: "POST"
     }).then(response => console.log(response)).then(() => {
             updatePage();
-    })
+    });
 }
 
 async function deleteIssue(issue_id) {
@@ -24,10 +26,9 @@ async function deleteIssue(issue_id) {
             method: "DELETE"
         }).then(response => console.log(response)).then(() => {
             updatePage();
-        })
+        });
     }
 }
-
 
 function toggleClearButton() {
     xMarkIcon.style.display = searchInput.value ? 'block' : 'none';
@@ -56,6 +57,22 @@ document.getElementById('search-form').addEventListener('submit', (e) => {
         searchInput.disabled = true;
 });
 
+filterForm.addEventListener('submit', (e) => {
+    filterForm.querySelectorAll('select').forEach(el => {
+        if (el.value == '') el.disabled = true;
+    });
+
+    filterForm.querySelectorAll('input[type=date]').forEach(el => {
+        if (el.value == '') el.disabled = true;
+    });
+});
+
+clearFilterA.addEventListener('click', (e) => {
+    let newUrl = new URL(window.location.origin + window.location.pathname);
+    newUrl.searchParams.set('p', 1);
+    window.location.replace(newUrl);
+});
+
 
 // Здесь document.documentElement.innerHTML меняется напрямую, вследствие чего слетает js код, и 
 // некоторые вещи могут перестать работать. Приходится заново навешивать все ивенты на html элементы.
@@ -73,6 +90,8 @@ function updatePage() {
 
             const searchInput = document.getElementById('search-input');
             const xMarkIcon = document.querySelector('.search-cross');
+            const filterForm = document.getElementById('filter-form');
+            const clearFilterA = document.getElementById('clearFilterHref');
 
             async function setStatusInWork(issue_id) {
                 await fetch(base_url + '/tech/issue_in_work/' + issue_id, {
@@ -127,6 +146,21 @@ function updatePage() {
                     searchInput.disabled = true;
             });
             
+            filterForm.addEventListener('submit', (e) => {
+                filterForm.querySelectorAll('select').forEach(el => {
+                    if (el.value == '') el.disabled = true;
+                });
+            
+                filterForm.querySelectorAll('input[type=date]').forEach(el => {
+                    if (el.value == '') el.disabled = true;
+                });
+            });
+            
+            clearFilterA.addEventListener('click', (e) => {
+                let newUrl = new URL(window.location.origin + window.location.pathname);
+                newUrl.searchParams.set('p', 1);
+                window.location.replace(newUrl);
+            });
 
             //senderSelect = document.getElementById("select-task-sender");
         })

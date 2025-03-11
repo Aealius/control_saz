@@ -33,8 +33,11 @@
 {%endif%}
 
 <div class="d-flex justify-content-between align-items-end mb-2 {%if archive%}flex-row-reverse{%endif%}">
-    
-    <a href="{{ url_for('tech_support.tech_support') }}" class="btn btn-primary mr-2" {%if archive%} style="display:none"{%endif%}>Оставить заявку</a>
+    <div>
+        <button class="btn btn-primary" data-toggle="modal" data-target="#filterModal">Фильтрация</button>
+        <a href="{{ url_for('tech_support.tech_support') }}" class="btn btn-primary mr-2" {%if archive%} style="display:none"{%endif%}>Оставить заявку</a>
+    </div>
+
     <form {%if not archive%} action="{{url_for('tech_support.tech_requests')}}" {%else%} action="{{url_for('tech_support.archived_issues')}}" {%endif%} id="search-form" class="d-flex justify-content justify-content-between">
         <div class="d-flex flex-nowrap position-relative">
             <input {%if request.args.get('search')%} value="{{request.args.get('search')}}" {%endif%}type="text" id="search-input" name="search" class="form-control" style="padding-right:30px;" placeholder="инв. №">
@@ -43,6 +46,60 @@
         <input class="btn btn-primary ml-2" type="submit" value="Поиск"/>
     </form>
 </div>
+
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Фильтрация заявок</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form {% if archive %} action="{{url_for('tech_support.archived_issues', p=1, **filter_params_dict)}}"
+                    {% else %} action="{{url_for('tech_support.tech_requests', p=1, **filter_params_dict)}}" {%endif%}
+                    method="get" id="filter-form">
+                    {%if current_user.department == "205 ОАСУП"%}
+                    <div class="form-group">
+                        <label for="creator">Отправитель</label>
+                        <select class="form-control" name="creator" id="sender-select">
+                            <option value="">Все</option>
+                            {%for creator in creators%}
+                            <option value="{{creator.department}}" {%if
+                                creator.department==request.args.get('creator')%} selected{%endif%}>
+                                {{creator.department}}</option>
+                            {%endfor%}
+                        </select>
+                    </div>
+                    {%endif%}
+                    <div class="form-group">
+                        <label for="date">Дата создания</label>
+                        <input class="form-control" type="date" name="date" id="date-input"
+                            value="{{request.args.get('date')}}">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Статус</label>
+                        <select class="form-control" name="status" id="status-select">
+                            <option value="">Все</option>
+                            {% for value, inner_text in status_dict.items() %}
+                            <option value="{{value}}" {% if value==request.args.get('status') %}selected{% endif %}>
+                                {{inner_text}}</option>
+                            {%endfor%}
+                        </select>
+                    </div>
+            </div>
+            <div class="modal-footer justify-content-between align-items-center">
+                <button type="submit" class="btn btn-primary">Применить фильтр</button>
+                <a id="clearFilterHref" class="text-muted">Очистить фильтр</a>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 
 <table class="table table-bordered">
     <thead>

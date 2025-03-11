@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import current_app, flash, render_template, request
 from flask_login import current_user, login_required
 from app.enums.status_enum import Status
-from app.models import TechMessage
+from app.models import TechMessage, User
 from app.tech_support import bp
 from app import db
 from app.tech_support.utils import filter_TechMessage_data
@@ -12,6 +12,11 @@ FILTER_PARAM_KEYS = ['creator',
                     'date',
                     'status',
                     'search']
+
+STATUS_DICT =  {'in_work' : 'В работе',
+                'completed' : 'Выполнено',
+                'pending' :'Ожидается выполнение'} 
+
 
 
 
@@ -88,11 +93,13 @@ def send_filtered_data(is_archived):
     tech_messages_query = db.session.query(TechMessage)
     if not is_archived:
         if current_user.department == '205 ОАСУП':
+            creators =  db.session.query(User).filter(User.is_deleted == False).all()
             tech_messages = tech_messages_query.filter(TechMessage.is_deleted == False, TechMessage.is_archived ==False)
         else:
             tech_messages = tech_messages_query.filter(TechMessage.user_id == current_user.id, TechMessage.is_deleted == False, TechMessage.is_archived ==False)
     else:
         if current_user.department == '205 ОАСУП':
+            creators = db.session.query(User).filter(User.is_deleted == False).all()
             tech_messages = tech_messages_query.filter(TechMessage.is_deleted == False, TechMessage.is_archived == True)
         else:
             tech_messages = tech_messages_query.filter(TechMessage.user_id == current_user.id, TechMessage.is_deleted == False, TechMessage.is_archived == True)
@@ -105,4 +112,6 @@ def send_filtered_data(is_archived):
                                                               status = Status,
                                                               page = page,
                                                               messages_count = messages_count,
-                                                              archive = is_archived)
+                                                              archive = is_archived,
+                                                              creators = creators, 
+                                                              status_dict = STATUS_DICT)
