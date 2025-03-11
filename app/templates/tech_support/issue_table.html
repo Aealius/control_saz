@@ -57,10 +57,10 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body">
-                <form {% if archive %} action="{{url_for('tech_support.archived_issues', p=1, **filter_params_dict)}}"
-                    {% else %} action="{{url_for('tech_support.tech_requests', p=1, **filter_params_dict)}}" {%endif%}
-                    method="get" id="filter-form">
+            <form {% if archive %} action="{{url_for('tech_support.archived_issues', p=1, **filter_params_dict)}}" {%
+                else %} action="{{url_for('tech_support.tech_requests', p=1, **filter_params_dict)}}" {%endif%}
+                method="get" id="filter-form">
+                <div class="modal-body">
                     {%if current_user.department == "205 ОАСУП"%}
                     <div class="form-group">
                         <label for="creator">Отправитель</label>
@@ -89,11 +89,11 @@
                             {%endfor%}
                         </select>
                     </div>
-            </div>
-            <div class="modal-footer justify-content-between align-items-center">
-                <button type="submit" class="btn btn-primary">Применить фильтр</button>
-                <a id="clearFilterHref" class="text-muted">Очистить фильтр</a>
-            </div>
+                </div>
+                <div class="modal-footer justify-content-between align-items-center">
+                    <button type="submit" class="btn btn-primary">Применить фильтр</button>
+                    <a id="clearFilterHref" class="text-muted">Очистить фильтр</a>
+                </div>
             </form>
         </div>
     </div>
