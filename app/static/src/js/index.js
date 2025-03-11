@@ -300,35 +300,36 @@ $(document).on('show.bs.modal', '#resendModal', function () {
 
 //при загрузке множ селекта получаем с бэка сотрудников бухгалтерии (!!! загружен он уже при загрузке страницы и спрятан и это не совсем гуд)
 $(document).on('loaded.bs.select', '#employee', function () {
+    if (currentUserLogin == "8") {
+        let employeeId = '27';
+        $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
 
-    let employeeId = '27';
-    $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
+        // Получение из бэка сотрудников отдела
+        fetch(base_url_api + "/users/" + employeeId + "/employees", {
+            method: "GET"
+        }).then((response) => {
+            console.log(response);
+            return response.text();
+        }).then((text) => {
+            let obj = JSON.parse(text);
+            let selectEmployee = document.getElementById('employee');
 
-    // Получение из бэка сотрудников отдела
-    fetch(base_url_api + "/users/" + employeeId + "/employees", {
-        method: "GET"
-    }).then((response) => {
-        console.log(response);
-        return response.text();
-    }).then((text) => {
-        let obj = JSON.parse(text);
-        let selectEmployee = document.getElementById('employee');
+            let optDef = document.createElement('option');
+            optDef.value = '';
+            optDef.innerHTML = 'Для отдела';
+            selectEmployee.appendChild(optDef);
 
-        let optDef = document.createElement('option');
-        optDef.value = '';
-        optDef.innerHTML = 'Для отдела';
-        selectEmployee.appendChild(optDef);
-        
-        for (let i = 0; i < obj.length; i++) {
-            let opt = document.createElement('option');
-            opt.value = obj[i].id;
-            opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
-            selectEmployee.appendChild(opt);
-        }
+            for (let i = 0; i < obj.length; i++) {
+                let opt = document.createElement('option');
+                opt.value = obj[i].id;
+                opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+                selectEmployee.appendChild(opt);
+            }
 
-        // Оставляем здесь, ибо если вынести из then - сработает слишком рано
-        $('.selectpicker').selectpicker('refresh');
-    });
+            // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+            $('.selectpicker').selectpicker('refresh');
+        });
+    }
 });
 
 // Для модалки пересылки
