@@ -91,6 +91,7 @@ def send_filtered_data(is_archived):
     page = request.args.get('p', 1, int)
     
     tech_messages_query = db.session.query(TechMessage)
+    creators = None
     if not is_archived:
         if current_user.department == '205 ОАСУП':
             creators =  db.session.query(User).filter(User.is_deleted == False).all()
