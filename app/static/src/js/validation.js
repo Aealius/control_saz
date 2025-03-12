@@ -7,7 +7,14 @@ function validate(validationResultArray, form){
             element.target.classList.remove('is-invalid');
             if (element.target.nextElementSibling){
                 element.target.nextElementSibling.remove();
+            } 
+            // для поля с № перед началом самого поля, иначе сообщение об ошибке не уберется
+            if (element.target.parentNode.classList.contains('input-group')) {
+                if (element.target.parentNode.nextElementSibling) {
+                    element.target.parentNode.nextElementSibling.remove();
+                }
             }
+
             createErrorView(element.error, element.target, form);
         }
         else { 
@@ -22,7 +29,8 @@ function validate(validationResultArray, form){
             }
             else{
                 if (element.target.nextElementSibling) {
-                    element.target.nextElementSibling.remove();
+                    if (element.target.nextElementSibling.classList.contains('invalid'))
+                        element.target.nextElementSibling.remove();
                 }
             }
         }
@@ -147,3 +155,17 @@ function checkThemeValidity(themeInput){
     return {valid: true, target: themeInput};
 }
 
+function checkCompNumberValidity(numberInput){
+    
+    const numberRE = new RegExp(/[^0-9]/, 'g');
+
+    if (!numberInput.value || numberInput.value == '') {
+        console.log('invalid computer number');
+        return { valid: false, target: numberInput, error: "Необходимо ввести номер компьютера" };
+    }
+    else if (numberInput.value.match(numberRE)){
+        console.log('invalid computer number');
+        return { valid: false, target: numberInput, error: "Инвентарный номер компьютера не может содержать буквы и символы" };
+    }
+    return {valid: true, target: numberInput};
+}

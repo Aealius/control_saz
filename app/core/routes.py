@@ -13,7 +13,8 @@ from app.models import (
     User,
     Task,
     DocTypeSubType,
-    Executive)
+    Executive,
+    TechMessage)
 import shutil
 
 FILTER_PARAM_KEYS = ['executor',
@@ -21,8 +22,9 @@ FILTER_PARAM_KEYS = ['executor',
                     'month',
                     'date',
                     'status',
-                    'nm-select',
-                    'sn']
+                    'nm-select', #тип документа по номенклатуре
+                    'dn', #номер документа
+                    'sn'] #отправитель/получатель
 
 STATUS_DICT =  {'in_work' : 'В работе',
                 'at_check' : 'На проверке',
@@ -101,9 +103,9 @@ def index():
 @bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
-    if not current_user.is_admin and not current_user.is_deputy:  # Проверка прав
+    if not current_user.is_admin and not current_user.is_deputy and not current_user.department == 'Канцелярия':  # Проверка прав
         flash('У вас нет прав для создания задач.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('core.index'))
 
     executors = hide_buh(current_user.login)
     nomenclature = db.session.query(DocTypeSubType).all()
@@ -352,9 +354,10 @@ def edit(task_id):
     executors = hide_buh(current_user.login)
         
     if request.method == 'POST':
-        task.executor_id = request.form['executor']
-        task.description = request.form['description']
+        task.executor_id = request.form.get('executor')
+        task.description = request.form.get('description')
         
+        #если задаче поставили в форме "недействительна"
         if (request.form.get('is_valid') != 'on'):
             task.status_id = Status.invalid.value
             
@@ -362,6 +365,7 @@ def edit(task_id):
         
         files = request.files.getlist('files') #массив файлов
         
+        #если исполнитель, которому можно назначить конкретное ответственное лицо
         if str(task.executor_id) in current_app.config.get('CAN_GET_RESENDED_TASKS_ARR'):
             task.employeeId = request.form.get('employee') or None
         else:
@@ -370,8 +374,10 @@ def edit(task_id):
         
         if (current_user.is_admin or current_user.is_deputy):
             
-            if 'deadline' in request.form.keys() :
+            if 'deadline' in request.form.keys():
                 task.deadline = datetime.strptime(request.form.get('deadline'), '%Y-%m-%d').date()
+            else:
+                task.deadline = None
             
             extend_deadline = request.form.get('extend_deadline')
             if extend_deadline:
@@ -754,6 +760,7 @@ def create_memo():
     
     return render_template('core/create_memo.html', executors = executors,
                                                current_user_department = current_user_department)
+
 
 
 @bp.route('/favicon.ico', methods=['GET'])

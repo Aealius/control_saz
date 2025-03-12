@@ -1,5 +1,15 @@
 {% extends 'base.html' %}
 
+{%block style%}
+<style>
+    .small-close {
+        font-size: 12px;
+        line-height: 1;
+        padding: 2px 4px;
+    }
+</style>
+{%endblock%}
+
 {% block content %}
 <h1>Добавить задачу</h1>
 
@@ -40,7 +50,7 @@
         <label for="deadline">Срок:</label>
         <input type="date" class="form-control" id="deadline" name="deadline" value="">
     </div>
-    {%if current_user.is_admin%}
+    {%if current_user.is_admin or current_user.department == 'Канцелярия'%}
     <div class="form-group">
         <label for="description">Номенклатура:</label>
         <div class="d-flex align-items-center w-100">
@@ -84,23 +94,12 @@
     <ul id="fileList"></ul>
     <button id="submit" class="btn btn-primary mt-3">Добавить</button>
 </form>
+{% endblock %}
 
+{%block scripts%}
 <script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
 <script src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
 <script src="{{url_for('static', filename = 'src/js/nomenclature.js') }}"></script>
 <script src="{{url_for('static', filename = 'src/js/add.js') }}"></script>
 <script src="{{url_for('static', filename = 'src/js/multipleExecutorSelect.js') }}"></script>
-
-<style>
-    .small-close {
-        font-size: 12px;
-        line-height: 1;
-        padding: 2px 4px;
-    }
-
-</style>
-
-<script>
-
-</script>
-{% endblock %}
+{%endblock%}

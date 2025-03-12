@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<h3>Техническая поддержка</h3>
+<br/>
+<form method="post" id="techSupportForm">
+    <div class="form-group">
+        <label for="compNumber">Инвентарный номер компьютера</label>
+        <div class="input-group flex-nowrap">
+            <span style="margin-left:-2px;" class="input-group-text" id="numberText">№</span>
+            <input type="text" id="compNumber" name="compNumber" class="form-control" aria-describedby="numberText">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="common-issues"> Выберите проблему из списка</label>
+        <select id="common-issues-select" name="common-issues" class="form-control">
+            <option value="Проблемы с принтером">Проблемы с принтером</option>
+            <option value="Проблемы с компьютером">Проблемы с компьютером</option>
+            <option value="Проблемы с программным обеспечением">Проблемы с программным обеспечением</option>
+            <option value="Видео-конференц-связь">Видео-конференц-связь</option>
+            <option value="Другое">Другое</option>
+        </select>
+    </div>
+    <div id="description-wrapper" class="form-group">
+        <label for="description">Описание проблемы</label>
+        <textarea name="description" id="description" class="form-control"></textarea>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <button type="submit" class="btn btn-success">Отправить</button>
+            <button onclick="window.location.replace(document.referrer)" class="btn btn-light">Отмена</button>
+        </div>
+    </div>
+</form>
+{%endblock%}
+
+{%block scripts%}
+<script src="{{url_for('static', filename = 'src/js/validation.js') }}"></script>
+<script src="{{url_for('static', filename = 'src/js/add_issue.js') }}"></script>
+{%endblock%}

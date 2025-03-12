@@ -95,8 +95,10 @@
         
         <button type="submit" class="btn btn-primary">Сохранить</button>
     </form>
+{% endblock %}
 
-    <script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
+{%block scripts%}
+<script src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
     <script src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
     <script src="{{url_for('static', filename = 'src/js/nomenclature.js') }}"></script>
     <script src="{{url_for('static', filename = 'src/js/edit.js')}}"></script>
@@ -113,4 +115,4 @@
         });
 
     </script>
-{% endblock %}
+{%endblock%}

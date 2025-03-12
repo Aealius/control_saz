@@ -5,6 +5,7 @@ let resendModal = document.getElementById("resendModal");
 let clearFilterHref = document.getElementById("clearFilterHref"); //строка "очистить фильтр" на форме фильтрации
 let submitFilterFormButton = document.getElementById("submitFilterformButton"); //кнопка "применить фильтр" на форме фильтрации
 let resendSelect = document.getElementById("executorResend"); //дропдаун с выбором исполнителей по отделам
+let nomenclatureSelect = document.getElementById("nm-select");
 let urlParams = new URLSearchParams(window.location.search);
 let globalTaskId = '';
 let currentUserLogin = '';
@@ -47,11 +48,11 @@ function taskReview(id) {
     })
 }
 
-// Здесь document.documentElement.innerHTML меняется напрямую, вследствие чего слетает js код и 
-// некоторые вещи могут перестать работать. Приходится заного навешивать все ивенты на html элементы.
+// Здесь document.documentElement.innerHTML меняется напрямую, вследствие чего слетает js код, и 
+// некоторые вещи могут перестать работать. Приходится заново навешивать все ивенты на html элементы.
 // 
-// TODO: По хорошему найти другой способ обновить отдельную строку или хотя бы целую страницу и убрать
-// это костыльное решение
+// TODO: По-хорошему найти другой способ обновить отдельную строку или хотя бы целую страницу и убрать
+// это костыльное решение --- по поводу этого можно было бы посмотреть в сторону htmx
 function updateIndex() {
     let base_url = window.location.origin;
     const queryString = window.location.search;
@@ -99,6 +100,7 @@ function updateIndex() {
                     'overdue',
                     'completed',
                     'sn',
+                    'dn',
                     'p'
                 ];
 
@@ -139,6 +141,10 @@ function updateIndex() {
                 });
 
                 filterForm.querySelectorAll('input[type=checkbox]').forEach(input => {
+                    if (input.value == '') input.disabled = true;
+                });
+
+                filterForm.querySelectorAll('input[type=text]').forEach(input => {
                     if (input.value == '') input.disabled = true;
                 });
 
@@ -238,6 +244,11 @@ filterForm.addEventListener('submit', () => {
         if (input.value == '') input.disabled = true;
     });
 
+    filterForm.querySelectorAll('input[type=text]').forEach(input => {
+        if (input.value == '') input.disabled = true;
+    });
+
+
     //добавляет спрятанное поле для того, чтобы отпралять параметр "sn" на бэк
     let senderHiddenInput = document.getElementById("hiddenSender");
     senderHiddenInput.value = senderSelect.value;
@@ -253,6 +264,8 @@ clearFilterHref.addEventListener('click', () => {
 
     window.location.replace(newUrl);
 });
+
+
 
 function buildQueryString(senderValue) { //построение строки параметров для последующей фильтрации по отправителю
 
@@ -271,41 +284,52 @@ function buildQueryString(senderValue) { //построение строки п�
     return newUrl;
 }
 
+//дизейблим "№ документа" в фильтрации если выбрано "все"
+nomenclatureSelect.addEventListener('change', (event) => {
+    let docnumberInput = document.getElementById('doc-number-input');
+    docnumberInput.disabled = event.target.value == '' ? true : false;
+    if (docnumberInput.disabled){
+        docnumberInput.value = '';
+    }
+});
 
+//снимаем выбор с множественного селекта при его показе при пересылке
 $(document).on('show.bs.modal', '#resendModal', function () {
     $('.selectpicker').selectpicker('deselectAll');
 });
 
+//при загрузке множ селекта получаем с бэка сотрудников бухгалтерии (!!! загружен он уже при загрузке страницы и спрятан и это не совсем гуд)
 $(document).on('loaded.bs.select', '#employee', function () {
+    if (currentUserLogin == "8") {
+        let employeeId = '27';
+        $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
 
-    let employeeId = '27';
-    $('#employeeLabel').text('Сотрудник (234 Бухгалтерия):');
+        // Получение из бэка сотрудников отдела
+        fetch(base_url_api + "/users/" + employeeId + "/employees", {
+            method: "GET"
+        }).then((response) => {
+            console.log(response);
+            return response.text();
+        }).then((text) => {
+            let obj = JSON.parse(text);
+            let selectEmployee = document.getElementById('employee');
 
-    // Получение из бэка сотрудников отдела
-    fetch(base_url_api + "/users/" + employeeId + "/employees", {
-        method: "GET"
-    }).then((response) => {
-        console.log(response);
-        return response.text();
-    }).then((text) => {
-        let obj = JSON.parse(text);
-        let selectEmployee = document.getElementById('employee');
+            let optDef = document.createElement('option');
+            optDef.value = '';
+            optDef.innerHTML = 'Для отдела';
+            selectEmployee.appendChild(optDef);
 
-        let optDef = document.createElement('option');
-        optDef.value = '';
-        optDef.innerHTML = 'Для отдела';
-        selectEmployee.appendChild(optDef);
-        
-        for (let i = 0; i < obj.length; i++) {
-            let opt = document.createElement('option');
-            opt.value = obj[i].id;
-            opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
-            selectEmployee.appendChild(opt);
-        }
+            for (let i = 0; i < obj.length; i++) {
+                let opt = document.createElement('option');
+                opt.value = obj[i].id;
+                opt.innerHTML = obj[i].surname + " " + obj[i].name + " " + obj[i].patronymic;
+                selectEmployee.appendChild(opt);
+            }
 
-        // Оставляем здесь, ибо если вынести из then - сработает слишком рано
-        $('.selectpicker').selectpicker('refresh');
-    });
+            // Оставляем здесь, ибо если вынести из then - сработает слишком рано
+            $('.selectpicker').selectpicker('refresh');
+        });
+    }
 });
 
 // Для модалки пересылки
@@ -333,7 +357,9 @@ function updateEmployee() {
 }
 
 
-resendSelect.addEventListener('change', (event) => {
+
+//валидация формы в переслыке задачи
+resendSelect && resendSelect.addEventListener('change', (event) => {
 
     let validationArray = [checkExecutorSelectValidity(resendForm, resendSelect)];
 
@@ -368,6 +394,8 @@ function resendTask() {
     }
 }
 
+
+//необходимо для пересылки задачи так как там используется множественный селект с немного изменной логикой
 function updateSelectedExecutors() {
     let resendSelectedOptions = resendSelect.selectedOptions;
     let selectedValuesArray = [...resendSelectedOptions].map(o => o.value);

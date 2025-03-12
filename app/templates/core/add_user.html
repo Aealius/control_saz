@@ -26,6 +26,8 @@
     </div>
     <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
-
-<script src="{{url_for('static', filename = 'src/js/passwordToggle.js')}}"></script>
 {% endblock %}
+
+{%block scripts%}
+<script src="{{url_for('static', filename = 'src/js/passwordToggle.js')}}"></script>
+{%endblock%}

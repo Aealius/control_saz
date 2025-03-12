@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" nonce="{{ nonce }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" nonce="{{ nonce }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/all.min.css') }}" nonce="{{ nonce }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}" nonce="{{ nonce }}">
 
     <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" >
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-select.min.css') }}">
+
+    {%block style%}
+    {%endblock%}
+
     <title>Задачи САЗ</title>
 </head>
 <body>
@@ -28,18 +33,24 @@
                 <li class="nav-item" id="taskLink">
                     <a class="nav-link" href="{{ url_for('core.index', sn='in', p=1) }}">Задачи</a>
                 </li>
-                <li class="nav-item" id="ataskLink">
-                    <a class="nav-link" href="{{ url_for('core.archived', sn='in', p=1) }}">Архив</a>
+                <li class="nav-item dropdown" id="ataskLink">
+                    <a class="nav-link dropdown-toggle" id="archiveDropdown"  role="button" data-toggle="dropdown" aria-expanded="false">Архив</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{{ url_for('core.archived', sn='in', p=1) }}" class="dropdown-item">Задачи</a></li>
+                        <li><a href="{{url_for('tech_support.archived_issues', p=1)}}" class="dropdown-item">Заявки на техподдержку</a></li>
+                    </ul>
                 </li>
                 {% if current_user.is_admin %}
                 <li class="nav-item">
-                    
                     <a class="nav-link" href="{{ url_for('core.users') }}">Пользователи</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('core.reports') }}">Просрочки</a>
                 </li>
                 {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('tech_support.tech_requests') }}">Тех. поддержка</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('auth.change_password') }}">Изменить пароль</a>
                 </li>
@@ -71,17 +82,18 @@
         {% block content %}
         {% endblock %}
     </div>
-    
-    <script src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap-select.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/defaults-ru_RU.js') }}"></script>
 
+<script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script> <!--[includes Popper.js - v.4.5]-->
+<script src="{{ url_for('static', filename='js/bootstrap-select.js') }}"></script>
+<script src="{{ url_for('static', filename='js/defaults-ru_RU.js') }}"></script>
+{% block scripts%}
+{% endblock %}
 </body>
 
 
 
 <script>
+
     let logoutLink = document.getElementById("logoutLink");
     let taskLink = document.getElementById('taskLink');
     let archTaskLink = document.getElementById('ataskLink');

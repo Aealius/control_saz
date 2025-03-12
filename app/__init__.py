@@ -39,6 +39,9 @@ def create_app(config_class=Config) -> Flask:
     from app.api import bp as api_bp
     app.register_blueprint(api_bp)
     
+    from app.tech_support import bp as support_bp
+    app.register_blueprint(support_bp, url_prefix = '/tech')
+    
     if not app.debug:
         
         if not os.path.exists(app.config.get('UPLOAD_FOLDER')):
@@ -54,8 +57,13 @@ def create_app(config_class=Config) -> Flask:
         
         @app.after_request
         def after_request(response):
+            
             timestamp = strftime('[%d.%m.%Y %H:%M]')
             app.logger.error('%s %s - %s %s %s - %s', timestamp, request.remote_addr, request.scheme, request.method, request.full_path, response.status)
+            
+            if 'Cache-Control' not in response.headers:
+                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, private'
+                
             return response
         
     return app

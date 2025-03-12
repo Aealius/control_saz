@@ -3,13 +3,13 @@
 <h1 class="mb-5">Список задач</h1>
 
 
-<!--панель кнопок-->
+<!--[панель кнопок]-->
 <div class="d-flex justify-content-between align-items-end mb-2">
     <div>
         <button type="button" class="btn btn-primary mr-2" data-toggle="modal" data-target="#filterModal">
             Фильтрация
         </button>
-        {% if current_user.is_admin or current_user.is_deputy %}
+        {% if current_user.is_admin or current_user.is_deputy or current_user.department=='Канцелярия'%}
         <a href="{{ url_for('core.add') }}" class="btn btn-success mr-2">Добавить задачу</a>
         {% endif %}
 
@@ -23,8 +23,10 @@
         </select>
     </div>
 </div>
+<!--[конец панели кнопок]-->
 
-<!--модалка на фильтрацию-->
+
+<!--[модалка на фильтрацию]-->
 <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel"
     aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -80,19 +82,26 @@
                         </div>
                         <input type="hidden" id="hiddenSender" name="sn" value="">
                     </div>
-                    <div class="mb-4">
-                        <div class="form-group">
+                    <div class="d-flex mb-4">
+                        <div class="form-group mr-2">
                             <label for="description">Номенклатура:</label>
                             <select id="nm-select" name="nm-select" class="w-100 form-control">
                                 <option value="">Все</option>
                                 {%for nm in nomenclature %}
                                 {%if nm.subtype%}
-                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>{{nm.doctype.name + ' (' + nm.subtype.name + ')'}}</option>
+                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>
+                                    {{nm.doctype.name + ' (' + nm.subtype.name + ')'}}</option>
                                 {%else%}
-                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>{{nm.doctype.name}}</option>
+                                <option value="{{nm.id}}" {% if nm.id|string==request.args.get('nm-select') %}selected{% endif %}>
+                                    {{nm.doctype.name}}</option>
                                 {%endif%}
                                 {%endfor%}
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dn">№ документа</label>
+                            <input type="text" id="doc-number-input" class="form-control" name="dn" type="text" 
+                            {% if request.args.get('dn') %} value="{{ request.args.get('dn') }}" {%elif not request.args.get('dn') and not request.args.get('nm-select') %} disabled {% endif %} value=''>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
@@ -105,8 +114,9 @@
         </div>
     </div>
 </div>
+<!--[конец модалки на фильтрацию]-->
 
-<!--модалка на пересылку-->
+<!--[модалка на пересылку]-->
 <div class="modal fade" id="resendModal" tabindex="-1" role="dialog" aria-labelledby="resendModalLabel"
     aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -141,8 +151,9 @@
         </div>
     </div>
 </div>
+<!--[конец модалки на пересылку]-->
 
-<!--таблица с задачами-->
+<!--[таблица с задачами]-->
 <table class="table table-bordered ">
     <thead class="primary-th">
         <tr>
@@ -249,7 +260,8 @@
                 {% endif %}
             </td>
             <td>
-                <!--кнопки редактирования и удаления-->
+                <!--[кнопки управления задачами]-->
+                <!--Редактирование-->
                 {% if current_user.is_admin or task.creator_id == current_user.id %}
                 {% if task.status_id != status.reviewed.value and task.status_id != status.completed.value and task.status_id != status.complete_delayed.value%}
                 <div class="btn-group" role="group">
@@ -258,6 +270,7 @@
                         <i class="fas fa-pencil-alt"></i>
                     </a>
                     {%endif%}
+                    <!--Удаление-->
                     <form method="POST" action="{{ url_for('core.delete', task_id=task.id) }}"
                         onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');" class="d-inline-block">
                         <button type="submit" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Удалить">
@@ -266,6 +279,7 @@
                     </form>
                 </div>
                 {% endif %}
+                <!--Пересылка-->
                 {% if current_user.is_deputy and not task.for_review and task.executor_id == current_user.id and
                 (task.status_id == status.delayed.value or task.status_id == status.in_work.value)%}
                 <div class="d-inline-block">
@@ -275,19 +289,21 @@
                     </button>
                 </div>
                 {% endif %}
-
+                <!--Выполнить-->
                 {% if task.status_id != status.completed.value and task.status_id != status.complete_delayed.value and
                     task.status_id != status.reviewed.value%}
                 {% if current_user.id == task.executor_id and not task.completion_note and not
                 task.for_review %}
                 <a href="{{ url_for('core.complete', task_id=task.id) }}" class="btn btn-success btn-sm">Выполнить</a>
                 {% endif %}
-
+                <!--Ознакомится-->
                 {% if task.for_review and current_user.id == task.executor_id and task.status_id != status.reviewed.value%}
                 <a href="{{ url_for('core.review', task_id=task.id) }}" class="btn btn-secondary btn-sm" data-toggle="modal"
                     data-target="#reviewModal-{{ task.id }}">
                     Ознакомиться
                 </a>
+                
+                <!--[модалка на ознакомление]-->
                 <div class="modal fade" id="reviewModal-{{ task.id }}" tabindex="-1" role="dialog"
                     aria-labelledby="reviewModalLabel-{{ task.id }}" aria-hidden="true">
                     <div class="modal-dialog" role="document">
@@ -314,20 +330,20 @@
                                     <button onclick="taskReview('{{task.id}}')" class="btn btn-primary">Ознакомлен</button>
                                 </div>
                             </div>
-
+                            <!--[конец модалки на ознакомление]-->
                         </div>
                     </div>
                 </div>
                 {% endif %}
                 {% endif %}
-
+                <!--Контроль выполнения-->
                 {% if (current_user.is_admin or current_user.is_deputy) and task.creator_id == current_user.id and task.completion_note and
                 task.status_id == status.at_check.value %}
                 <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
                     data-target="#confirmModal{{ task.id }}">
                     Контроль выполнения
                 </button>
-
+                <!--[модалка на контроль выполнения]-->
                 <div class="modal fade" id="confirmModal{{ task.id }}" tabindex="-1" role="dialog"
                     aria-labelledby="confirmModalLabel{{ task.id }}" aria-hidden="true">
                     <div class="modal-dialog" role="document">
@@ -378,14 +394,16 @@
                         </div>
                     </div>
                 </div>
+                <!--[конец модалки контроля выполнения]-->
                 {% endif %}
             </td>
+            <!--[конец кнопок управления задачами]-->
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-
+<!--[подпись "Страницы"]-->
 <div class="d-flex justify-content-between">
     <div>
         {% if per_page > task_count %}
@@ -402,7 +420,9 @@
         {%endif%}
         {%endif%}
     </div>
+    <!--[конец подписи "Страницы"]-->
     {% if task_count != 0 %}
+    <!--[пагинация]-->
     <nav aria-label="paging">
         <ul class="pagination justify-content-end">
             <li class="page-item {% if page == 1 %} disabled {% endif %}">
@@ -425,8 +445,10 @@
     </nav>
     {%endif%}
 </div>
+{% endblock %}
+<!--[конец пагинации]-->
 
-
+{%block scripts%}
 <script src="{{ url_for('static', filename='src/js/validation.js') }}"></script>
 <script src="{{ url_for('static', filename='src/js/index.js') }}"></script>
 <script>
@@ -434,5 +456,4 @@
         $('[data-toggle="tooltip"]').tooltip()
     })
 </script>
-
-{% endblock %}
+{%endblock%}

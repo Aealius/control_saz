@@ -210,4 +210,14 @@ button.archive:hover{
     то нужно обязательно убрать этот стиль*/
 .ce-toolbar {
     display: none !important;
-  }
+}
+
+.search-cross {
+    position:absolute;
+    font-size: 1.25rem;
+    padding: 9px;
+    color:#808080;
+    z-index: 2;
+    right:0px;
+    display: none;
+}

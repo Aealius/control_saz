@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>Техническая поддержка
+    {%if archive%}
+    <span>(архив)</span>
+    {%endif%}
+</h1>
+
+{%if not archive%}
+<p class="text-muted">
+    Раздел "Техническая поддержка" позволяет оставить заявку в случае неполадок с оборудованием, необходимым в работе. <br>
+    В таблице на данной странице отображены отправленные
+    {%if current_user.login == '205'%} 
+    <span>пользователями </span>
+    {%else%}
+    <span>Вами </span>
+    {%endif%}
+    заявки. <br>
+    Чтобы отправить заявку, нажмите на кнопку "Оставить заявку" и заполните приведенную форму.
+</p>
+{%else%}
+<p class="text-muted mb-4">
+    Раздел "Техническая поддержка (архив)" позволяет просмотреть завершенные заявки. <br>
+    В таблице на данной странице отображены отправленные
+    {%if current_user.login == '205'%} 
+    <span>пользователями </span>
+    {%else%}
+    <span>Вами </span>
+    {%endif%}
+    завершенные заявки, срок после завершения которых составляет более 3 дней. <br>
+</p>
+{%endif%}
+
+<div class="d-flex justify-content-between align-items-end mb-2 {%if archive%}flex-row-reverse{%endif%}">
+    <div>
+        <button class="btn btn-primary" data-toggle="modal" data-target="#filterModal">Фильтрация</button>
+        <a href="{{ url_for('tech_support.tech_support') }}" class="btn btn-primary mr-2" {%if archive%} style="display:none"{%endif%}>Оставить заявку</a>
+    </div>
+
+    <form {%if not archive%} action="{{url_for('tech_support.tech_requests')}}" {%else%} action="{{url_for('tech_support.archived_issues')}}" {%endif%} id="search-form" class="d-flex justify-content justify-content-between">
+        <div class="d-flex flex-nowrap position-relative">
+            <input {%if request.args.get('search')%} value="{{request.args.get('search')}}" {%endif%}type="text" id="search-input" name="search" class="form-control" style="padding-right:30px;" placeholder="инв. №">
+            <i class="fa-solid fa-xmark search-cross"></i>
+        </div>
+        <input class="btn btn-primary ml-2" type="submit" value="Поиск"/>
+    </form>
+</div>
+
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Фильтрация заявок</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form {% if archive %} action="{{url_for('tech_support.archived_issues', p=1, **filter_params_dict)}}" {%
+                else %} action="{{url_for('tech_support.tech_requests', p=1, **filter_params_dict)}}" {%endif%}
+                method="get" id="filter-form">
+                <div class="modal-body">
+                    {%if current_user.department == "205 ОАСУП"%}
+                    <div class="form-group">
+                        <label for="creator">Отправитель</label>
+                        <select class="form-control" name="creator" id="sender-select">
+                            <option value="">Все</option>
+                            {%for creator in creators%}
+                            <option value="{{creator.department}}" {%if
+                                creator.department==request.args.get('creator')%} selected{%endif%}>
+                                {{creator.department}}</option>
+                            {%endfor%}
+                        </select>
+                    </div>
+                    {%endif%}
+                    <div class="form-group">
+                        <label for="date">Дата создания</label>
+                        <input class="form-control" type="date" name="date" id="date-input"
+                            value="{{request.args.get('date')}}">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Статус</label>
+                        <select class="form-control" name="status" id="status-select">
+                            <option value="">Все</option>
+                            {% for value, inner_text in status_dict.items() %}
+                            <option value="{{value}}" {% if value==request.args.get('status') %}selected{% endif %}>
+                                {{inner_text}}</option>
+                            {%endfor%}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between align-items-center">
+                    <button type="submit" class="btn btn-primary">Применить фильтр</button>
+                    <a id="clearFilterHref" class="text-muted">Очистить фильтр</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<table class="table table-bordered">
+    <thead>
+        <th>Отправитель</th>
+        <th>Дата создания</th>
+        <th>Инв. № устройства</th>
+        <th>Текст</th>
+        <th>Статус</th>
+
+        <!--если не архив, то рендерим еще один столбец-->
+        {%if not archive%}
+        <th>Действия</th>
+        {%endif%}
+    </thead>
+    <tbody>
+    {% for message in tech_messages %}
+        <tr>
+            <td>{{message.user.department}}</td>
+            <td>{{message.date_created.strftime('%d.%m.%Y %H:%M')}}</td>
+            <td>№{{message.comp_number}}</td>
+            <td>
+                <div><u>{{message.theme}}</u></div>
+                <div>{{message.description}}</div>
+            </td>
+            <td>
+                {% if message.status_id == status.completed.value %}
+                <span class="badge badge-success">Выполнено {%if message.completion_confirmed_at%}: {{message.completion_confirmed_at.strftime('%d.%m.%Y %H:%M')}} {%endif%}</span>
+                {% elif message.status_id == status.in_work.value %}
+                <span class="badge badge-warning">В работе</span>
+                {% elif message.status_id == status.pending.value %}
+                <span class="badge badge-primary">Ожидается выполнение</span>
+                {% endif %}
+
+                {%if archive%}
+                <span class="badge archive p-1 my-0 mx-auto">Архивировано</span>
+                {%endif%}
+            </td>
+            {%if not archive%}
+            <td>
+                {% if message.status_id == status.pending.value and current_user.login == "205"%}
+                <button id="issue-in-work-button" class="btn btn-primary btn-sm" onclick="setStatusInWork('{{message.id}}')">
+                    Принять в работу
+                </button>
+                {%endif%}
+                {% if message.status_id == status.in_work.value and current_user.login == "205"%}
+                <button id="issue-in-work-button" class="btn btn-success ess btn-sm" onclick="setStatusCompleted('{{message.id}}')">
+                    Завершить
+                </button>
+                {%endif%}
+
+                {%if current_user.id == message.user_id or current_user.login == "205"%}
+                <button type="submit" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Удалить" onclick="deleteIssue('{{message.id}}')">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+                {%endif%}
+            </td>
+            {%endif%}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-between">
+    <div>
+        {% if per_page > messages_count %}
+        Страница {{page}} | Записи 1-{{messages_count}} из {{messages_count}}
+        {%else%}
+        {%if page == 1%}
+        Страница {{page}} | Записи 1-{{page * per_page }} из {{messages_count}}
+        {%else%}
+        {%if page * per_page > messages_count%}
+        Страница {{page}} | Записи {{(page-1) * per_page + 1}}-{{messages_count}} из {{messages_count}}
+        {%else%}
+        Страница {{page}} | Записи {{(page-1) * per_page + 1}}-{{page * per_page }} из {{messages_count}}
+        {%endif%}
+        {%endif%}
+        {%endif%}
+    </div>
+    {% if messages_count != 0 %}
+    <!--сюда бы jinja-макросы-->
+    {%if not archive%}
+    <nav aria-label="paging">
+        <ul class="pagination justify-content-end">
+
+            <li class="page-item {% if page == 1 %} disabled {% endif %}">
+                <a class="page-link" href="{{url_for('tech_support.tech_requests', p=page-1, **filter_params_dict)}}">Предыдущая</a>
+            </li>
+            {% for page_number in tech_messages.iter_pages(right_current=2)%}
+            {% if page_number == None %}
+            <li class="page-item disabled"><a class="page-link">...</a></li>
+            {%elif page_number == page%}
+            <li class="page-item active"><a class="page-link">{{page_number}}</a></li>
+            {%else %}
+            <li class="page-item"><a class="page-link"
+                    href="{{url_for('tech_support.tech_requests', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
+            {% endif %}
+            {% endfor %}
+            <li class="page-item {% if page == tech_messages.pages %}disabled{% endif %}">
+                <a class="page-link" href="{{url_for('tech_support.tech_requests', p=page+1, **filter_params_dict)}}">Следующая</a>
+            </li>
+        </ul>
+    </nav>
+    {%elif archive%}
+    <nav aria-label="paging">
+        <ul class="pagination justify-content-end">
+
+            <li class="page-item {% if page == 1 %} disabled {% endif %}">
+                <a class="page-link" href="{{url_for('tech_support.archived_issues', p=page-1, **filter_params_dict)}}">Предыдущая</a>
+            </li>
+            {% for page_number in tech_messages.iter_pages(right_current=2)%}
+            {% if page_number == None %}
+            <li class="page-item disabled"><a class="page-link">...</a></li>
+            {%elif page_number == page%}
+            <li class="page-item active"><a class="page-link">{{page_number}}</a></li>
+            {%else %}
+            <li class="page-item"><a class="page-link"
+                    href="{{url_for('tech_support.archived_issues', p=page_number, **filter_params_dict)}}">{{page_number}}</a></li>
+            {% endif %}
+            {% endfor %}
+            <li class="page-item {% if page == tech_messages.pages %}disabled{% endif %}">
+                <a class="page-link" href="{{url_for('tech_support.archived_issues', p=page+1, **filter_params_dict)}}">Следующая</a>
+            </li>
+        </ul>
+    </nav>
+    {%endif%}
+    {%endif%}
+</div>
+{% endblock %}
+
+{%block scripts%}
+
+<script src="{{ url_for('static', filename='src/js/support_table.js') }}"></script>
+{%endblock%}
+

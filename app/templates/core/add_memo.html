@@ -1,5 +1,15 @@
 {% extends 'base.html' %}
 
+{%block style%}
+<style>
+    .small-close {
+        font-size: 12px;
+        line-height: 1;
+        padding: 2px 4px;
+    }
+</style>
+{%endblock%}
+
 {% block content %}
 <div class="d-flex align-items-center">
     <h1 class="mr-2">Служебная записка</h1>
@@ -45,18 +55,11 @@
 
     <button type="submit" class="btn btn-primary">Добавить</button>
 </form>
+{% endblock %}
 
+{%block scripts%}
 <script type="text/javascript" src="{{url_for('static', filename = 'src/js/validation.js')}}"></script>
 <script type="text/javascript" src="{{url_for('static', filename = 'src/js/fileUpload.js')}}"></script>
 <script type="text/javascript" src="{{url_for('static', filename = 'src/js/add_memo.js')}}"></script>
 <script type="text/javascript" src="{{url_for('static', filename = 'src/js/multipleExecutorSelect.js')}}"></script>
-
-<style>
-    .small-close {
-        font-size: 12px;
-        line-height: 1;
-        padding: 2px 4px;
-    }
-
-</style>
-{% endblock %}
+{%endblock%}
